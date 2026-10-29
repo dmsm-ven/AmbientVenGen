@@ -1,0 +1,146 @@
+﻿<Window
+    x:Class="AmbientVenGen.Desktop.MainWindow"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:local="clr-namespace:AmbientVenGen.Desktop"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    Title="Ambient Forge"
+    Width="720"
+    Height="650"
+    MinWidth="600"
+    MinHeight="580"
+    Background="#17171D"
+    Foreground="#E6E6EE"
+    WindowStartupLocation="CenterScreen"
+    mc:Ignorable="d">
+
+
+    <Window.Resources>
+        <Style TargetType="TextBlock">
+            <Setter Property="Margin" Value="0,0,0,6" />
+        </Style>
+
+        <Style TargetType="Slider">
+            <Setter Property="Margin" Value="0,4,0,12" />
+        </Style>
+
+        <Style TargetType="Button">
+            <Setter Property="Padding" Value="14,9" />
+            <Setter Property="Margin" Value="0,0,8,0" />
+        </Style>
+    </Window.Resources>
+
+    <ScrollViewer VerticalScrollBarVisibility="Auto">
+        <StackPanel Margin="24">
+
+            <TextBlock
+                FontSize="25"
+                FontWeight="Bold"
+                Text="AMBIENT FORGE" />
+
+            <TextBlock
+                Margin="0,0,0,24"
+                Foreground="#AAA9BB"
+                Text="Procedural Dark Ambient Synthesizer" />
+
+            <TextBlock FontWeight="SemiBold" Text="Composition preset" />
+
+            <ComboBox
+                x:Name="PresetBox"
+                Margin="0,0,0,20"
+                Padding="8"
+                SelectedIndex="0"
+                SelectionChanged="PresetBox_SelectionChanged">
+                <ComboBoxItem Content="Deep Space" />
+                <ComboBoxItem Content="Dark Drone" />
+                <ComboBoxItem Content="Distant Atmosphere" />
+            </ComboBox>
+
+            <TextBlock Text="Drone level" />
+            <Slider
+                x:Name="DroneSlider"
+                Maximum="1"
+                Minimum="0"
+                TickFrequency="0.05"
+                ValueChanged="Parameter_ValueChanged"
+                Value="0.65" />
+
+            <TextBlock Text="Atmosphere level" />
+            <Slider
+                x:Name="AtmosphereSlider"
+                Maximum="1"
+                Minimum="0"
+                TickFrequency="0.05"
+                ValueChanged="Parameter_ValueChanged"
+                Value="0.25" />
+
+            <TextBlock Text="Brightness" />
+            <Slider
+                x:Name="BrightnessSlider"
+                Maximum="1"
+                Minimum="0"
+                TickFrequency="0.05"
+                ValueChanged="Parameter_ValueChanged"
+                Value="0.35" />
+
+            <TextBlock Text="Modulation depth" />
+            <Slider
+                x:Name="ModulationSlider"
+                Maximum="1"
+                Minimum="0"
+                TickFrequency="0.05"
+                ValueChanged="Parameter_ValueChanged"
+                Value="0.35" />
+
+            <TextBlock Text="Composition duration" />
+
+            <ComboBox
+                x:Name="DurationBox"
+                Margin="0,0,0,20"
+                Padding="8"
+                SelectedValue="10"
+                SelectedValuePath="Tag">
+                <ComboBoxItem Content="5 minutes" Tag="5" />
+                <ComboBoxItem Content="10 minutes" Tag="10" />
+                <ComboBoxItem Content="15 minutes" Tag="15" />
+            </ComboBox>
+
+            <WrapPanel Margin="0,0,0,16">
+                <Button
+                    MinWidth="90"
+                    Click="Play_Click"
+                    Content="Play" />
+
+                <Button
+                    MinWidth="90"
+                    Click="Stop_Click"
+                    Content="Stop" />
+
+                <Button Click="Regenerate_Click" Content="Regenerate" />
+            </WrapPanel>
+
+            <Separator Margin="0,4,0,16" Background="#393943" />
+
+            <WrapPanel>
+                <Button
+                    x:Name="ExportWavButton"
+                    Click="ExportWav_Click"
+                    Content="Export WAV" />
+
+                <Button
+                    x:Name="ExportMp3Button"
+                    Click="ExportMp3_Click"
+                    Content="Export MP3" />
+            </WrapPanel>
+
+            <TextBlock
+                x:Name="StatusText"
+                Margin="0,20,0,0"
+                Foreground="#AAA9BB"
+                Text="Ready"
+                TextWrapping="Wrap" />
+
+        </StackPanel>
+    </ScrollViewer>
+</Window>
