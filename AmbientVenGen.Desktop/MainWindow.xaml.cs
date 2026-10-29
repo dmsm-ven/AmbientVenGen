@@ -5,17 +5,9 @@ namespace AmbientVenGen.Desktop;
 
 public partial class MainWindow : FluentWindow
 {
-    public MainWindow()
+    public MainWindow(MainViewModel viewModel)
     {
         InitializeComponent();
-        DataContext = new MainViewModel();
-    }
-
-    protected override void OnClosed(EventArgs e)
-    {
-        if (DataContext is IDisposable disposable)
-            disposable.Dispose();
-
-        base.OnClosed(e);
+        DataContext = viewModel;
     }
 }

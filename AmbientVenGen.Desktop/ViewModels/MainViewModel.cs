@@ -1,41 +1,22 @@
 using AmbientVenGen.Desktop.Audio;
-using AmbientVenGen.Desktop.Models;
-using AmbientVenGen.Desktop.Presets;
 using AmbientVenGen.Desktop.Services;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
-using System.Collections.ObjectModel;
 
 namespace AmbientVenGen.Desktop.ViewModels;
 
+/// <summary>
+/// Coordinates playback and export commands. Composition parameters live in Settings.
+/// </summary>
 public partial class MainViewModel : ObservableObject, IDisposable
 {
-    private readonly AudioPlaybackService _playbackService = new();
-    private readonly AudioExportService _exportService = new();
-    private readonly FileDialogService _fileDialogService = new();
-
+    private readonly AudioPlaybackService _playbackService;
+    private readonly AudioExportService _exportService;
+    private readonly FileDialogService _fileDialogService;
     private int _seed = 12345;
+    private bool _disposed;
 
-    public ObservableCollection<AmbientPreset> Presets { get; }
-    public IReadOnlyList<int> DurationOptions { get; } = [5, 10, 15];
-
-    [ObservableProperty]
-    private AmbientPreset? _selectedPreset;
-
-    [ObservableProperty]
-    private double _droneLevel = 0.65;
-
-    [ObservableProperty]
-    private double _atmosphereLevel = 0.25;
-
-    [ObservableProperty]
-    private double _brightness = 0.35;
-
-    [ObservableProperty]
-    private double _modulation = 0.35;
-
-    [ObservableProperty]
-    private int _selectedDurationMinutes = 10;
+    public CompositionSettingsViewModel Settings { get; }
 
     [ObservableProperty]
     private bool _isPlaying;
@@ -48,35 +29,20 @@ public partial class MainViewModel : ObservableObject, IDisposable
 
     public bool IsNotExporting => !IsExporting;
 
-    public MainViewModel()
+    public MainViewModel(
+        CompositionSettingsViewModel settings,
+        AudioPlaybackService playbackService,
+        AudioExportService exportService,
+        FileDialogService fileDialogService)
     {
-        Presets = new ObservableCollection<AmbientPreset>
-        {
-            new("Deep Space", 0.65, 0.25, 0.35, 0.35),
-            new("Dark Drone", 0.80, 0.15, 0.15, 0.15),
-            new("Distant Atmosphere", 0.35, 0.60, 0.65, 0.70)
-        };
+        Settings = settings ?? throw new ArgumentNullException(nameof(settings));
+        _playbackService = playbackService ?? throw new ArgumentNullException(nameof(playbackService));
+        _exportService = exportService ?? throw new ArgumentNullException(nameof(exportService));
+        _fileDialogService = fileDialogService ?? throw new ArgumentNullException(nameof(fileDialogService));
 
-        SelectedPreset = Presets[0];
+        Settings.SettingsChanged += OnSettingsChanged;
+        Settings.PropertyChanged += OnSettingsPropertyChanged;
     }
-
-    partial void OnSelectedPresetChanged(AmbientPreset? value)
-    {
-        if (value is null)
-            return;
-
-        DroneLevel = value.DroneLevel;
-        AtmosphereLevel = value.AtmosphereLevel;
-        Brightness = value.Brightness;
-        Modulation = value.Modulation;
-        ApplyLiveSettings();
-        StatusMessage = $"Preset selected: {value.Name}";
-    }
-
-    partial void OnDroneLevelChanged(double value) => ApplyLiveSettings();
-    partial void OnAtmosphereLevelChanged(double value) => ApplyLiveSettings();
-    partial void OnBrightnessChanged(double value) => ApplyLiveSettings();
-    partial void OnModulationChanged(double value) => ApplyLiveSettings();
 
     partial void OnIsExportingChanged(bool value)
     {
@@ -90,7 +56,7 @@ public partial class MainViewModel : ObservableObject, IDisposable
     {
         try
         {
-            _playbackService.Start(CreateSettings());
+            _playbackService.Start(Settings.CreateSettings(_seed));
             IsPlaying = true;
             StatusMessage = $"Playing · Seed: {_seed}";
         }
@@ -144,8 +110,8 @@ public partial class MainViewModel : ObservableObject, IDisposable
         {
             await _exportService.ExportAsync(
                 path,
-                CreateSettings(),
-                TimeSpan.FromMinutes(SelectedDurationMinutes),
+                Settings.CreateSettings(_seed),
+                TimeSpan.FromMinutes(Settings.SelectedDurationMinutes),
                 mp3);
 
             StatusMessage = $"Export completed: {path}";
@@ -160,24 +126,27 @@ public partial class MainViewModel : ObservableObject, IDisposable
         }
     }
 
-    private void ApplyLiveSettings()
+    private void OnSettingsChanged()
     {
-        if (!IsPlaying)
-            return;
-
-        _playbackService.Update(CreateSettings());
+        if (IsPlaying)
+            _playbackService.Update(Settings.CreateSettings(_seed));
     }
 
-    private CompositionSettings CreateSettings() => new(
-        (float)DroneLevel,
-        (float)AtmosphereLevel,
-        (float)Brightness,
-        (float)Modulation,
-        _seed);
+    private void OnSettingsPropertyChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
+    {
+        if (e.PropertyName == nameof(CompositionSettingsViewModel.SelectedPreset) && Settings.SelectedPreset is not null)
+            StatusMessage = $"Preset selected: {Settings.SelectedPreset.Name}";
+    }
 
     public void Dispose()
     {
-        _playbackService.Dispose();
+        if (_disposed)
+            return;
+
+        _disposed = true;
+        Settings.SettingsChanged -= OnSettingsChanged;
+        Settings.PropertyChanged -= OnSettingsPropertyChanged;
+        _playbackService.Stop();
         IsPlaying = false;
     }
 }
