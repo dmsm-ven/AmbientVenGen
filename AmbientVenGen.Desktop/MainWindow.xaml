@@ -1,146 +1,233 @@
-﻿<Window
+﻿<ui:FluentWindow
     x:Class="AmbientVenGen.Desktop.MainWindow"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
-    xmlns:local="clr-namespace:AmbientVenGen.Desktop"
-    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
     Title="Ambient Forge"
-    Width="720"
+    Width="700"
     Height="650"
     MinWidth="600"
-    MinHeight="580"
+    MinHeight="590"
     Background="#17171D"
-    Foreground="#E6E6EE"
-    WindowStartupLocation="CenterScreen"
-    mc:Ignorable="d">
+    ExtendsContentIntoTitleBar="True"
+    Foreground="#ECECF2"
+    WindowStartupLocation="CenterScreen">
 
-
-    <Window.Resources>
+    <ui:FluentWindow.Resources>
         <Style TargetType="TextBlock">
-            <Setter Property="Margin" Value="0,0,0,6" />
+            <Setter Property="Margin" Value="0,0,0,3" />
         </Style>
-
         <Style TargetType="Slider">
-            <Setter Property="Margin" Value="0,4,0,12" />
+            <Setter Property="Margin" Value="0,1,0,2" />
+            <Setter Property="Height" Value="22" />
         </Style>
+        <Style TargetType="ComboBox">
+            <Setter Property="Margin" Value="0,2,0,0" />
+            <Setter Property="MinHeight" Value="30" />
+            <Setter Property="IsEditable" Value="True" />
+            <Setter Property="IsTextSearchEnabled" Value="True" />
 
-        <Style TargetType="Button">
-            <Setter Property="Padding" Value="14,9" />
-            <Setter Property="Margin" Value="0,0,8,0" />
         </Style>
-    </Window.Resources>
+        <Style x:Key="SectionCard" TargetType="Border">
+            <Setter Property="Background" Value="#202027" />
+            <Setter Property="BorderBrush" Value="#34343F" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="CornerRadius" Value="8" />
+            <Setter Property="Padding" Value="12" />
+        </Style>
+    </ui:FluentWindow.Resources>
 
-    <ScrollViewer VerticalScrollBarVisibility="Auto">
-        <StackPanel Margin="24">
+    <ScrollViewer HorizontalScrollBarVisibility="Disabled" VerticalScrollBarVisibility="Auto">
+        <StackPanel Margin="16,12,16,12">
+            <DockPanel Margin="0,0,0,10">
+                <StackPanel>
+                    <ui:TitleBar Title="{Binding Title}" />
+                    <ui:TextBlock
+                        FontSize="23"
+                        FontWeight="Bold"
+                        Text="AMBIENT FORGE" />
+                    <ui:TextBlock
+                        FontSize="12"
+                        Foreground="#AAA9BB"
+                        Text="Procedural Dark Ambient Synthesizer" />
+                </StackPanel>
+            </DockPanel>
 
-            <TextBlock
-                FontSize="25"
-                FontWeight="Bold"
-                Text="AMBIENT FORGE" />
+            <Border Margin="0,0,0,10" Style="{StaticResource SectionCard}">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="12" />
+                        <ColumnDefinition Width="*" />
+                    </Grid.ColumnDefinitions>
+                    <StackPanel Grid.Column="0">
+                        <ui:TextBlock FontWeight="SemiBold" Text="Composition preset" />
+                        <ComboBox
+                            DisplayMemberPath="Name"
+                            ItemsSource="{Binding Presets}"
+                            SelectedItem="{Binding SelectedPreset, Mode=TwoWay}" />
+                    </StackPanel>
+                    <StackPanel Grid.Column="2">
+                        <ui:TextBlock FontWeight="SemiBold" Text="Duration" />
+                        <ComboBox ItemsSource="{Binding DurationOptions}" SelectedItem="{Binding SelectedDurationMinutes, Mode=TwoWay}">
+                            <ComboBox.ItemTemplate>
+                                <DataTemplate>
+                                    <TextBlock Foreground="#ECECF2" Text="{Binding StringFormat={}{0} minutes}" />
+                                </DataTemplate>
+                            </ComboBox.ItemTemplate>
+                        </ComboBox>
+                    </StackPanel>
+                </Grid>
+            </Border>
 
-            <TextBlock
-                Margin="0,0,0,24"
+            <Border Margin="0,0,0,10" Style="{StaticResource SectionCard}">
+                <StackPanel>
+                    <ui:TextBlock
+                        Margin="0,0,0,8"
+                        FontSize="14"
+                        FontWeight="SemiBold"
+                        Text="Sound parameters" />
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="14" />
+                            <ColumnDefinition Width="*" />
+                        </Grid.ColumnDefinitions>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="12" />
+                            <RowDefinition Height="Auto" />
+                        </Grid.RowDefinitions>
+
+                        <StackPanel Grid.Row="0" Grid.Column="0">
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="Auto" />
+                                </Grid.ColumnDefinitions>
+                                <ui:TextBlock Text="Drone level" />
+                                <ui:TextBlock
+                                    Grid.Column="1"
+                                    Foreground="#B7AFE9"
+                                    Text="{Binding DroneLevel, StringFormat={}{0:P0}}" />
+                            </Grid>
+                            <Slider
+                                Maximum="1"
+                                Minimum="0"
+                                TickFrequency="0.05"
+                                Value="{Binding DroneLevel, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+                        </StackPanel>
+
+                        <StackPanel Grid.Row="0" Grid.Column="2">
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="Auto" />
+                                </Grid.ColumnDefinitions>
+                                <ui:TextBlock Text="Atmosphere level" />
+                                <ui:TextBlock
+                                    Grid.Column="1"
+                                    Foreground="#B7AFE9"
+                                    Text="{Binding AtmosphereLevel, StringFormat={}{0:P0}}" />
+                            </Grid>
+                            <Slider
+                                Maximum="1"
+                                Minimum="0"
+                                TickFrequency="0.05"
+                                Value="{Binding AtmosphereLevel, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+                        </StackPanel>
+
+                        <StackPanel Grid.Row="2" Grid.Column="0">
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="Auto" />
+                                </Grid.ColumnDefinitions>
+                                <ui:TextBlock Text="Brightness" />
+                                <ui:TextBlock
+                                    Grid.Column="1"
+                                    Foreground="#B7AFE9"
+                                    Text="{Binding Brightness, StringFormat={}{0:P0}}" />
+                            </Grid>
+                            <Slider
+                                Maximum="1"
+                                Minimum="0"
+                                TickFrequency="0.05"
+                                Value="{Binding Brightness, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+                        </StackPanel>
+
+                        <StackPanel Grid.Row="2" Grid.Column="2">
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="Auto" />
+                                </Grid.ColumnDefinitions>
+                                <ui:TextBlock Text="Modulation depth" />
+                                <ui:TextBlock
+                                    Grid.Column="1"
+                                    Foreground="#B7AFE9"
+                                    Text="{Binding Modulation, StringFormat={}{0:P0}}" />
+                            </Grid>
+                            <Slider
+                                Maximum="1"
+                                Minimum="0"
+                                TickFrequency="0.05"
+                                Value="{Binding Modulation, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+                        </StackPanel>
+                    </Grid>
+                </StackPanel>
+            </Border>
+
+            <Border Margin="0,0,0,10" Style="{StaticResource SectionCard}">
+                <StackPanel>
+                    <ui:TextBlock
+                        Margin="0,0,0,8"
+                        FontSize="14"
+                        FontWeight="SemiBold"
+                        Text="Generation" />
+                    <WrapPanel>
+                        <ui:Button
+                            MinWidth="88"
+                            Margin="0,0,6,4"
+                            Padding="10,5"
+                            Appearance="Primary"
+                            Command="{Binding PlayCommand}"
+                            Content="Play" />
+                        <ui:Button
+                            MinWidth="88"
+                            Margin="0,0,6,4"
+                            Padding="10,5"
+                            Command="{Binding StopCommand}"
+                            Content="Stop" />
+                        <ui:Button
+                            MinWidth="105"
+                            Margin="0,0,0,4"
+                            Padding="10,5"
+                            Command="{Binding RegenerateCommand}"
+                            Content="Regenerate" />
+                    </WrapPanel>
+                    <Separator Margin="0,5,0,8" Background="#3A3945" />
+                    <WrapPanel>
+                        <ui:Button
+                            Margin="0,0,6,0"
+                            Padding="10,5"
+                            Command="{Binding ExportWavCommand}"
+                            Content="Export WAV"
+                            IsEnabled="{Binding IsNotExporting}" />
+                        <ui:Button
+                            Padding="10,5"
+                            Command="{Binding ExportMp3Command}"
+                            Content="Export MP3"
+                            IsEnabled="{Binding IsNotExporting}" />
+                    </WrapPanel>
+                </StackPanel>
+            </Border>
+
+            <ui:TextBlock
+                Margin="2,0,2,0"
                 Foreground="#AAA9BB"
-                Text="Procedural Dark Ambient Synthesizer" />
-
-            <TextBlock FontWeight="SemiBold" Text="Composition preset" />
-
-            <ComboBox
-                x:Name="PresetBox"
-                Margin="0,0,0,20"
-                Padding="8"
-                SelectedIndex="0"
-                SelectionChanged="PresetBox_SelectionChanged">
-                <ComboBoxItem Content="Deep Space" />
-                <ComboBoxItem Content="Dark Drone" />
-                <ComboBoxItem Content="Distant Atmosphere" />
-            </ComboBox>
-
-            <TextBlock Text="Drone level" />
-            <Slider
-                x:Name="DroneSlider"
-                Maximum="1"
-                Minimum="0"
-                TickFrequency="0.05"
-                ValueChanged="Parameter_ValueChanged"
-                Value="0.65" />
-
-            <TextBlock Text="Atmosphere level" />
-            <Slider
-                x:Name="AtmosphereSlider"
-                Maximum="1"
-                Minimum="0"
-                TickFrequency="0.05"
-                ValueChanged="Parameter_ValueChanged"
-                Value="0.25" />
-
-            <TextBlock Text="Brightness" />
-            <Slider
-                x:Name="BrightnessSlider"
-                Maximum="1"
-                Minimum="0"
-                TickFrequency="0.05"
-                ValueChanged="Parameter_ValueChanged"
-                Value="0.35" />
-
-            <TextBlock Text="Modulation depth" />
-            <Slider
-                x:Name="ModulationSlider"
-                Maximum="1"
-                Minimum="0"
-                TickFrequency="0.05"
-                ValueChanged="Parameter_ValueChanged"
-                Value="0.35" />
-
-            <TextBlock Text="Composition duration" />
-
-            <ComboBox
-                x:Name="DurationBox"
-                Margin="0,0,0,20"
-                Padding="8"
-                SelectedValue="10"
-                SelectedValuePath="Tag">
-                <ComboBoxItem Content="5 minutes" Tag="5" />
-                <ComboBoxItem Content="10 minutes" Tag="10" />
-                <ComboBoxItem Content="15 minutes" Tag="15" />
-            </ComboBox>
-
-            <WrapPanel Margin="0,0,0,16">
-                <Button
-                    MinWidth="90"
-                    Click="Play_Click"
-                    Content="Play" />
-
-                <Button
-                    MinWidth="90"
-                    Click="Stop_Click"
-                    Content="Stop" />
-
-                <Button Click="Regenerate_Click" Content="Regenerate" />
-            </WrapPanel>
-
-            <Separator Margin="0,4,0,16" Background="#393943" />
-
-            <WrapPanel>
-                <Button
-                    x:Name="ExportWavButton"
-                    Click="ExportWav_Click"
-                    Content="Export WAV" />
-
-                <Button
-                    x:Name="ExportMp3Button"
-                    Click="ExportMp3_Click"
-                    Content="Export MP3" />
-            </WrapPanel>
-
-            <TextBlock
-                x:Name="StatusText"
-                Margin="0,20,0,0"
-                Foreground="#AAA9BB"
-                Text="Ready"
+                Text="{Binding StatusMessage}"
                 TextWrapping="Wrap" />
-
         </StackPanel>
     </ScrollViewer>
-</Window>
+</ui:FluentWindow>

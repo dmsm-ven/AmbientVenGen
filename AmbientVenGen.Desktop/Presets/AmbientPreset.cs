@@ -1,9 +1,8 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-
 namespace AmbientVenGen.Desktop.Presets;
 
-internal class AmbientPreset
-{
-}
+public sealed record AmbientPreset(
+    string Name,
+    double DroneLevel,
+    double AtmosphereLevel,
+    double Brightness,
+    double Modulation);
