@@ -1,5 +1,4 @@
-using AmbientVenGen.Desktop.Audio;
-using AmbientVenGen.Desktop.Presets;
+﻿using AmbientVenGen.Desktop.Audio;
 using AmbientVenGen.Desktop.Services;
 using AmbientVenGen.Desktop.ViewModels;
 using Microsoft.Extensions.DependencyInjection;
@@ -12,7 +11,7 @@ public partial class App : Application
 {
     private IHost? _host;
 
-    protected override void OnStartup(StartupEventArgs e)
+    protected override async void OnStartup(StartupEventArgs e)
     {
         base.OnStartup(e);
 
@@ -31,18 +30,18 @@ public partial class App : Application
             })
             .Build();
 
-        _host.StartAsync().GetAwaiter().GetResult();
+        await _host.StartAsync();
 
         var mainWindow = _host.Services.GetRequiredService<MainWindow>();
         MainWindow = mainWindow;
         mainWindow.Show();
     }
 
-    protected override void OnExit(ExitEventArgs e)
+    protected override async void OnExit(ExitEventArgs e)
     {
         try
         {
-            _host?.StopAsync().GetAwaiter().GetResult();
+            await _host?.StopAsync();
         }
         finally
         {
