@@ -1,4 +1,5 @@
 using AmbientVenGen.Desktop.Audio;
+using AmbientVenGen.Desktop.Models;
 using AmbientVenGen.Desktop.Services;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
@@ -13,6 +14,8 @@ public partial class MainViewModel : ObservableObject, IDisposable
     private readonly AudioPlaybackService _playbackService;
     private readonly AudioExportService _exportService;
     private readonly FileDialogService _fileDialogService;
+    private readonly ExportOptionsDialogService _exportOptionsDialogService;
+    private ExportOptions? _lastExportOptions;
     private int _seed = 12345;
     private bool _disposed;
 
@@ -27,31 +30,35 @@ public partial class MainViewModel : ObservableObject, IDisposable
     [ObservableProperty]
     private string _statusMessage = "Ready";
 
-    public bool IsNotExporting => !IsExporting;
-
     public MainViewModel(
         CompositionSettingsViewModel settings,
         AudioPlaybackService playbackService,
         AudioExportService exportService,
-        FileDialogService fileDialogService)
+        FileDialogService fileDialogService,
+        ExportOptionsDialogService exportOptionsDialogService)
     {
         Settings = settings ?? throw new ArgumentNullException(nameof(settings));
         _playbackService = playbackService ?? throw new ArgumentNullException(nameof(playbackService));
         _exportService = exportService ?? throw new ArgumentNullException(nameof(exportService));
         _fileDialogService = fileDialogService ?? throw new ArgumentNullException(nameof(fileDialogService));
+        _exportOptionsDialogService = exportOptionsDialogService ?? throw new ArgumentNullException(nameof(exportOptionsDialogService));
 
         Settings.SettingsChanged += OnSettingsChanged;
         Settings.PropertyChanged += OnSettingsPropertyChanged;
     }
 
-    partial void OnIsExportingChanged(bool value)
+    partial void OnIsExportingChanged(bool value) => ExportCommand.NotifyCanExecuteChanged();
+
+    /// <summary>Single Play/Stop button: the icon in the view follows <see cref="IsPlaying"/>.</summary>
+    [RelayCommand]
+    private void TogglePlay()
     {
-        OnPropertyChanged(nameof(IsNotExporting));
-        ExportWavCommand.NotifyCanExecuteChanged();
-        ExportMp3Command.NotifyCanExecuteChanged();
+        if (IsPlaying)
+            Stop();
+        else
+            Play();
     }
 
-    [RelayCommand]
     private void Play()
     {
         try
@@ -67,7 +74,6 @@ public partial class MainViewModel : ObservableObject, IDisposable
         }
     }
 
-    [RelayCommand]
     private void Stop()
     {
         _playbackService.Stop();
@@ -89,17 +95,21 @@ public partial class MainViewModel : ObservableObject, IDisposable
         StatusMessage = $"New composition seed: {_seed}";
     }
 
-    [RelayCommand(CanExecute = nameof(CanExport))]
-    private Task ExportWavAsync() => ExportAsync(mp3: false);
-
-    [RelayCommand(CanExecute = nameof(CanExport))]
-    private Task ExportMp3Async() => ExportAsync(mp3: true);
-
     private bool CanExport() => !IsExporting;
 
-    private async Task ExportAsync(bool mp3)
+    [RelayCommand(CanExecute = nameof(CanExport))]
+    private async Task ExportAsync()
     {
-        string? path = _fileDialogService.ChooseExportPath(mp3, _seed);
+        ExportOptions? options = _exportOptionsDialogService.Show(
+            Settings.SelectedDurationMinutes,
+            _lastExportOptions);
+
+        if (options is null)
+            return;
+
+        _lastExportOptions = options;
+
+        string? path = _fileDialogService.ChooseExportPath(options.Format == ExportFormat.Mp3, _seed);
         if (string.IsNullOrWhiteSpace(path))
             return;
 
@@ -112,7 +122,7 @@ public partial class MainViewModel : ObservableObject, IDisposable
                 path,
                 Settings.CreateSettings(_seed),
                 TimeSpan.FromMinutes(Settings.SelectedDurationMinutes),
-                mp3);
+                options);
 
             StatusMessage = $"Export completed: {path}";
         }

@@ -1,5 +1,6 @@
 ﻿using AmbientVenGen.Desktop.Models;
 using NAudio.Wave;
+using NAudio.Wave.SampleProviders;
 using System.IO;
 
 namespace AmbientVenGen.Desktop.Audio;
@@ -10,20 +11,25 @@ public sealed class AudioExportService
         string outputPath,
         CompositionSettings settings,
         TimeSpan duration,
-        bool mp3)
+        ExportOptions options)
     {
-        return Task.Run(() => Export(outputPath, settings, duration, mp3));
+        return Task.Run(() => Export(outputPath, settings, duration, options));
     }
 
     private static void Export(
         string outputPath,
         CompositionSettings settings,
         TimeSpan duration,
-        bool mp3)
+        ExportOptions options)
     {
-        if (!mp3)
+        if (options.Format == ExportFormat.Wav)
         {
-            RenderWav(outputPath, settings, duration);
+            RenderWav(
+                outputPath,
+                settings,
+                duration,
+                options,
+                float32: options.WavSampleFormat == WavSampleFormat.Float32);
             return;
         }
 
@@ -33,10 +39,11 @@ public sealed class AudioExportService
 
         try
         {
-            RenderWav(temporaryWav, settings, duration);
+            // The MP3 encoder takes a 16-bit PCM source.
+            RenderWav(temporaryWav, settings, duration, options, float32: false);
 
             using var reader = new WaveFileReader(temporaryWav);
-            MediaFoundationEncoder.EncodeToMp3(reader, outputPath, 192_000);
+            MediaFoundationEncoder.EncodeToMp3(reader, outputPath, options.Mp3BitrateKbps * 1000);
         }
         finally
         {
@@ -58,10 +65,25 @@ public sealed class AudioExportService
     private static void RenderWav(
         string path,
         CompositionSettings settings,
-        TimeSpan duration)
+        TimeSpan duration,
+        ExportOptions options,
+        bool float32)
     {
         var synth = new DroneSynthProvider(settings);
-        var limited = new DurationSampleProvider(synth, duration);
-        WaveFileWriter.CreateWaveFile16(path, limited);
+        ISampleProvider chain = new DurationSampleProvider(synth, duration);
+
+        if (options.FadeInSeconds > 0 || options.FadeOutSeconds > 0)
+        {
+            chain = new FadeSampleProvider(
+                chain,
+                duration,
+                TimeSpan.FromSeconds(options.FadeInSeconds),
+                TimeSpan.FromSeconds(options.FadeOutSeconds));
+        }
+
+        if (float32)
+            WaveFileWriter.CreateWaveFile(path, new SampleToWaveProvider(chain));
+        else
+            WaveFileWriter.CreateWaveFile16(path, chain);
     }
 }

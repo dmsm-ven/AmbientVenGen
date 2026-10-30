@@ -5,9 +5,9 @@
     xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
     Title="Ambient Forge"
     Width="700"
-    Height="650"
+    Height="560"
     MinWidth="600"
-    MinHeight="590"
+    MinHeight="500"
     Background="#17171D"
     ExtendsContentIntoTitleBar="True"
     Foreground="#ECECF2"
@@ -17,16 +17,20 @@
         <Style TargetType="TextBlock">
             <Setter Property="Margin" Value="0,0,0,3" />
         </Style>
-        <Style TargetType="Slider">
+
+        <!--
+            Implicit styles MUST be based on the WPF-UI ones. Without BasedOn the style replaces the
+            WPF-UI control template with the default system one (white popup + light text in dark theme).
+        -->
+        <Style BasedOn="{StaticResource {x:Type Slider}}" TargetType="Slider">
             <Setter Property="Margin" Value="0,1,0,2" />
             <Setter Property="Height" Value="22" />
         </Style>
-        <Style TargetType="ComboBox">
+        <Style BasedOn="{StaticResource {x:Type ComboBox}}" TargetType="ComboBox">
             <Setter Property="Margin" Value="0,2,0,0" />
             <Setter Property="MinHeight" Value="30" />
-            <Setter Property="IsEditable" Value="True" />
-            <Setter Property="IsTextSearchEnabled" Value="True" />
         </Style>
+
         <Style x:Key="SectionCard" TargetType="Border">
             <Setter Property="Background" Value="#202027" />
             <Setter Property="BorderBrush" Value="#34343F" />
@@ -34,187 +38,232 @@
             <Setter Property="CornerRadius" Value="8" />
             <Setter Property="Padding" Value="12" />
         </Style>
+
+        <!-- 24x24 icon-only button for the top tool panel. -->
+        <Style
+            x:Key="ToolIconButton"
+            BasedOn="{StaticResource {x:Type ui:Button}}"
+            TargetType="ui:Button">
+            <Setter Property="Width" Value="24" />
+            <Setter Property="Height" Value="24" />
+            <Setter Property="MinWidth" Value="24" />
+            <Setter Property="MinHeight" Value="24" />
+            <Setter Property="Padding" Value="0" />
+            <Setter Property="Margin" Value="0,0,4,0" />
+            <Setter Property="FontSize" Value="14" />
+            <Setter Property="HorizontalContentAlignment" Value="Center" />
+            <Setter Property="VerticalContentAlignment" Value="Center" />
+        </Style>
+
+        <!-- Play / Stop in one button: the icon and tooltip follow MainViewModel.IsPlaying. -->
+        <Style
+            x:Key="PlayStopButton"
+            BasedOn="{StaticResource ToolIconButton}"
+            TargetType="ui:Button">
+            <Setter Property="Appearance" Value="Primary" />
+            <Setter Property="ToolTip" Value="Play" />
+            <Setter Property="Icon">
+                <Setter.Value>
+                    <ui:SymbolIcon Symbol="Play24" />
+                </Setter.Value>
+            </Setter>
+            <Style.Triggers>
+                <DataTrigger Binding="{Binding IsPlaying}" Value="True">
+                    <Setter Property="ToolTip" Value="Stop" />
+                    <Setter Property="Icon">
+                        <Setter.Value>
+                            <ui:SymbolIcon Symbol="Stop24" />
+                        </Setter.Value>
+                    </Setter>
+                </DataTrigger>
+            </Style.Triggers>
+        </Style>
     </ui:FluentWindow.Resources>
 
-    <ScrollViewer HorizontalScrollBarVisibility="Disabled" VerticalScrollBarVisibility="Auto">
-        <StackPanel Margin="4">
-            <DockPanel>
-                <StackPanel>
-                    <ui:TitleBar Title="Ambient Forge" />
-                </StackPanel>
-            </DockPanel>
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+            <RowDefinition Height="Auto" />
+        </Grid.RowDefinitions>
 
-            <Border Margin="0,0,0,10" Style="{StaticResource SectionCard}">
-                <Grid>
-                    <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="*" />
-                        <ColumnDefinition Width="12" />
-                        <ColumnDefinition Width="*" />
-                    </Grid.ColumnDefinitions>
-                    <StackPanel Grid.Column="0">
-                        <ui:TextBlock FontWeight="SemiBold" Text="Composition preset" />
-                        <ComboBox
-                            DisplayMemberPath="Name"
-                            ItemsSource="{Binding Settings.Presets}"
-                            SelectedItem="{Binding Settings.SelectedPreset, Mode=TwoWay}" />
-                    </StackPanel>
-                    <StackPanel Grid.Column="2">
-                        <ui:TextBlock FontWeight="SemiBold" Text="Duration" />
-                        <ComboBox ItemsSource="{Binding Settings.DurationOptions}" SelectedItem="{Binding Settings.SelectedDurationMinutes, Mode=TwoWay}">
-                            <ComboBox.ItemTemplate>
-                                <DataTemplate>
-                                    <TextBlock Foreground="#ECECF2" Text="{Binding StringFormat={}{0} minutes}" />
-                                </DataTemplate>
-                            </ComboBox.ItemTemplate>
-                        </ComboBox>
-                    </StackPanel>
-                </Grid>
-            </Border>
+        <ui:TitleBar Grid.Row="0" Title="Ambient Forge" />
 
-            <Border Margin="0,0,0,10" Style="{StaticResource SectionCard}">
-                <StackPanel>
-                    <ui:TextBlock
-                        Margin="0,0,0,8"
-                        FontSize="14"
-                        FontWeight="SemiBold"
-                        Text="Sound parameters" />
+        <!-- Top ToolPanel (below the window title) -->
+        <Border
+            Grid.Row="1"
+            Padding="10,5"
+            Background="#1C1C23"
+            BorderBrush="#34343F"
+            BorderThickness="0,1,0,1">
+            <StackPanel Orientation="Horizontal">
+                <ui:Button
+                    Command="{Binding TogglePlayCommand}"
+                    Style="{StaticResource PlayStopButton}" />
+                <ui:Button
+                    Command="{Binding RegenerateCommand}"
+                    Style="{StaticResource ToolIconButton}"
+                    ToolTip="Regenerate (new seed)">
+                    <ui:Button.Icon>
+                        <ui:SymbolIcon Symbol="ArrowSync24" />
+                    </ui:Button.Icon>
+                </ui:Button>
+                <Rectangle
+                    Width="1"
+                    Height="16"
+                    Margin="6,0,10,0"
+                    Fill="#3A3945" />
+                <ui:Button
+                    Command="{Binding ExportCommand}"
+                    Style="{StaticResource ToolIconButton}"
+                    ToolTip="Export...">
+                    <ui:Button.Icon>
+                        <ui:SymbolIcon Symbol="ArrowDownload24" />
+                    </ui:Button.Icon>
+                </ui:Button>
+            </StackPanel>
+        </Border>
+
+        <ScrollViewer
+            Grid.Row="2"
+            HorizontalScrollBarVisibility="Disabled"
+            VerticalScrollBarVisibility="Auto">
+            <StackPanel Margin="12,12,12,4">
+                <Border Margin="0,0,0,10" Style="{StaticResource SectionCard}">
                     <Grid>
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="*" />
-                            <ColumnDefinition Width="14" />
+                            <ColumnDefinition Width="12" />
                             <ColumnDefinition Width="*" />
                         </Grid.ColumnDefinitions>
-                        <Grid.RowDefinitions>
-                            <RowDefinition Height="Auto" />
-                            <RowDefinition Height="12" />
-                            <RowDefinition Height="Auto" />
-                        </Grid.RowDefinitions>
-                        <StackPanel Grid.Row="0" Grid.Column="0">
-                            <Grid>
-                                <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="*" />
-                                    <ColumnDefinition Width="Auto" />
-                                </Grid.ColumnDefinitions>
-                                <ui:TextBlock Text="Drone level" />
-                                <ui:TextBlock
-                                    Grid.Column="1"
-                                    Foreground="#B7AFE9"
-                                    Text="{Binding Settings.DroneLevel, StringFormat={}{0:P0}}" />
-                            </Grid>
-                            <Slider
-                                Maximum="1"
-                                Minimum="0"
-                                TickFrequency="0.05"
-                                Value="{Binding Settings.DroneLevel, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+                        <StackPanel Grid.Column="0">
+                            <ui:TextBlock FontWeight="SemiBold" Text="Composition preset" />
+                            <ComboBox
+                                DisplayMemberPath="Name"
+                                ItemsSource="{Binding Settings.Presets}"
+                                SelectedItem="{Binding Settings.SelectedPreset, Mode=TwoWay}" />
                         </StackPanel>
-                        <StackPanel Grid.Row="0" Grid.Column="2">
-                            <Grid>
-                                <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="*" />
-                                    <ColumnDefinition Width="Auto" />
-                                </Grid.ColumnDefinitions>
-                                <ui:TextBlock Text="Atmosphere level" />
-                                <ui:TextBlock
-                                    Grid.Column="1"
-                                    Foreground="#B7AFE9"
-                                    Text="{Binding Settings.AtmosphereLevel, StringFormat={}{0:P0}}" />
-                            </Grid>
-                            <Slider
-                                Maximum="1"
-                                Minimum="0"
-                                TickFrequency="0.05"
-                                Value="{Binding Settings.AtmosphereLevel, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
-                        </StackPanel>
-                        <StackPanel Grid.Row="2" Grid.Column="0">
-                            <Grid>
-                                <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="*" />
-                                    <ColumnDefinition Width="Auto" />
-                                </Grid.ColumnDefinitions>
-                                <ui:TextBlock Text="Brightness" />
-                                <ui:TextBlock
-                                    Grid.Column="1"
-                                    Foreground="#B7AFE9"
-                                    Text="{Binding Settings.Brightness, StringFormat={}{0:P0}}" />
-                            </Grid>
-                            <Slider
-                                Maximum="1"
-                                Minimum="0"
-                                TickFrequency="0.05"
-                                Value="{Binding Settings.Brightness, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
-                        </StackPanel>
-                        <StackPanel Grid.Row="2" Grid.Column="2">
-                            <Grid>
-                                <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="*" />
-                                    <ColumnDefinition Width="Auto" />
-                                </Grid.ColumnDefinitions>
-                                <ui:TextBlock Text="Modulation depth" />
-                                <ui:TextBlock
-                                    Grid.Column="1"
-                                    Foreground="#B7AFE9"
-                                    Text="{Binding Settings.Modulation, StringFormat={}{0:P0}}" />
-                            </Grid>
-                            <Slider
-                                Maximum="1"
-                                Minimum="0"
-                                TickFrequency="0.05"
-                                Value="{Binding Settings.Modulation, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+                        <StackPanel Grid.Column="2">
+                            <ui:TextBlock FontWeight="SemiBold" Text="Duration" />
+                            <ComboBox ItemsSource="{Binding Settings.DurationOptions}" SelectedItem="{Binding Settings.SelectedDurationMinutes, Mode=TwoWay}">
+                                <ComboBox.ItemTemplate>
+                                    <DataTemplate>
+                                        <TextBlock Margin="0" Text="{Binding StringFormat={}{0} minutes}" />
+                                    </DataTemplate>
+                                </ComboBox.ItemTemplate>
+                            </ComboBox>
                         </StackPanel>
                     </Grid>
-                </StackPanel>
-            </Border>
+                </Border>
 
-            <Border Margin="0,0,0,10" Style="{StaticResource SectionCard}">
-                <StackPanel>
-                    <ui:TextBlock
-                        Margin="0,0,0,8"
-                        FontSize="14"
-                        FontWeight="SemiBold"
-                        Text="Generation" />
-                    <WrapPanel>
-                        <ui:Button
-                            MinWidth="88"
-                            Margin="0,0,6,4"
-                            Padding="10,5"
-                            Appearance="Primary"
-                            Command="{Binding PlayCommand}"
-                            Content="Play" />
-                        <ui:Button
-                            MinWidth="88"
-                            Margin="0,0,6,4"
-                            Padding="10,5"
-                            Command="{Binding StopCommand}"
-                            Content="Stop" />
-                        <ui:Button
-                            MinWidth="105"
-                            Margin="0,0,0,4"
-                            Padding="10,5"
-                            Command="{Binding RegenerateCommand}"
-                            Content="Regenerate" />
-                    </WrapPanel>
-                    <Separator Margin="0,5,0,8" Background="#3A3945" />
-                    <WrapPanel>
-                        <ui:Button
-                            Margin="0,0,6,0"
-                            Padding="10,5"
-                            Command="{Binding ExportWavCommand}"
-                            Content="Export WAV"
-                            IsEnabled="{Binding IsNotExporting}" />
-                        <ui:Button
-                            Padding="10,5"
-                            Command="{Binding ExportMp3Command}"
-                            Content="Export MP3"
-                            IsEnabled="{Binding IsNotExporting}" />
-                    </WrapPanel>
-                </StackPanel>
-            </Border>
+                <Border Margin="0,0,0,10" Style="{StaticResource SectionCard}">
+                    <StackPanel>
+                        <ui:TextBlock
+                            Margin="0,0,0,8"
+                            FontSize="14"
+                            FontWeight="SemiBold"
+                            Text="Sound parameters" />
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="14" />
+                                <ColumnDefinition Width="*" />
+                            </Grid.ColumnDefinitions>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="12" />
+                                <RowDefinition Height="Auto" />
+                            </Grid.RowDefinitions>
+                            <StackPanel Grid.Row="0" Grid.Column="0">
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*" />
+                                        <ColumnDefinition Width="Auto" />
+                                    </Grid.ColumnDefinitions>
+                                    <ui:TextBlock Text="Drone level" />
+                                    <ui:TextBlock
+                                        Grid.Column="1"
+                                        Foreground="#B7AFE9"
+                                        Text="{Binding Settings.DroneLevel, StringFormat={}{0:P0}}" />
+                                </Grid>
+                                <Slider
+                                    Maximum="1"
+                                    Minimum="0"
+                                    TickFrequency="0.05"
+                                    Value="{Binding Settings.DroneLevel, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+                            </StackPanel>
+                            <StackPanel Grid.Row="0" Grid.Column="2">
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*" />
+                                        <ColumnDefinition Width="Auto" />
+                                    </Grid.ColumnDefinitions>
+                                    <ui:TextBlock Text="Atmosphere level" />
+                                    <ui:TextBlock
+                                        Grid.Column="1"
+                                        Foreground="#B7AFE9"
+                                        Text="{Binding Settings.AtmosphereLevel, StringFormat={}{0:P0}}" />
+                                </Grid>
+                                <Slider
+                                    Maximum="1"
+                                    Minimum="0"
+                                    TickFrequency="0.05"
+                                    Value="{Binding Settings.AtmosphereLevel, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+                            </StackPanel>
+                            <StackPanel Grid.Row="2" Grid.Column="0">
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*" />
+                                        <ColumnDefinition Width="Auto" />
+                                    </Grid.ColumnDefinitions>
+                                    <ui:TextBlock Text="Brightness" />
+                                    <ui:TextBlock
+                                        Grid.Column="1"
+                                        Foreground="#B7AFE9"
+                                        Text="{Binding Settings.Brightness, StringFormat={}{0:P0}}" />
+                                </Grid>
+                                <Slider
+                                    Maximum="1"
+                                    Minimum="0"
+                                    TickFrequency="0.05"
+                                    Value="{Binding Settings.Brightness, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+                            </StackPanel>
+                            <StackPanel Grid.Row="2" Grid.Column="2">
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*" />
+                                        <ColumnDefinition Width="Auto" />
+                                    </Grid.ColumnDefinitions>
+                                    <ui:TextBlock Text="Modulation depth" />
+                                    <ui:TextBlock
+                                        Grid.Column="1"
+                                        Foreground="#B7AFE9"
+                                        Text="{Binding Settings.Modulation, StringFormat={}{0:P0}}" />
+                                </Grid>
+                                <Slider
+                                    Maximum="1"
+                                    Minimum="0"
+                                    TickFrequency="0.05"
+                                    Value="{Binding Settings.Modulation, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+                            </StackPanel>
+                        </Grid>
+                    </StackPanel>
+                </Border>
+            </StackPanel>
+        </ScrollViewer>
 
+        <!-- Status line, pinned to the bottom -->
+        <Border
+            Grid.Row="3"
+            Padding="14,6"
+            BorderBrush="#34343F"
+            BorderThickness="0,1,0,0">
             <ui:TextBlock
-                Margin="2,0,2,0"
+                Margin="0"
                 Foreground="#AAA9BB"
                 Text="{Binding StatusMessage}"
-                TextWrapping="Wrap" />
-        </StackPanel>
-    </ScrollViewer>
+                TextTrimming="CharacterEllipsis" />
+        </Border>
+    </Grid>
 </ui:FluentWindow>
