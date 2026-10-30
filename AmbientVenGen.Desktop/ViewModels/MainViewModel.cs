@@ -23,6 +23,7 @@ public partial class MainViewModel : ObservableObject, IDisposable
     private readonly AudioExportService _exportService;
     private readonly FileDialogService _fileDialogService;
     private readonly ExportOptionsDialogService _exportOptionsDialogService;
+    private readonly PresetLibraryWindowService _presetLibraryWindowService;
     private readonly ProjectFileService _projectFileService;
     private readonly MessageService _messageService;
     private readonly SpectrumProcessor _spectrum = new();
@@ -95,7 +96,8 @@ public partial class MainViewModel : ObservableObject, IDisposable
         ExportOptionsDialogService exportOptionsDialogService,
         ProjectFileService projectFileService,
         MessageService messageService,
-        TemplateService templateService)
+        TemplateService templateService,
+        PresetLibraryWindowService presetLibraryWindowService)
     {
         _playbackService = playbackService ?? throw new ArgumentNullException(nameof(playbackService));
         _exportService = exportService ?? throw new ArgumentNullException(nameof(exportService));
@@ -104,6 +106,7 @@ public partial class MainViewModel : ObservableObject, IDisposable
         _projectFileService = projectFileService ?? throw new ArgumentNullException(nameof(projectFileService));
         _messageService = messageService ?? throw new ArgumentNullException(nameof(messageService));
         ArgumentNullException.ThrowIfNull(templateService);
+        _presetLibraryWindowService = presetLibraryWindowService ?? throw new ArgumentNullException(nameof(presetLibraryWindowService));
 
         Templates = templateService.Templates;
         SelectedTemplate = templateService.Default;
@@ -395,6 +398,11 @@ public partial class MainViewModel : ObservableObject, IDisposable
         IsDirty = false;
         OnPropertyChanged(nameof(TimeText));
     }
+
+    // ---------------------------------------------------------------- preset library
+
+    [RelayCommand]
+    private void OpenPresetLibrary() => _presetLibraryWindowService.Show();
 
     // ---------------------------------------------------------------- export
 

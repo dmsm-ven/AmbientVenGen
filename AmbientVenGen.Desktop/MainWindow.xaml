@@ -19,56 +19,7 @@
     <ui:FluentWindow.Resources>
         <BooleanToVisibilityConverter x:Key="BoolToVisibility" />
 
-        <Style TargetType="TextBlock">
-            <Setter Property="Margin" Value="0,0,0,3" />
-        </Style>
-
-        <!--
-            Implicit styles MUST be based on the WPF-UI ones. Without BasedOn the style replaces the
-            WPF-UI control template with the default system one (white popup + light text in dark theme).
-        -->
-        <Style BasedOn="{StaticResource {x:Type Slider}}" TargetType="Slider">
-            <Setter Property="Margin" Value="0,1,0,2" />
-            <Setter Property="Height" Value="22" />
-        </Style>
-        <Style BasedOn="{StaticResource {x:Type ComboBox}}" TargetType="ComboBox">
-            <Setter Property="Margin" Value="0,2,0,0" />
-            <Setter Property="MinHeight" Value="30" />
-        </Style>
-
-        <!-- ComboBox over a list of vm:Choice items (label + value). -->
-        <Style
-            x:Key="ChoiceCombo"
-            BasedOn="{StaticResource {x:Type ComboBox}}"
-            TargetType="ComboBox">
-            <Setter Property="DisplayMemberPath" Value="Label" />
-            <Setter Property="SelectedValuePath" Value="Value" />
-        </Style>
-
-        <!-- Translucent card: the window backdrop shines through. -->
-        <Style x:Key="SectionCard" TargetType="Border">
-            <Setter Property="Background" Value="#8C20202B" />
-            <Setter Property="BorderBrush" Value="#33FFFFFF" />
-            <Setter Property="BorderThickness" Value="1" />
-            <Setter Property="CornerRadius" Value="10" />
-            <Setter Property="Padding" Value="12" />
-        </Style>
-
-        <!-- 24x24 icon-only button for the tool panels. -->
-        <Style
-            x:Key="ToolIconButton"
-            BasedOn="{StaticResource {x:Type ui:Button}}"
-            TargetType="ui:Button">
-            <Setter Property="Width" Value="24" />
-            <Setter Property="Height" Value="24" />
-            <Setter Property="MinWidth" Value="24" />
-            <Setter Property="MinHeight" Value="24" />
-            <Setter Property="Padding" Value="0" />
-            <Setter Property="Margin" Value="0,0,4,0" />
-            <Setter Property="FontSize" Value="14" />
-            <Setter Property="HorizontalContentAlignment" Value="Center" />
-            <Setter Property="VerticalContentAlignment" Value="Center" />
-        </Style>
+        <!-- Generic styles (TextBlock, Slider, ComboBox, SectionCard, ToolIconButton) are in Resources/Styles.xaml. -->
 
         <!-- Play / Stop in one button: the icon and tooltip follow MainViewModel.IsPlaying. -->
         <Style
@@ -166,6 +117,14 @@
                         Height="16"
                         Margin="6,0,10,0"
                         Fill="#3A3945" />
+                    <ui:Button
+                        Command="{Binding OpenPresetLibraryCommand}"
+                        Style="{StaticResource ToolIconButton}"
+                        ToolTip="Preset library">
+                        <ui:Button.Icon>
+                            <ui:SymbolIcon Symbol="Library24" />
+                        </ui:Button.Icon>
+                    </ui:Button>
                     <ui:Button
                         Command="{Binding ExportCommand}"
                         Style="{StaticResource ToolIconButton}"

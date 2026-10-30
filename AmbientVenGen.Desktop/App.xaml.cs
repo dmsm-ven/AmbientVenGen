@@ -1,6 +1,8 @@
 ﻿using AmbientVenGen.Desktop.Audio;
+using AmbientVenGen.Desktop.DataAccess;
 using AmbientVenGen.Desktop.Services;
 using AmbientVenGen.Desktop.ViewModels;
+using AmbientVenGen.Desktop.Views;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using System.Windows;
@@ -26,6 +28,14 @@ public partial class App : Application
                 services.AddSingleton<AudioExportService>();
                 services.AddSingleton<FileDialogService>();
                 services.AddSingleton<ExportOptionsDialogService>();
+                services.AddSingleton<PresetLibraryWindowService>();
+
+                services.AddSingleton<FieldPresetRepository>();
+                services.AddSingleton<AudioFileAnalyzer>();
+
+                // A new library window is created on every open (a closed WPF window cannot be shown again).
+                services.AddTransient<PresetLibraryViewModel>();
+                services.AddTransient<PresetLibraryWindow>();
 
                 services.AddSingleton<MainViewModel>();
                 services.AddSingleton<MainWindow>();

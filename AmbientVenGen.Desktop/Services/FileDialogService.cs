@@ -23,6 +23,19 @@ public sealed class FileDialogService
         return dialog.ShowDialog() == true ? dialog.FileName : null;
     }
 
+    public string? ChooseFieldPresetFile()
+    {
+        var dialog = new OpenFileDialog
+        {
+            Title = "Add field recording",
+            Filter = "Audio and video (*.flac;*.mp3;*.wav;*.m4a;*.mp4)|*.flac;*.mp3;*.wav;*.m4a;*.mp4|All files (*.*)|*.*",
+            CheckFileExists = true,
+            Multiselect = false
+        };
+
+        return dialog.ShowDialog() == true ? dialog.FileName : null;
+    }
+
     public string? ChooseProjectToOpen()
     {
         var dialog = new OpenFileDialog
