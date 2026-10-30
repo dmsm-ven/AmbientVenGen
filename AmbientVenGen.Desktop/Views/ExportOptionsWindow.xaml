@@ -86,7 +86,7 @@
 
             <ui:TextBlock
                 Foreground="#AAA9BB"
-                Text="{Binding DurationMinutes, StringFormat=Track length: {0} min (set in the main window)}" />
+                Text="{Binding TrackLengthText, StringFormat=Track length: {0} (set in the main window)}" />
         </StackPanel>
 
         <StackPanel

@@ -4,6 +4,8 @@ namespace AmbientVenGen.Desktop.Services;
 
 public sealed class FileDialogService
 {
+    private const string ProjectFilter = "Ambient Forge project (*.afproj)|*.afproj";
+
     public string? ChooseExportPath(bool mp3, int seed)
     {
         var dialog = new SaveFileDialog
@@ -15,6 +17,33 @@ public sealed class FileDialogService
             FileName = $"AmbientForge_{seed}" + (mp3 ? ".mp3" : ".wav"),
             AddExtension = true,
             DefaultExt = mp3 ? ".mp3" : ".wav",
+            OverwritePrompt = true
+        };
+
+        return dialog.ShowDialog() == true ? dialog.FileName : null;
+    }
+
+    public string? ChooseProjectToOpen()
+    {
+        var dialog = new OpenFileDialog
+        {
+            Title = "Open project",
+            Filter = ProjectFilter,
+            CheckFileExists = true
+        };
+
+        return dialog.ShowDialog() == true ? dialog.FileName : null;
+    }
+
+    public string? ChooseProjectSavePath(string suggestedName)
+    {
+        var dialog = new SaveFileDialog
+        {
+            Title = "Save project",
+            Filter = ProjectFilter,
+            FileName = suggestedName,
+            AddExtension = true,
+            DefaultExt = ProjectFileService.Extension,
             OverwritePrompt = true
         };
 

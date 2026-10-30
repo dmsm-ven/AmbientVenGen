@@ -10,9 +10,9 @@ public sealed class ExportOptionsDialogService
     /// <summary>
     /// Shows the export options dialog. Returns null when the user cancels.
     /// </summary>
-    public ExportOptions? Show(int durationMinutes, ExportOptions? previous)
+    public ExportOptions? Show(string trackLengthText, ExportOptions? previous)
     {
-        var viewModel = new ExportOptionsViewModel(durationMinutes, previous);
+        var viewModel = new ExportOptionsViewModel(trackLengthText, previous);
 
         var window = new ExportOptionsWindow
         {

@@ -1,4 +1,5 @@
-﻿using AmbientVenGen.Desktop.Models;
+﻿using AmbientVenGen.Desktop.Composition;
+using AmbientVenGen.Desktop.Models;
 using NAudio.Wave;
 using NAudio.Wave.SampleProviders;
 using System.IO;
@@ -7,70 +8,78 @@ namespace AmbientVenGen.Desktop.Audio;
 
 public sealed class AudioExportService
 {
+    /// <summary>Renders the project to a file. Throws <see cref="OperationCanceledException"/> when cancelled.</summary>
     public Task ExportAsync(
         string outputPath,
-        CompositionSettings settings,
-        TimeSpan duration,
-        ExportOptions options)
+        ProjectSpec spec,
+        ExportOptions options,
+        IProgress<double>? progress,
+        CancellationToken cancellationToken)
     {
-        return Task.Run(() => Export(outputPath, settings, duration, options));
+        return Task.Run(() => Export(outputPath, spec, options, progress, cancellationToken), CancellationToken.None);
     }
 
     private static void Export(
         string outputPath,
-        CompositionSettings settings,
-        TimeSpan duration,
-        ExportOptions options)
+        ProjectSpec spec,
+        ExportOptions options,
+        IProgress<double>? progress,
+        CancellationToken cancellationToken)
     {
         if (options.Format == ExportFormat.Wav)
         {
             RenderWav(
                 outputPath,
-                settings,
-                duration,
+                spec,
                 options,
-                float32: options.WavSampleFormat == WavSampleFormat.Float32);
+                float32: options.WavSampleFormat == WavSampleFormat.Float32,
+                progress,
+                cancellationToken,
+                scale: 1.0);
+
+            if (cancellationToken.IsCancellationRequested)
+            {
+                TryDelete(outputPath);
+                throw new OperationCanceledException(cancellationToken);
+            }
+
             return;
         }
 
-        string temporaryWav = Path.Combine(
-            Path.GetTempPath(),
-            $"{Guid.NewGuid():N}.wav");
+        string temporaryWav = Path.Combine(Path.GetTempPath(), $"{Guid.NewGuid():N}.wav");
 
         try
         {
-            // The MP3 encoder takes a 16-bit PCM source.
-            RenderWav(temporaryWav, settings, duration, options, float32: false);
+            // Rendering is the long part: 0..90%. The MP3 encoder takes a 16-bit PCM source.
+            RenderWav(temporaryWav, spec, options, float32: false, progress, cancellationToken, scale: 0.9);
+            cancellationToken.ThrowIfCancellationRequested();
 
-            using var reader = new WaveFileReader(temporaryWav);
-            MediaFoundationEncoder.EncodeToMp3(reader, outputPath, options.Mp3BitrateKbps * 1000);
+            progress?.Report(0.92);
+
+            using (var reader = new WaveFileReader(temporaryWav))
+            {
+                MediaFoundationEncoder.EncodeToMp3(reader, outputPath, options.Mp3BitrateKbps * 1000);
+            }
+
+            progress?.Report(1.0);
         }
         finally
         {
-            try
-            {
-                File.Delete(temporaryWav);
-            }
-            catch (IOException)
-            {
-                // A leftover temporary file must not mask the export result.
-            }
-            catch (UnauthorizedAccessException)
-            {
-                // A leftover temporary file must not mask the export result.
-            }
+            TryDelete(temporaryWav);
         }
     }
 
     private static void RenderWav(
         string path,
-        CompositionSettings settings,
-        TimeSpan duration,
+        ProjectSpec spec,
         ExportOptions options,
-        bool float32)
+        bool float32,
+        IProgress<double>? progress,
+        CancellationToken cancellationToken,
+        double scale)
     {
-        var synth = new DroneSynthProvider(settings);
-        ISampleProvider chain = new DurationSampleProvider(synth, duration);
+        var duration = TimeSpan.FromSeconds(spec.DurationSeconds);
+        ISampleProvider chain = new ProjectMixer(spec);
 
         if (options.FadeInSeconds > 0 || options.FadeOutSeconds > 0)
         {
@@ -81,9 +90,27 @@ public sealed class AudioExportService
                 TimeSpan.FromSeconds(options.FadeOutSeconds));
         }
 
+        chain = new ProgressSampleProvider(chain, duration, progress, cancellationToken, scale);
+
         if (float32)
             WaveFileWriter.CreateWaveFile(path, new SampleToWaveProvider(chain));
         else
             WaveFileWriter.CreateWaveFile16(path, chain);
+    }
+
+    private static void TryDelete(string path)
+    {
+        try
+        {
+            File.Delete(path);
+        }
+        catch (IOException)
+        {
+            // A leftover file must not mask the export result.
+        }
+        catch (UnauthorizedAccessException)
+        {
+            // A leftover file must not mask the export result.
+        }
     }
 }

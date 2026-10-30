@@ -29,7 +29,7 @@ public partial class ExportOptionsViewModel : ObservableObject
     ];
 
     /// <summary>Track length is defined in the main window; shown here for information only.</summary>
-    public int DurationMinutes { get; }
+    public string TrackLengthText { get; }
 
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(IsWav))]
@@ -51,9 +51,9 @@ public partial class ExportOptionsViewModel : ObservableObject
     public bool IsWav => Format == ExportFormat.Wav;
     public bool IsMp3 => Format == ExportFormat.Mp3;
 
-    public ExportOptionsViewModel(int durationMinutes, ExportOptions? previous = null)
+    public ExportOptionsViewModel(string trackLengthText, ExportOptions? previous = null)
     {
-        DurationMinutes = durationMinutes;
+        TrackLengthText = trackLengthText;
 
         if (previous is null)
             return;

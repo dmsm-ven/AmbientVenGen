@@ -18,8 +18,9 @@ public partial class App : Application
         _host = Host.CreateDefaultBuilder()
             .ConfigureServices((_, services) =>
             {
-                services.AddSingleton<IPresetService, PresetService>();
-                services.AddSingleton<CompositionSettingsViewModel>();
+                services.AddSingleton<TemplateService>();
+                services.AddSingleton<ProjectFileService>();
+                services.AddSingleton<MessageService>();
 
                 services.AddSingleton<AudioPlaybackService>();
                 services.AddSingleton<AudioExportService>();
