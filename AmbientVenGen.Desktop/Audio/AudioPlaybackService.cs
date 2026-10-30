@@ -1,4 +1,5 @@
-using AmbientVenGen.Desktop.Composition;
+using AmbientVenGen.Core.Audio;
+using AmbientVenGen.Core.Composition;
 using NAudio.Wave;
 using NAudio.Wave.SampleProviders;
 

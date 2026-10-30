@@ -1,38 +1,29 @@
-using AmbientVenGen.Desktop.Composition;
+using AmbientVenGen.Core.Composition;
 using CommunityToolkit.Mvvm.ComponentModel;
 
 namespace AmbientVenGen.Desktop.ViewModels;
 
-/// <summary>Values of the "New layer" form.</summary>
+/// <summary>
+/// The "New layer" form: only the type is chosen here. Start, length, fades and the curves
+/// get defaults and are edited in the "Selected layer" panel or on the timeline.
+/// </summary>
 public partial class NewLayerFormViewModel : ObservableObject
 {
+    private const double DefaultDurationSeconds = 180;
+    private const double DefaultFadeSeconds = 30;
+
     [ObservableProperty]
     private LayerType _type = LayerType.Drone;
-
-    [ObservableProperty]
-    private double _startSeconds;
-
-    [ObservableProperty]
-    private double _durationSeconds = 180;
-
-    [ObservableProperty]
-    private double _fadeInSeconds = 30;
-
-    [ObservableProperty]
-    private double _fadeOutSeconds = 30;
-
-    [ObservableProperty]
-    private Easing _fadeEasing = Easing.Sine;
 
     public Layer CreateLayer(string name)
     {
         Layer layer = LayerDefaults.Create(Type, name);
 
-        layer.StartSeconds = StartSeconds;
-        layer.DurationSeconds = DurationSeconds;
-        layer.FadeInSeconds = FadeInSeconds;
-        layer.FadeOutSeconds = FadeOutSeconds;
-        layer.FadeEasing = FadeEasing;
+        layer.StartSeconds = 0;
+        layer.DurationSeconds = DefaultDurationSeconds;
+        layer.FadeInSeconds = DefaultFadeSeconds;
+        layer.FadeOutSeconds = DefaultFadeSeconds;
+        layer.FadeEasing = Easing.Sine;
 
         return layer;
     }

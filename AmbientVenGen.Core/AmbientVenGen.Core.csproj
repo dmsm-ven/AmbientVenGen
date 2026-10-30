@@ -1,0 +1,21 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!--
+    The audio engine and the composition model: no WPF, no UI, no dialogs.
+    Windows-only parts (WaveOut playback, MP3 through Media Foundation) stay in AmbientVenGen.Desktop.
+    NAudio is the same package as in Desktop. It can be narrowed to NAudio.Core (and the target to
+    plain net10.0) when the engine has to run outside Windows, e.g. in tests on a Linux build agent.
+  -->
+  <PropertyGroup>
+    <TargetFramework>net10.0-windows</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <RootNamespace>AmbientVenGen.Core</RootNamespace>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="NAudio" Version="3.3.0" />
+    <PackageReference Include="CommunityToolkit.Mvvm" Version="8.4.0" />
+  </ItemGroup>
+
+</Project>

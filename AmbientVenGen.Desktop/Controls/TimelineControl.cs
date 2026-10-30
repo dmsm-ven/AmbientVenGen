@@ -1,4 +1,4 @@
-using AmbientVenGen.Desktop.Composition;
+using AmbientVenGen.Core.Composition;
 using System.Globalization;
 using System.Windows;
 using System.Windows.Input;
@@ -303,10 +303,22 @@ public sealed class TimelineControl : FrameworkElement
             double top = LaneTop(lane);
             bool selected = lane < project.Layers.Count && ReferenceEquals(project.Layers[lane], SelectedLayer);
 
-            Color color = selected
-                ? WithAlpha(TypeColor(project.Layers[lane].Type), 0x1C)
-                : Color.FromArgb(lane % 2 == 0 ? (byte)0x0C : (byte)0x05, 0xFF, 0xFF, 0xFF);
+            if (selected)
+            {
+                // The selected row: a bright tinted band that fades to the right, with accent edges.
+                Color accent = TypeColor(project.Layers[lane].Type);
 
+                var band = new LinearGradientBrush(WithAlpha(accent, 0x78), WithAlpha(accent, 0x30), 0);
+                band.Freeze();
+                dc.DrawRectangle(band, null, new Rect(0, top, width, LaneHeight));
+
+                var edge = new Pen(BrushOf(WithAlpha(accent, 0xD0)), 1);
+                dc.DrawLine(edge, new Point(0, top + 0.5), new Point(width, top + 0.5));
+                dc.DrawLine(edge, new Point(0, top + LaneHeight - 0.5), new Point(width, top + LaneHeight - 0.5));
+                continue;
+            }
+
+            Color color = Color.FromArgb(lane % 2 == 0 ? (byte)0x0C : (byte)0x05, 0xFF, 0xFF, 0xFF);
             dc.DrawRectangle(BrushOf(color), null, new Rect(0, top, width, LaneHeight));
 
             // Thin separator under the lane.
@@ -362,17 +374,23 @@ public sealed class TimelineControl : FrameworkElement
         {
             double top = LaneTop(lane);
 
-            dc.DrawRectangle(
-                BrushOf(Color.FromArgb(0x30, 0x10, 0x10, 0x16)),
-                null,
-                new Rect(0, top, HeaderWidth, LaneHeight));
+            Layer? laneLayer = lane < project.Layers.Count ? project.Layers[lane] : null;
+            bool selected = laneLayer is not null && ReferenceEquals(laneLayer, SelectedLayer);
 
-            if (lane >= project.Layers.Count)
+            // The selected row keeps its bright band; the other headers get a dark backing.
+            if (!selected)
+            {
+                dc.DrawRectangle(
+                    BrushOf(Color.FromArgb(0x30, 0x10, 0x10, 0x16)),
+                    null,
+                    new Rect(0, top, HeaderWidth, LaneHeight));
+            }
+
+            if (laneLayer is null)
                 continue;
 
-            Layer layer = project.Layers[lane];
+            Layer layer = laneLayer;
             Color accent = TypeColor(layer.Type);
-            bool selected = ReferenceEquals(layer, SelectedLayer);
             double opacity = layer.Muted ? 0.45 : 1.0;
 
             dc.PushOpacity(opacity);
@@ -381,9 +399,9 @@ public sealed class TimelineControl : FrameworkElement
             dc.DrawRoundedRectangle(
                 BrushOf(WithAlpha(accent, selected ? (byte)0xFF : (byte)0xB0)),
                 null,
-                new Rect(8, top + 14, 3, LaneHeight - 28),
-                1.5,
-                1.5);
+                new Rect(8, top + (selected ? 8 : 14), selected ? 4 : 3, LaneHeight - (selected ? 16 : 28)),
+                2,
+                2);
 
             FormattedText name = MakeText(layer.Name, 13, Color.FromArgb(0xF0, 0xEC, 0xEC, 0xF2), bold: true, maxWidth: HeaderWidth - 64);
             dc.DrawText(name, new Point(20, top + LaneHeight / 2.0 - 17));

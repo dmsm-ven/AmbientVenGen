@@ -1,4 +1,4 @@
-namespace AmbientVenGen.Desktop.Composition;
+namespace AmbientVenGen.Core.Composition;
 
 /// <summary>Shape of a smooth change between two values over time.</summary>
 public enum Easing

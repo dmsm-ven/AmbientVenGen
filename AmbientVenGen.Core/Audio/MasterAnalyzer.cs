@@ -1,4 +1,4 @@
-namespace AmbientVenGen.Desktop.Audio;
+namespace AmbientVenGen.Core.Audio;
 
 /// <summary>
 /// Collects what the audio thread plays so the UI can draw the level meter and the spectrum.

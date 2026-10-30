@@ -5,6 +5,7 @@
     xmlns:controls="clr-namespace:AmbientVenGen.Desktop.Controls"
     xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
     xmlns:vm="clr-namespace:AmbientVenGen.Desktop.ViewModels"
+    Icon="pack://application:,,,/Assets/app-icon.ico"
     Title="Ambient Forge"
     Width="1220"
     Height="820"
@@ -55,7 +56,7 @@
             <RowDefinition Height="Auto" />
         </Grid.RowDefinitions>
 
-        <ui:TitleBar Grid.Row="0" Title="{Binding WindowTitle}" />
+        <ui:TitleBar Icon="pack://application:,,,/Assets/app-icon.ico" Grid.Row="0" Title="{Binding WindowTitle}" />
 
         <!-- Top tool panel -->
         <Border
@@ -166,13 +167,16 @@
         <!-- Top row: new layer form + selected layer inspector -->
         <Grid Grid.Row="2" Margin="12,10,12,0">
             <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="340" />
+                <ColumnDefinition Width="160" />
                 <ColumnDefinition Width="10" />
                 <ColumnDefinition Width="*" />
             </Grid.ColumnDefinitions>
 
-            <!-- New layer -->
-            <Border Grid.Column="0" Style="{StaticResource SectionCard}">
+            <!-- New layer: only the type; start, length and fades are edited after adding -->
+            <Border
+                Grid.Column="0"
+                VerticalAlignment="Top"
+                Style="{StaticResource SectionCard}">
                 <StackPanel>
                     <Grid Margin="0,0,0,8">
                         <ui:TextBlock
@@ -199,75 +203,9 @@
                         Foreground="#C9C8D6"
                         Text="Type" />
                     <ComboBox
-                        Margin="0,2,0,8"
                         ItemsSource="{x:Static vm:Choices.LayerTypes}"
                         SelectedValue="{Binding NewLayer.Type, Mode=TwoWay}"
                         Style="{StaticResource ChoiceCombo}" />
-
-                    <Grid>
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="*" />
-                            <ColumnDefinition Width="14" />
-                            <ColumnDefinition Width="*" />
-                        </Grid.ColumnDefinitions>
-                        <Grid.RowDefinitions>
-                            <RowDefinition Height="Auto" />
-                            <RowDefinition Height="Auto" />
-                            <RowDefinition Height="Auto" />
-                        </Grid.RowDefinitions>
-
-                        <controls:LabeledSlider
-                            Grid.Row="0"
-                            Grid.Column="0"
-                            Margin="0,0,0,6"
-                            Format="{}{0:0} s"
-                            Header="Start"
-                            Maximum="{Binding Project.DurationSeconds}"
-                            Minimum="0"
-                            Step="1"
-                            Value="{Binding NewLayer.StartSeconds, Mode=TwoWay}" />
-                        <controls:LabeledSlider
-                            Grid.Row="0"
-                            Grid.Column="2"
-                            Margin="0,0,0,6"
-                            Format="{}{0:0} s"
-                            Header="Length"
-                            Maximum="{Binding Project.DurationSeconds}"
-                            Minimum="5"
-                            Step="1"
-                            Value="{Binding NewLayer.DurationSeconds, Mode=TwoWay}" />
-                        <controls:LabeledSlider
-                            Grid.Row="1"
-                            Grid.Column="0"
-                            Margin="0,0,0,6"
-                            Format="{}{0:0} s"
-                            Header="Fade in"
-                            Maximum="{Binding NewLayer.DurationSeconds}"
-                            Minimum="0"
-                            Step="1"
-                            Value="{Binding NewLayer.FadeInSeconds, Mode=TwoWay}" />
-                        <controls:LabeledSlider
-                            Grid.Row="1"
-                            Grid.Column="2"
-                            Margin="0,0,0,6"
-                            Format="{}{0:0} s"
-                            Header="Fade out"
-                            Maximum="{Binding NewLayer.DurationSeconds}"
-                            Minimum="0"
-                            Step="1"
-                            Value="{Binding NewLayer.FadeOutSeconds, Mode=TwoWay}" />
-                        <StackPanel Grid.Row="2" Grid.Column="0">
-                            <ui:TextBlock
-                                Margin="0"
-                                FontSize="12"
-                                Foreground="#C9C8D6"
-                                Text="Transition curve" />
-                            <ComboBox
-                                ItemsSource="{x:Static vm:Choices.Easings}"
-                                SelectedValue="{Binding NewLayer.FadeEasing, Mode=TwoWay}"
-                                Style="{StaticResource ChoiceCombo}" />
-                        </StackPanel>
-                    </Grid>
                 </StackPanel>
             </Border>
 
@@ -320,14 +258,17 @@
                                         <RowDefinition Height="Auto" />
                                     </Grid.RowDefinitions>
 
-                                    <!-- Name / type / mute -->
-                                    <Grid Grid.Row="0" Grid.ColumnSpan="3" Margin="0,0,0,8">
+                                    <!-- Name / type / mute / placement -->
+                                    <Grid Grid.Row="0" Grid.ColumnSpan="3" Margin="0,0,0,10">
                                         <Grid.ColumnDefinitions>
-                                            <ColumnDefinition Width="260" />
+                                            <ColumnDefinition Width="220" />
                                             <ColumnDefinition Width="Auto" />
                                             <ColumnDefinition Width="Auto" />
+                                            <ColumnDefinition Width="*" />
+                                            <ColumnDefinition Width="*" />
                                         </Grid.ColumnDefinitions>
                                         <TextBox
+                                            VerticalAlignment="Center"
                                             MaxLength="32"
                                             Text="{Binding Name, UpdateSourceTrigger=PropertyChanged}" />
                                         <ui:TextBlock
@@ -336,11 +277,44 @@
                                             VerticalAlignment="Center"
                                             Foreground="#B7AFE9"
                                             Text="{Binding TypeLabel}" />
-                                        <CheckBox
+                                        <ToggleButton
                                             Grid.Column="2"
+                                            Margin="0,0,22,0"
                                             VerticalAlignment="Center"
-                                            Content="Muted"
-                                            IsChecked="{Binding Muted, Mode=TwoWay}" />
+                                            IsChecked="{Binding Muted, Mode=TwoWay}"
+                                            Style="{StaticResource MuteToggleButton}">
+                                            <ui:SymbolIcon>
+                                                <ui:SymbolIcon.Style>
+                                                    <Style TargetType="ui:SymbolIcon">
+                                                        <Setter Property="Symbol" Value="Speaker224" />
+                                                        <Style.Triggers>
+                                                            <DataTrigger Binding="{Binding Muted}" Value="True">
+                                                                <Setter Property="Symbol" Value="SpeakerOff24" />
+                                                            </DataTrigger>
+                                                        </Style.Triggers>
+                                                    </Style>
+                                                </ui:SymbolIcon.Style>
+                                            </ui:SymbolIcon>
+                                        </ToggleButton>
+                                        <controls:LabeledSlider
+                                            Grid.Column="3"
+                                            Margin="0,0,16,0"
+                                            VerticalAlignment="Center"
+                                            Format="{}{0:0} s"
+                                            Header="Start"
+                                            Maximum="{Binding DataContext.Project.DurationSeconds, RelativeSource={RelativeSource AncestorType=Window}}"
+                                            Minimum="0"
+                                            Step="1"
+                                            Value="{Binding StartSeconds, Mode=TwoWay}" />
+                                        <controls:LabeledSlider
+                                            Grid.Column="4"
+                                            VerticalAlignment="Center"
+                                            Format="{}{0:0} s"
+                                            Header="Length"
+                                            Maximum="{Binding DataContext.Project.DurationSeconds, RelativeSource={RelativeSource AncestorType=Window}}"
+                                            Minimum="2"
+                                            Step="1"
+                                            Value="{Binding DurationSeconds, Mode=TwoWay}" />
                                     </Grid>
 
                                     <!-- Parameters that move over the layer: from -> to along a curve -->
@@ -508,33 +482,13 @@
                                             Grid.Column="0"
                                             Margin="0,0,0,6"
                                             Format="{}{0:0} s"
-                                            Header="Start"
-                                            Maximum="{Binding DataContext.Project.DurationSeconds, RelativeSource={RelativeSource AncestorType=Window}}"
-                                            Minimum="0"
-                                            Step="1"
-                                            Value="{Binding StartSeconds, Mode=TwoWay}" />
-                                        <controls:LabeledSlider
-                                            Grid.Row="1"
-                                            Grid.Column="2"
-                                            Margin="0,0,0,6"
-                                            Format="{}{0:0} s"
-                                            Header="Length"
-                                            Maximum="{Binding DataContext.Project.DurationSeconds, RelativeSource={RelativeSource AncestorType=Window}}"
-                                            Minimum="2"
-                                            Step="1"
-                                            Value="{Binding DurationSeconds, Mode=TwoWay}" />
-                                        <controls:LabeledSlider
-                                            Grid.Row="2"
-                                            Grid.Column="0"
-                                            Margin="0,0,0,6"
-                                            Format="{}{0:0} s"
                                             Header="Fade in"
                                             Maximum="{Binding DurationSeconds}"
                                             Minimum="0"
                                             Step="1"
                                             Value="{Binding FadeInSeconds, Mode=TwoWay}" />
                                         <controls:LabeledSlider
-                                            Grid.Row="2"
+                                            Grid.Row="1"
                                             Grid.Column="2"
                                             Margin="0,0,0,6"
                                             Format="{}{0:0} s"
@@ -543,7 +497,7 @@
                                             Minimum="0"
                                             Step="1"
                                             Value="{Binding FadeOutSeconds, Mode=TwoWay}" />
-                                        <StackPanel Grid.Row="3" Grid.Column="0">
+                                        <StackPanel Grid.Row="2" Grid.Column="0">
                                             <ui:TextBlock
                                                 Margin="0"
                                                 FontSize="12"

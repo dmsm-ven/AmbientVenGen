@@ -1,4 +1,4 @@
-namespace AmbientVenGen.Desktop.Audio;
+namespace AmbientVenGen.Core.Audio;
 
 /// <summary>Turns the latest audio into smoothed, log-spaced spectrum bands (0..1) for drawing.</summary>
 public sealed class SpectrumProcessor

@@ -1,6 +1,6 @@
-using AmbientVenGen.Desktop.Composition;
+using AmbientVenGen.Core.Composition;
 
-namespace AmbientVenGen.Desktop.Services;
+namespace AmbientVenGen.Core.Projects;
 
 /// <summary>A ready-made starting point: replaces the layers of the project.</summary>
 public sealed record ProjectTemplate(string Name, Func<ProjectSpec> Build);

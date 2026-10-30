@@ -3,7 +3,7 @@ using System.Collections.ObjectModel;
 using System.Collections.Specialized;
 using System.ComponentModel;
 
-namespace AmbientVenGen.Desktop.Composition;
+namespace AmbientVenGen.Core.Composition;
 
 /// <summary>
 /// The track being edited: a list of layers on a timeline plus a few master settings.

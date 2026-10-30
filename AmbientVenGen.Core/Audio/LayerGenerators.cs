@@ -1,6 +1,6 @@
-using AmbientVenGen.Desktop.Composition;
+using AmbientVenGen.Core.Composition;
 
-namespace AmbientVenGen.Desktop.Audio;
+namespace AmbientVenGen.Core.Audio;
 
 /// <summary>Parameters of one render block, already evaluated from the layer curves.</summary>
 internal readonly struct BlockParams

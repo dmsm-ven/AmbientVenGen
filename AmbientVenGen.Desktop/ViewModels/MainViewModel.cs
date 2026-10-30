@@ -1,6 +1,8 @@
+using AmbientVenGen.Core.Audio;
+using AmbientVenGen.Core.Composition;
+using AmbientVenGen.Core.Export;
+using AmbientVenGen.Core.Projects;
 using AmbientVenGen.Desktop.Audio;
-using AmbientVenGen.Desktop.Composition;
-using AmbientVenGen.Desktop.Models;
 using AmbientVenGen.Desktop.Services;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;

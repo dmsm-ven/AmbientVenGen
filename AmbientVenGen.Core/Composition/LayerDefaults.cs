@@ -1,4 +1,4 @@
-namespace AmbientVenGen.Desktop.Composition;
+namespace AmbientVenGen.Core.Composition;
 
 /// <summary>Sensible starting values for each layer type.</summary>
 public static class LayerDefaults

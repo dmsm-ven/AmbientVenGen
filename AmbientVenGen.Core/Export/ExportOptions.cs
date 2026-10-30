@@ -1,4 +1,4 @@
-namespace AmbientVenGen.Desktop.Models;
+namespace AmbientVenGen.Core.Export;
 
 public enum ExportFormat
 {

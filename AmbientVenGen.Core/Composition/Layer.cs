@@ -1,6 +1,6 @@
 using CommunityToolkit.Mvvm.ComponentModel;
 
-namespace AmbientVenGen.Desktop.Composition;
+namespace AmbientVenGen.Core.Composition;
 
 /// <summary>Editable (observable) layer shown on the timeline and in the inspector.</summary>
 public sealed partial class Layer : ObservableObject

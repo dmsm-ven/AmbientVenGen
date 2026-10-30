@@ -1,9 +1,9 @@
-using AmbientVenGen.Desktop.Composition;
+using AmbientVenGen.Core.Composition;
 using System.IO;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 
-namespace AmbientVenGen.Desktop.Services;
+namespace AmbientVenGen.Core.Projects;
 
 /// <summary>Saves and loads projects as readable JSON (.afproj).</summary>
 public sealed class ProjectFileService

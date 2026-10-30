@@ -1,4 +1,4 @@
-namespace AmbientVenGen.Desktop.Audio;
+namespace AmbientVenGen.Core.Audio;
 
 /// <summary>
 /// Compact Freeverb-style reverb (8 combs + 4 all-passes per channel) with a long tail,

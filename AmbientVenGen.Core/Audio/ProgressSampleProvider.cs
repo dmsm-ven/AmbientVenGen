@@ -1,6 +1,6 @@
 using NAudio.Wave;
 
-namespace AmbientVenGen.Desktop.Audio;
+namespace AmbientVenGen.Core.Audio;
 
 /// <summary>
 /// Reports how much of the track has been rendered and stops the render when cancelled

@@ -1,4 +1,4 @@
-using AmbientVenGen.Desktop.Models;
+using AmbientVenGen.Core.Export;
 using CommunityToolkit.Mvvm.ComponentModel;
 
 namespace AmbientVenGen.Desktop.ViewModels;

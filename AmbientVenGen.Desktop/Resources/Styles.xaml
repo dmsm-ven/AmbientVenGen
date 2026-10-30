@@ -56,4 +56,19 @@
         <Setter Property="HorizontalContentAlignment" Value="Center" />
         <Setter Property="VerticalContentAlignment" Value="Center" />
     </Style>
+
+    <!--  Square toggle button with an icon (mute). Checked = accent background.  -->
+    <Style
+        x:Key="MuteToggleButton"
+        BasedOn="{StaticResource {x:Type ToggleButton}}"
+        TargetType="ToggleButton">
+        <Setter Property="Width" Value="28" />
+        <Setter Property="Height" Value="28" />
+        <Setter Property="MinWidth" Value="28" />
+        <Setter Property="MinHeight" Value="28" />
+        <Setter Property="Padding" Value="0" />
+        <Setter Property="HorizontalContentAlignment" Value="Center" />
+        <Setter Property="VerticalContentAlignment" Value="Center" />
+        <Setter Property="ToolTip" Value="Mute / unmute layer" />
+    </Style>
 </ResourceDictionary>

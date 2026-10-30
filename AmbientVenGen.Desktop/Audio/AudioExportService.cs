@@ -1,11 +1,14 @@
-﻿using AmbientVenGen.Desktop.Composition;
-using AmbientVenGen.Desktop.Models;
+using AmbientVenGen.Core.Composition;
+using AmbientVenGen.Core.Export;
 using NAudio.Wave;
-using NAudio.Wave.SampleProviders;
 using System.IO;
 
 namespace AmbientVenGen.Desktop.Audio;
 
+/// <summary>
+/// Export to a file. Rendering itself is in Core (<see cref="ProjectRenderer"/>);
+/// this class adds the Windows-only MP3 encoder and file handling.
+/// </summary>
 public sealed class AudioExportService
 {
     /// <summary>Renders the project to a file. Throws <see cref="OperationCanceledException"/> when cancelled.</summary>
@@ -28,14 +31,14 @@ public sealed class AudioExportService
     {
         if (options.Format == ExportFormat.Wav)
         {
-            RenderWav(
+            ProjectRenderer.RenderWav(
                 outputPath,
                 spec,
                 options,
                 float32: options.WavSampleFormat == WavSampleFormat.Float32,
                 progress,
                 cancellationToken,
-                scale: 1.0);
+                progressScale: 1.0);
 
             if (cancellationToken.IsCancellationRequested)
             {
@@ -51,7 +54,7 @@ public sealed class AudioExportService
         try
         {
             // Rendering is the long part: 0..90%. The MP3 encoder takes a 16-bit PCM source.
-            RenderWav(temporaryWav, spec, options, float32: false, progress, cancellationToken, scale: 0.9);
+            ProjectRenderer.RenderWav(temporaryWav, spec, options, float32: false, progress, cancellationToken, progressScale: 0.9);
             cancellationToken.ThrowIfCancellationRequested();
 
             progress?.Report(0.92);
@@ -67,35 +70,6 @@ public sealed class AudioExportService
         {
             TryDelete(temporaryWav);
         }
-    }
-
-    private static void RenderWav(
-        string path,
-        ProjectSpec spec,
-        ExportOptions options,
-        bool float32,
-        IProgress<double>? progress,
-        CancellationToken cancellationToken,
-        double scale)
-    {
-        var duration = TimeSpan.FromSeconds(spec.DurationSeconds);
-        ISampleProvider chain = new ProjectMixer(spec);
-
-        if (options.FadeInSeconds > 0 || options.FadeOutSeconds > 0)
-        {
-            chain = new FadeSampleProvider(
-                chain,
-                duration,
-                TimeSpan.FromSeconds(options.FadeInSeconds),
-                TimeSpan.FromSeconds(options.FadeOutSeconds));
-        }
-
-        chain = new ProgressSampleProvider(chain, duration, progress, cancellationToken, scale);
-
-        if (float32)
-            WaveFileWriter.CreateWaveFile(path, new SampleToWaveProvider(chain));
-        else
-            WaveFileWriter.CreateWaveFile16(path, chain);
     }
 
     private static void TryDelete(string path)

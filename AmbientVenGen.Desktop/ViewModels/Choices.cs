@@ -1,4 +1,4 @@
-using AmbientVenGen.Desktop.Composition;
+using AmbientVenGen.Core.Composition;
 
 namespace AmbientVenGen.Desktop.ViewModels;
 

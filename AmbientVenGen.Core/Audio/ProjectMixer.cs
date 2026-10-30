@@ -1,7 +1,7 @@
-using AmbientVenGen.Desktop.Composition;
+using AmbientVenGen.Core.Composition;
 using NAudio.Wave;
 
-namespace AmbientVenGen.Desktop.Audio;
+namespace AmbientVenGen.Core.Audio;
 
 /// <summary>
 /// Renders a whole project: every layer by time, then reverb and a soft limiter.

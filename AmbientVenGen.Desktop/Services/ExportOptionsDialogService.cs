@@ -1,4 +1,4 @@
-using AmbientVenGen.Desktop.Models;
+using AmbientVenGen.Core.Export;
 using AmbientVenGen.Desktop.ViewModels;
 using AmbientVenGen.Desktop.Views;
 using System.Windows;

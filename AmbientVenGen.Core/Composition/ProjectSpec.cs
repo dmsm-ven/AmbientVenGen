@@ -1,4 +1,4 @@
-namespace AmbientVenGen.Desktop.Composition;
+namespace AmbientVenGen.Core.Composition;
 
 public enum LayerType
 {

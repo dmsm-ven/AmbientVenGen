@@ -1,6 +1,6 @@
 using NAudio.Wave;
 
-namespace AmbientVenGen.Desktop.Audio;
+namespace AmbientVenGen.Core.Audio;
 
 /// <summary>
 /// Applies a fade-in at the start and a fade-out at the end of a track of known length.
