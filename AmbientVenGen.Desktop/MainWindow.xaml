@@ -9,7 +9,7 @@
     Title="Ambient Forge"
     Width="1220"
     Height="820"
-    MinWidth="1060"
+    MinWidth="1120"
     MinHeight="720"
     Background="#E617171D"
     controls:Hints.IsShown="{Binding ShowHints}"
@@ -26,7 +26,7 @@
         <!-- Play / Stop in one button: the icon and tooltip follow MainViewModel.IsPlaying. -->
         <Style
             x:Key="PlayStopButton"
-            BasedOn="{StaticResource ToolIconButton}"
+            BasedOn="{StaticResource TimelineIconButton}"
             TargetType="ui:Button">
             <Setter Property="Appearance" Value="Primary" />
             <Setter Property="ToolTip" Value="Play (Space)" />
@@ -76,21 +76,7 @@
                 </Grid.ColumnDefinitions>
 
                 <StackPanel Grid.Column="0" Orientation="Horizontal">
-                    <ui:Button Command="{Binding TogglePlayCommand}" Style="{StaticResource PlayStopButton}" />
-                    <ui:Button
-                        Command="{Binding RegenerateCommand}"
-                        Style="{StaticResource ToolIconButton}"
-                        ToolTip="Regenerate (new seed)">
-                        <ui:Button.Icon>
-                            <ui:SymbolIcon Symbol="ArrowSync24" />
-                        </ui:Button.Icon>
-                    </ui:Button>
-                    <Rectangle
-                        Width="1"
-                        Height="16"
-                        Margin="6,0,10,0"
-                        Fill="#3A3945" />
-                    <ui:Button
+<ui:Button
                         Command="{Binding NewProjectCommand}"
                         Style="{StaticResource ToolIconButton}"
                         ToolTip="New project (Ctrl+N)">
@@ -179,16 +165,14 @@
         <!-- Top row: new layer form + selected layer inspector -->
         <Grid Grid.Row="2" Margin="12,10,12,0">
             <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="160" />
+                <ColumnDefinition Width="224" />
                 <ColumnDefinition Width="10" />
                 <ColumnDefinition Width="*" />
             </Grid.ColumnDefinitions>
 
             <!-- New layer: only the type; start, length and fades are edited after adding -->
-            <Border
-                Grid.Column="0"
-                VerticalAlignment="Top"
-                Style="{StaticResource SectionCard}">
+            <StackPanel Grid.Column="0" VerticalAlignment="Top">
+            <Border Style="{StaticResource SectionCard}">
                 <StackPanel>
                     <Grid Margin="0,0,0,8">
                         <ui:TextBlock
@@ -197,6 +181,16 @@
                             FontSize="14"
                             FontWeight="SemiBold"
                             Text="New layer" />
+                        <ui:Button
+                            Margin="0,0,30,0"
+                            HorizontalAlignment="Right"
+                            Command="{Binding UndoDeleteCommand}"
+                            Style="{StaticResource ToolIconButton}"
+                            ToolTip="Restore the last removed layer">
+                            <ui:Button.Icon>
+                                <ui:SymbolIcon Symbol="ArrowUndo24" />
+                            </ui:Button.Icon>
+                        </ui:Button>
                         <ui:Button
                             Margin="0"
                             HorizontalAlignment="Right"
@@ -224,6 +218,31 @@
                 </StackPanel>
             </Border>
 
+            <!-- Templates: a ready-made set of layers -->
+            <Border Margin="0,10,0,0" Style="{StaticResource SectionCard}">
+                <StackPanel>
+                    <StackPanel Margin="0,0,0,4" Orientation="Horizontal">
+                        <ui:TextBlock
+                            Margin="0"
+                            FontSize="14"
+                            FontWeight="SemiBold"
+                            Text="Template" />
+                        <controls:HintIcon Margin="5,0,0,0" Text="{x:Static vm:HintTexts.Template}" />
+                    </StackPanel>
+                    <ComboBox
+                        DisplayMemberPath="Name"
+                        ItemsSource="{Binding Templates}"
+                        SelectedItem="{Binding SelectedTemplate, Mode=TwoWay}" />
+                    <ui:Button
+                        Margin="0,8,0,0"
+                        HorizontalAlignment="Stretch"
+                        Command="{Binding ApplyTemplateCommand}"
+                        Content="Apply template"
+                        ToolTip="Replaces all layers of the project with the template" />
+                </StackPanel>
+            </Border>
+            </StackPanel>
+
             <!-- Selected layer inspector -->
             <Border Grid.Column="2" Style="{StaticResource SectionCard}">
                 <Grid>
@@ -239,6 +258,16 @@
                             FontSize="14"
                             FontWeight="SemiBold"
                             Text="Selected layer" />
+                        <ui:Button
+                            Margin="0,0,30,0"
+                            HorizontalAlignment="Right"
+                            Command="{Binding RandomizeSelectedLayerCommand}"
+                            Style="{StaticResource ToolIconButton}"
+                            ToolTip="Randomize all sound settings of this layer">
+                            <ui:Button.Icon>
+                                <ui:SymbolIcon Symbol="ArrowShuffle24" />
+                            </ui:Button.Icon>
+                        </ui:Button>
                         <ui:Button
                             Margin="0"
                             HorizontalAlignment="Right"
@@ -303,6 +332,40 @@
                                                 </ui:SymbolIcon.Style>
                                             </ui:SymbolIcon>
                                         </ToggleButton>
+                                        <!-- Recording file (Field record layers only) -->
+                                        <StackPanel
+                                            Grid.Column="4"
+                                            Margin="22,0,0,0"
+                                            VerticalAlignment="Top">
+                                            <StackPanel.Style>
+                                                <Style TargetType="StackPanel">
+                                                    <Setter Property="Visibility" Value="Collapsed" />
+                                                    <Style.Triggers>
+                                                        <DataTrigger Binding="{Binding Type}" Value="FieldRecord">
+                                                            <Setter Property="Visibility" Value="Visible" />
+                                                        </DataTrigger>
+                                                    </Style.Triggers>
+                                                </Style>
+                                            </StackPanel.Style>
+                                            <StackPanel Orientation="Horizontal">
+                                                <ui:TextBlock
+                                                    Margin="0"
+                                                    FontSize="12"
+                                                    Foreground="#C9C8D6"
+                                                    Text="Source file" />
+                                                <controls:HintIcon Margin="5,0,0,0" Text="{x:Static vm:HintTexts.Source}" />
+                                            </StackPanel>
+                                            <ui:TextBlock
+                                                Margin="0,2,0,6"
+                                                Foreground="#8FD16A"
+                                                Text="{Binding SourceName}"
+                                                TextTrimming="CharacterEllipsis"
+                                                ToolTip="{Binding SourcePath}" />
+                                            <ui:Button
+                                                Command="{Binding DataContext.ChangeSourceCommand, RelativeSource={RelativeSource AncestorType=Window}}"
+                                                Content="Change file..." />
+                                        </StackPanel>
+
                                         <!-- Start over Length: a fixed-width column, not stretched across the panel -->
                                         <StackPanel
                                             Grid.Column="3"
@@ -477,7 +540,8 @@
                                             Format="{}{0:0.0} Hz"
                                             Header="Pitch"
                                             Hint="{x:Static vm:HintTexts.Pitch}"
-                                            Maximum="440"
+                                            IsLogarithmic="True"
+                                            Maximum="5000"
                                             Minimum="20"
                                             Step="0.1"
                                             Value="{Binding PitchHz, Mode=TwoWay}">
@@ -485,6 +549,9 @@
                                                 <Style TargetType="controls:LabeledSlider">
                                                     <Style.Triggers>
                                                         <DataTrigger Binding="{Binding Type}" Value="Noise">
+                                                            <Setter Property="Visibility" Value="Collapsed" />
+                                                        </DataTrigger>
+                                                        <DataTrigger Binding="{Binding Type}" Value="FieldRecord">
                                                             <Setter Property="Visibility" Value="Collapsed" />
                                                         </DataTrigger>
                                                     </Style.Triggers>
@@ -545,27 +612,39 @@
                     <RowDefinition Height="*" />
                 </Grid.RowDefinitions>
 
-                <Grid Grid.Row="0" Margin="14,10,14,8">
+                <Grid Grid.Row="0" Margin="14,5,14,3">
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="Auto" />
                         <ColumnDefinition Width="*" />
                         <ColumnDefinition Width="Auto" />
                         <ColumnDefinition Width="Auto" />
-                        <ColumnDefinition Width="Auto" />
-                        <ColumnDefinition Width="Auto" />
                     </Grid.ColumnDefinitions>
 
-                    <ui:TextBlock
-                        Margin="0"
-                        VerticalAlignment="Center"
-                        FontSize="14"
-                        FontWeight="SemiBold"
-                        Text="Timeline" />
+                    <!-- Title with Play / Stop and Seed under it -->
+                    <StackPanel Grid.Column="0">
+                        <ui:TextBlock
+                            Margin="0"
+                            FontSize="14"
+                            FontWeight="SemiBold"
+                            Text="Timeline" />
+                        <StackPanel Margin="0,3,0,0" Orientation="Horizontal">
+                            <ui:Button Command="{Binding TogglePlayCommand}" Style="{StaticResource PlayStopButton}" />
+                            <ui:Button
+                                Command="{Binding RegenerateCommand}"
+                                Style="{StaticResource TimelineIconButton}"
+                                ToolTip="Regenerate (new seed)">
+                                <ui:Button.Icon>
+                                    <ui:SymbolIcon Symbol="ArrowSync24" />
+                                </ui:Button.Icon>
+                            </ui:Button>
+                        </StackPanel>
+                    </StackPanel>
 
                     <controls:LabeledSlider
                         Grid.Column="2"
                         Width="190"
                         Margin="0,0,24,0"
+                        VerticalAlignment="Bottom"
                         Format="{}{0:P0}"
                         Header="Space (reverb)"
                         Hint="{x:Static vm:HintTexts.Reverb}"
@@ -574,34 +653,7 @@
                         Step="0.01"
                         Value="{Binding Project.ReverbMix, Mode=TwoWay}" />
 
-                    <StackPanel Grid.Column="3" Width="170">
-                        <StackPanel Orientation="Horizontal">
-                            <ui:TextBlock
-                                Margin="0"
-                                FontSize="12"
-                                Foreground="#C9C8D6"
-                                Text="Template" />
-                            <controls:HintIcon Margin="5,0,0,0" Text="{x:Static vm:HintTexts.Template}" />
-                        </StackPanel>
-                        <ComboBox
-                            DisplayMemberPath="Name"
-                            ItemsSource="{Binding Templates}"
-                            SelectedItem="{Binding SelectedTemplate, Mode=TwoWay}" />
-                    </StackPanel>
-
-                    <ui:Button
-                        Grid.Column="4"
-                        Margin="6,0,24,0"
-                        VerticalAlignment="Bottom"
-                        Command="{Binding ApplyTemplateCommand}"
-                        Style="{StaticResource ToolIconButton}"
-                        ToolTip="Apply template (replaces all layers)">
-                        <ui:Button.Icon>
-                            <ui:SymbolIcon Symbol="Checkmark24" />
-                        </ui:Button.Icon>
-                    </ui:Button>
-
-                    <StackPanel Grid.Column="5" Width="110">
+                    <StackPanel Grid.Column="3" Width="110" VerticalAlignment="Bottom">
                         <StackPanel Orientation="Horizontal">
                             <ui:TextBlock
                                 Margin="0"

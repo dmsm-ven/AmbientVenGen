@@ -332,11 +332,11 @@ public sealed class TimelineControl : FrameworkElement
                 // The selected row: a bright tinted band that fades to the right, with accent edges.
                 Color accent = TypeColor(project.Layers[lane].Type);
 
-                var band = new LinearGradientBrush(WithAlpha(accent, 0x78), WithAlpha(accent, 0x30), 0);
+                var band = new LinearGradientBrush(WithAlpha(accent, 0x60), WithAlpha(accent, 0x26), 0);
                 band.Freeze();
                 dc.DrawRectangle(band, null, new Rect(0, top, width, LaneHeight));
 
-                var edge = new Pen(BrushOf(WithAlpha(accent, 0xD0)), 1);
+                var edge = new Pen(BrushOf(WithAlpha(accent, 0xA6)), 1);
                 dc.DrawLine(edge, new Point(0, top + 0.5), new Point(width, top + 0.5));
                 dc.DrawLine(edge, new Point(0, top + LaneHeight - 0.5), new Point(width, top + LaneHeight - 0.5));
                 continue;
@@ -438,9 +438,12 @@ public sealed class TimelineControl : FrameworkElement
             FormattedText name = MakeText(layer.Name, 13, Color.FromArgb(0xF0, 0xEC, 0xEC, 0xF2), bold: true, maxWidth: HeaderWidth - 64);
             dc.DrawText(name, new Point(20, top + LaneHeight / 2.0 - 17));
 
-            string detail = layer.Type == LayerType.Noise
-                ? "Noise"
-                : $"{layer.TypeLabel} · {layer.PitchHz:0.#} Hz";
+            string detail = layer.Type switch
+            {
+                LayerType.Noise => "Noise",
+                LayerType.FieldRecord => $"{layer.TypeLabel} · {layer.SourceName}",
+                _ => $"{layer.TypeLabel} · {layer.PitchHz:0.#} Hz"
+            };
             FormattedText sub = MakeText(detail, 10.5, Color.FromArgb(0xA0, 0xC9, 0xC8, 0xD6), maxWidth: HeaderWidth - 64);
             dc.DrawText(sub, new Point(20, top + LaneHeight / 2.0 + 2));
 
@@ -452,14 +455,22 @@ public sealed class TimelineControl : FrameworkElement
                 DrawArrow(dc, lane, -1);
                 DrawArrow(dc, lane, 1);
             }
-            else if (layer.Muted)
+            else
             {
-                // The mute switch is in the "Selected layer" panel; here a muted layer is only marked.
+                // The "M" mark is always there: amber when the layer is muted, a quiet outline otherwise.
+                // (The mute switch itself is in the "Selected layer" panel.)
                 var badge = new Rect(HeaderWidth - 36, top + (LaneHeight - 20) / 2.0, 24, 20);
+                Color fill = layer.Muted ? Color.FromArgb(0xE0, 0xFF, 0xC1, 0x5C) : Color.FromArgb(0x16, 0xFF, 0xFF, 0xFF);
+                Color text = layer.Muted ? Color.FromRgb(0x20, 0x16, 0x08) : Color.FromArgb(0xB0, 0xC9, 0xC8, 0xD6);
 
-                dc.DrawRoundedRectangle(BrushOf(Color.FromArgb(0xE0, 0xFF, 0xC1, 0x5C)), null, badge, 5, 5);
+                dc.DrawRoundedRectangle(
+                    BrushOf(fill),
+                    new Pen(BrushOf(Color.FromArgb(0x30, 0xFF, 0xFF, 0xFF)), 1),
+                    badge,
+                    5,
+                    5);
 
-                FormattedText m = MakeText("M", 11, Color.FromRgb(0x20, 0x16, 0x08), bold: true);
+                FormattedText m = MakeText("M", 11, text, bold: true);
                 dc.DrawText(m, new Point(badge.Left + (badge.Width - m.Width) / 2.0, badge.Top + (badge.Height - m.Height) / 2.0));
             }
         }
@@ -768,6 +779,7 @@ public sealed class TimelineControl : FrameworkElement
     {
         LayerType.Noise => Color.FromRgb(0x46, 0xD2, 0xC8),
         LayerType.Pad => Color.FromRgb(0xF0, 0x8B, 0xC8),
+        LayerType.FieldRecord => Color.FromRgb(0x8F, 0xD1, 0x6A),
         _ => Color.FromRgb(0x8B, 0x7C, 0xFF)
     };
 

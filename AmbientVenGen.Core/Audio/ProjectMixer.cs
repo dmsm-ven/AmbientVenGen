@@ -104,9 +104,14 @@ public sealed class ProjectMixer : ISampleProvider
 
     private void MixLayer(LayerSpec layer, int projectSeed, double blockTime, int count, int offset)
     {
-        if (!_runtimes.TryGetValue(layer.Id, out LayerRuntime? runtime) || runtime.Type != layer.Type)
+        if (!_runtimes.TryGetValue(layer.Id, out LayerRuntime? runtime)
+            || runtime.Type != layer.Type
+            || runtime.SourcePath != layer.SourcePath)
         {
-            runtime = new LayerRuntime(layer.Type, LayerGenerator.Create(layer.Type, MixSeed(projectSeed, layer.Seed)));
+            runtime = new LayerRuntime(
+                layer.Type,
+                layer.SourcePath,
+                LayerGenerator.Create(layer.Type, MixSeed(projectSeed, layer.Seed), layer.SourcePath));
             _runtimes[layer.Id] = runtime;
         }
 
@@ -124,7 +129,8 @@ public sealed class ProjectMixer : ISampleProvider
         var block = new BlockParams(
             (float)layer.BrightnessAt(curveTime),
             (float)layer.ModulationAt(curveTime),
-            (float)layer.PitchHz);
+            (float)layer.PitchHz,
+            Math.Max(0.0, local - count * 0.5 / SampleRate));
 
         var scratchLeft = _scratchLeft.AsSpan(0, count);
         var scratchRight = _scratchRight.AsSpan(0, count);
@@ -165,12 +171,14 @@ public sealed class ProjectMixer : ISampleProvider
     private sealed class LayerRuntime
     {
         public LayerType Type { get; }
+        public string? SourcePath { get; }
         public LayerGenerator Generator { get; }
         public float Gain { get; set; }
 
-        public LayerRuntime(LayerType type, LayerGenerator generator)
+        public LayerRuntime(LayerType type, string? sourcePath, LayerGenerator generator)
         {
             Type = type;
+            SourcePath = sourcePath;
             Generator = generator;
         }
     }

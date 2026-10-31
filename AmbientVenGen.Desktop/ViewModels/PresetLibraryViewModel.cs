@@ -3,6 +3,7 @@ using AmbientVenGen.Desktop.Models;
 using AmbientVenGen.Desktop.Services;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using CommunityToolkit.Mvvm.Messaging;
 using System.Collections.ObjectModel;
 using System.IO;
 
@@ -20,6 +21,7 @@ public partial class PresetLibraryViewModel : ObservableObject
 
     [ObservableProperty]
     [NotifyCanExecuteChangedFor(nameof(DeletePresetCommand))]
+    [NotifyCanExecuteChangedFor(nameof(UsePresetCommand))]
     private FieldPresetItem? _selectedPreset;
 
     public PresetLibraryViewModel(
@@ -95,6 +97,16 @@ public partial class PresetLibraryViewModel : ObservableObject
         SelectedPreset = item;
 
         await LoadThumbnailAsync(item);
+    }
+
+    private bool CanUsePreset() => SelectedPreset is { IsUnavailable: false };
+
+    /// <summary>Adds the selected recording to the project as a "Field record" layer.</summary>
+    [RelayCommand(CanExecute = nameof(CanUsePreset))]
+    private void UsePreset()
+    {
+        if (SelectedPreset is { } item)
+            WeakReferenceMessenger.Default.Send(new UseFieldPresetMessage(item.FilePath, item.Name));
     }
 
     private bool CanDeletePreset() => SelectedPreset is not null;
