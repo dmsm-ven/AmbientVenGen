@@ -17,6 +17,9 @@ public partial class PresetLibraryViewModel : ObservableObject
     private readonly FileDialogService _fileDialogService;
     private readonly MessageService _messageService;
 
+    // At most two waveforms are decoded at the same time, so scrolling does not choke the machine.
+    private readonly SemaphoreSlim _thumbnailSlots = new(2);
+
     public ObservableCollection<FieldPresetItem> Presets { get; } = [];
 
     [ObservableProperty]
@@ -46,7 +49,7 @@ public partial class PresetLibraryViewModel : ObservableObject
 
             Presets.Clear();
             foreach (FieldPreset preset in stored)
-                Presets.Add(new FieldPresetItem(preset));
+                Presets.Add(CreateItem(preset));
         }
         catch (Exception ex)
         {
@@ -54,8 +57,7 @@ public partial class PresetLibraryViewModel : ObservableObject
             return;
         }
 
-        foreach (FieldPresetItem item in Presets.ToList())
-            await LoadThumbnailAsync(item);
+        // Thumbnails are built lazily, when a row is shown (see FieldPresetItem.RequestThumbnail).
     }
 
     [RelayCommand]
@@ -92,12 +94,13 @@ public partial class PresetLibraryViewModel : ObservableObject
             return;
         }
 
-        var item = new FieldPresetItem(preset);
+        FieldPresetItem item = CreateItem(preset);
         Presets.Add(item);
         SelectedPreset = item;
-
-        await LoadThumbnailAsync(item);
     }
+
+    private FieldPresetItem CreateItem(FieldPreset preset) =>
+        new(preset) { ThumbnailLoader = LoadThumbnailAsync };
 
     private bool CanUsePreset() => SelectedPreset is { IsUnavailable: false };
 
@@ -136,14 +139,31 @@ public partial class PresetLibraryViewModel : ObservableObject
     // Decoding happens on a background thread; the bitmap is drawn on the UI thread.
     private async Task LoadThumbnailAsync(FieldPresetItem item)
     {
-        float[]? peaks = await Task.Run(() => _analyzer.TryReadPeaks(item.FilePath, WaveformRenderer.ColumnCount));
-
-        if (peaks is null)
+        try
         {
-            item.IsUnavailable = true;
-            return;
-        }
+            await _thumbnailSlots.WaitAsync();
 
-        item.Thumbnail = WaveformRenderer.Render(peaks);
+            float[]? peaks;
+            try
+            {
+                peaks = await Task.Run(() => _analyzer.TryReadPeaks(item.FilePath, WaveformRenderer.ColumnCount));
+            }
+            finally
+            {
+                _thumbnailSlots.Release();
+            }
+
+            if (peaks is null)
+            {
+                item.IsUnavailable = true;
+                return;
+            }
+
+            item.Thumbnail = WaveformRenderer.Render(peaks);
+        }
+        finally
+        {
+            item.IsThumbnailLoading = false;
+        }
     }
 }

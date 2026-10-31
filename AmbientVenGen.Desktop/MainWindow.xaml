@@ -371,27 +371,23 @@
                                                 Content="Change file..." />
                                         </StackPanel>
 
-                                        <!-- Start over Length: a fixed-width column, not stretched across the panel -->
+                                        <!-- Start over Duration: a fixed-width column, not stretched across the panel -->
                                         <StackPanel
                                             Grid.Column="3"
                                             Width="180"
                                             HorizontalAlignment="Left">
-                                            <controls:LabeledSlider
+                                            <controls:TimeBox
                                                 Margin="0,0,0,6"
-                                                Format="{}{0:0} s"
                                                 Header="Start"
                                                 Hint="{x:Static vm:HintTexts.Start}"
                                                 Maximum="{Binding DataContext.Project.DurationSeconds, RelativeSource={RelativeSource AncestorType=Window}}"
                                                 Minimum="0"
-                                                Step="1"
                                                 Value="{Binding StartSeconds, Mode=TwoWay}" />
-                                            <controls:LabeledSlider
-                                                Format="{}{0:0} s"
-                                                Header="Length"
-                                                Hint="{x:Static vm:HintTexts.Length}"
+                                            <controls:TimeBox
+                                                Header="Duration"
+                                                Hint="{x:Static vm:HintTexts.Duration}"
                                                 Maximum="{Binding DataContext.Project.DurationSeconds, RelativeSource={RelativeSource AncestorType=Window}}"
                                                 Minimum="2"
-                                                Step="1"
                                                 Value="{Binding DurationSeconds, Mode=TwoWay}" />
                                         </StackPanel>
                                     </Grid>

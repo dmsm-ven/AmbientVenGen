@@ -66,13 +66,16 @@
             BorderBrush="#3F3F46"
             CanUserAddRows="False"
             CanUserDeleteRows="False"
+            EnableRowVirtualization="True"
             Foreground="White"
             GridLinesVisibility="Horizontal"
             HeadersVisibility="Column"
             IsReadOnly="True"
             ItemsSource="{Binding Presets}"
             SelectedItem="{Binding SelectedPreset, Mode=TwoWay}"
-            SelectionMode="Single">
+            ScrollViewer.CanContentScroll="True"
+            SelectionMode="Single"
+            VirtualizingPanel.IsVirtualizing="True">
             <ui:DataGrid.Columns>
                 <!--  Icon + preset name  -->
                 <DataGridTemplateColumn Width="230" Header="Preset">
@@ -124,13 +127,34 @@
                 <DataGridTemplateColumn Width="*" MinWidth="270" Header="Preview">
                     <DataGridTemplateColumn.CellTemplate>
                         <DataTemplate>
-                            <Image
+                            <Grid
                                 Width="250"
                                 Height="40"
                                 HorizontalAlignment="Left"
-                                RenderOptions.BitmapScalingMode="NearestNeighbor"
-                                Source="{Binding Thumbnail}"
-                                Stretch="Fill" />
+                                Loaded="OnPreviewCellLoaded">
+                                <Image
+                                    RenderOptions.BitmapScalingMode="NearestNeighbor"
+                                    Source="{Binding Thumbnail}"
+                                    Stretch="Fill" />
+                                <!--  Shown while the waveform is being prepared  -->
+                                <ui:ProgressRing
+                                    Width="24"
+                                    Height="24"
+                                    HorizontalAlignment="Center"
+                                    VerticalAlignment="Center"
+                                    IsIndeterminate="True">
+                                    <ui:ProgressRing.Style>
+                                        <Style TargetType="ui:ProgressRing">
+                                            <Setter Property="Visibility" Value="Collapsed" />
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding IsThumbnailLoading}" Value="True">
+                                                    <Setter Property="Visibility" Value="Visible" />
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </ui:ProgressRing.Style>
+                                </ui:ProgressRing>
+                            </Grid>
                         </DataTemplate>
                     </DataGridTemplateColumn.CellTemplate>
                 </DataGridTemplateColumn>

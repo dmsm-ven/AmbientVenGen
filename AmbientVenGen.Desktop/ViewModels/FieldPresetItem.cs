@@ -24,6 +24,29 @@ public sealed partial class FieldPresetItem : ObservableObject
     [ObservableProperty]
     private bool _isUnavailable;
 
+    /// <summary>True while the waveform is being prepared (a spinner is shown instead).</summary>
+    [ObservableProperty]
+    private bool _isThumbnailLoading;
+
+    private bool _thumbnailRequested;
+
+    /// <summary>Set by the library; builds the thumbnail of this row.</summary>
+    internal Func<FieldPresetItem, Task>? ThumbnailLoader { get; set; }
+
+    /// <summary>
+    /// Called when the row's preview cell appears on screen. The table only creates cells for the rows
+    /// that are visible, so thumbnails of rows far down the list are not built until they are scrolled to.
+    /// </summary>
+    public void RequestThumbnail()
+    {
+        if (_thumbnailRequested || ThumbnailLoader is null)
+            return;
+
+        _thumbnailRequested = true;
+        IsThumbnailLoading = true;
+        _ = ThumbnailLoader(this);
+    }
+
     public bool IsVideo => Extension.Equals(".mp4", StringComparison.OrdinalIgnoreCase);
 
     public string AddedText => AddedAt.ToString("dd.MM.yyyy", CultureInfo.CurrentCulture);
