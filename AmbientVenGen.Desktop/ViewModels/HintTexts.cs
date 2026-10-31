@@ -22,10 +22,10 @@ public static class HintTexts
         "Position in the stereo field: -1 is fully left, 0 is the centre, +1 is fully right.";
 
     public const string Start =
-        "Where the layer begins on the timeline, in seconds. You can also drag the clip on the timeline.";
+        "Where the layer begins on the timeline (hh:mm:ss). You can also drag the clip on the timeline.";
 
-    public const string Length =
-        "How long the layer lasts, in seconds. You can also drag the edges of the clip on the timeline.";
+    public const string Duration =
+        "How long the layer lasts (hh:mm:ss). You can also drag the edges of the clip on the timeline.";
 
     public const string FadeIn =
         "Time the layer takes to rise from silence at its start.";

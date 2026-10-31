@@ -171,8 +171,13 @@
             </Grid.ColumnDefinitions>
 
             <!-- New layer: only the type; start, length and fades are edited after adding -->
-            <StackPanel Grid.Column="0" VerticalAlignment="Top">
-            <Border Style="{StaticResource SectionCard}">
+            <Grid Grid.Column="0">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="*" />
+                <RowDefinition Height="10" />
+                <RowDefinition Height="*" />
+            </Grid.RowDefinitions>
+            <Border Grid.Row="0" Style="{StaticResource SectionCard}">
                 <StackPanel>
                     <Grid Margin="0,0,0,8">
                         <ui:TextBlock
@@ -219,7 +224,7 @@
             </Border>
 
             <!-- Templates: a ready-made set of layers -->
-            <Border Margin="0,10,0,0" Style="{StaticResource SectionCard}">
+            <Border Grid.Row="2" Style="{StaticResource SectionCard}">
                 <StackPanel>
                     <StackPanel Margin="0,0,0,4" Orientation="Horizontal">
                         <ui:TextBlock
@@ -241,7 +246,7 @@
                         ToolTip="Replaces all layers of the project with the template" />
                 </StackPanel>
             </Border>
-            </StackPanel>
+            </Grid>
 
             <!-- Selected layer inspector -->
             <Border Grid.Column="2" Style="{StaticResource SectionCard}">
@@ -366,27 +371,23 @@
                                                 Content="Change file..." />
                                         </StackPanel>
 
-                                        <!-- Start over Length: a fixed-width column, not stretched across the panel -->
+                                        <!-- Start over Duration: a fixed-width column, not stretched across the panel -->
                                         <StackPanel
                                             Grid.Column="3"
                                             Width="180"
                                             HorizontalAlignment="Left">
-                                            <controls:LabeledSlider
+                                            <controls:TimeBox
                                                 Margin="0,0,0,6"
-                                                Format="{}{0:0} s"
                                                 Header="Start"
                                                 Hint="{x:Static vm:HintTexts.Start}"
                                                 Maximum="{Binding DataContext.Project.DurationSeconds, RelativeSource={RelativeSource AncestorType=Window}}"
                                                 Minimum="0"
-                                                Step="1"
                                                 Value="{Binding StartSeconds, Mode=TwoWay}" />
-                                            <controls:LabeledSlider
-                                                Format="{}{0:0} s"
-                                                Header="Length"
-                                                Hint="{x:Static vm:HintTexts.Length}"
+                                            <controls:TimeBox
+                                                Header="Duration"
+                                                Hint="{x:Static vm:HintTexts.Duration}"
                                                 Maximum="{Binding DataContext.Project.DurationSeconds, RelativeSource={RelativeSource AncestorType=Window}}"
                                                 Minimum="2"
-                                                Step="1"
                                                 Value="{Binding DurationSeconds, Mode=TwoWay}" />
                                         </StackPanel>
                                     </Grid>
@@ -397,10 +398,8 @@
                                             <ColumnDefinition Width="104" />
                                             <ColumnDefinition Width="*" />
                                             <ColumnDefinition Width="*" />
-                                            <ColumnDefinition Width="80" />
                                         </Grid.ColumnDefinitions>
                                         <Grid.RowDefinitions>
-                                            <RowDefinition Height="Auto" />
                                             <RowDefinition Height="Auto" />
                                             <RowDefinition Height="Auto" />
                                             <RowDefinition Height="Auto" />
@@ -436,7 +435,6 @@
                                             Minimum="0"
                                             Step="0.01"
                                             Value="{Binding LevelTo, Mode=TwoWay}" />
-                                        <controls:TransitionFunctionDropdown Grid.Row="0" Grid.Column="3" Margin="0,0,0,8" VerticalAlignment="Bottom" Value="{Binding LevelEasing, Mode=TwoWay}" />
 
                                         <StackPanel
                                             Grid.Row="1"
@@ -468,7 +466,6 @@
                                             Minimum="0"
                                             Step="0.01"
                                             Value="{Binding BrightnessTo, Mode=TwoWay}" />
-                                        <controls:TransitionFunctionDropdown Grid.Row="1" Grid.Column="3" Margin="0,0,0,8" VerticalAlignment="Bottom" Value="{Binding BrightnessEasing, Mode=TwoWay}" />
 
                                         <StackPanel
                                             Grid.Row="2"
@@ -500,23 +497,6 @@
                                             Minimum="0"
                                             Step="0.01"
                                             Value="{Binding ModulationTo, Mode=TwoWay}" />
-                                        <controls:TransitionFunctionDropdown Grid.Row="2" Grid.Column="3" Margin="0,0,0,8" VerticalAlignment="Bottom" Value="{Binding ModulationEasing, Mode=TwoWay}" />
-                                        <!-- Fade in / fade out curve: right under the parameter rows -->
-                                        <StackPanel
-                                            Grid.Row="3"
-                                            VerticalAlignment="Center"
-                                            Orientation="Horizontal">
-                                            <ui:TextBlock
-                                                Margin="0"
-                                                FontWeight="SemiBold"
-                                                Text="Transition curve" />
-                                            <controls:HintIcon Margin="5,0,0,0" Text="{x:Static vm:HintTexts.TransitionCurve}" />
-                                        </StackPanel>
-                                        <controls:TransitionFunctionDropdown
-                                            Grid.Row="3"
-                                            Grid.Column="1"
-                                            Grid.ColumnSpan="2"
-                                            Value="{Binding FadeEasing, Mode=TwoWay}" />
                                     </Grid>
 
                                     <!-- Placement, fades, pitch, pan -->
@@ -591,6 +571,55 @@
                                             Minimum="0"
                                             Step="1"
                                             Value="{Binding FadeOutSeconds, Mode=TwoWay}" />
+
+                                        <!-- Transition curves: Level, Brightness, Modulation and the fades, four in a row -->
+                                        <StackPanel
+                                            Grid.Row="2"
+                                            Grid.ColumnSpan="3"
+                                            Margin="0,4,0,0">
+                                            <StackPanel Margin="0,0,0,4" Orientation="Horizontal">
+                                                <ui:TextBlock
+                                                    Margin="0"
+                                                    FontSize="12"
+                                                    Foreground="#C9C8D6"
+                                                    Text="Transition curve" />
+                                                <controls:HintIcon Margin="5,0,0,0" Text="{x:Static vm:HintTexts.TransitionCurve}" />
+                                            </StackPanel>
+                                            <StackPanel Orientation="Horizontal">
+                                            <StackPanel Margin="0,0,14,0">
+                                                <ui:TextBlock
+                                                    Margin="0,0,0,2"
+                                                    FontSize="11"
+                                                    Foreground="#C9C8D6"
+                                                    Text="Level" />
+                                                <controls:TransitionFunctionDropdown Value="{Binding LevelEasing, Mode=TwoWay}" />
+                                            </StackPanel>
+                                            <StackPanel Margin="0,0,14,0">
+                                                <ui:TextBlock
+                                                    Margin="0,0,0,2"
+                                                    FontSize="11"
+                                                    Foreground="#C9C8D6"
+                                                    Text="Brightness" />
+                                                <controls:TransitionFunctionDropdown Value="{Binding BrightnessEasing, Mode=TwoWay}" />
+                                            </StackPanel>
+                                            <StackPanel Margin="0,0,14,0">
+                                                <ui:TextBlock
+                                                    Margin="0,0,0,2"
+                                                    FontSize="11"
+                                                    Foreground="#C9C8D6"
+                                                    Text="Modulation" />
+                                                <controls:TransitionFunctionDropdown Value="{Binding ModulationEasing, Mode=TwoWay}" />
+                                            </StackPanel>
+                                            <StackPanel Margin="0">
+                                                <ui:TextBlock
+                                                    Margin="0,0,0,2"
+                                                    FontSize="11"
+                                                    Foreground="#C9C8D6"
+                                                    Text="Fades" />
+                                                <controls:TransitionFunctionDropdown Value="{Binding FadeEasing, Mode=TwoWay}" />
+                                            </StackPanel>
+                                            </StackPanel>
+                                        </StackPanel>
                                     </Grid>
                                 </Grid>
                             </DataTemplate>
