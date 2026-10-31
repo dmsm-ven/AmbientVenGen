@@ -251,14 +251,6 @@
                         </ui:Button>
                     </Grid>
 
-                    <ui:TextBlock
-                        Grid.Row="1"
-                        HorizontalAlignment="Center"
-                        VerticalAlignment="Center"
-                        Foreground="#AAA9BB"
-                        Text="Click a layer on the timeline to edit it"
-                        Visibility="{Binding IsLayerSelectionEmpty, Converter={StaticResource BoolToVisibility}}" />
-
                     <ContentControl Grid.Row="1" Content="{Binding SelectedLayer}">
                         <ContentControl.ContentTemplate>
                             <DataTemplate>

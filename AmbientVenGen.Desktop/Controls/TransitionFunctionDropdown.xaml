@@ -1,12 +1,12 @@
-<UserControl
+﻿<UserControl
     x:Class="AmbientVenGen.Desktop.Controls.TransitionFunctionDropdown"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:local="clr-namespace:AmbientVenGen.Desktop.Controls"
     xmlns:vm="clr-namespace:AmbientVenGen.Desktop.ViewModels"
-    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     x:Name="Root"
-    Width="72"
-    Height="40"
+    Width="64"
+    Height="36"
     HorizontalAlignment="Left">
     <UserControl.Resources>
         <BooleanToVisibilityConverter x:Key="BoolToVisibility" />
