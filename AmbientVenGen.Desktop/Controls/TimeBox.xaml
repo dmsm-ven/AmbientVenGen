@@ -48,7 +48,29 @@
                 VerticalAlignment="Center" />
         </StackPanel>
 
-        <Grid Margin="0,3,0,0">
+        <!--  Default look: just the time, like a label. Click to edit.  -->
+        <Border
+            x:Name="DisplayBox"
+            Height="32"
+            Margin="0,3,0,0"
+            Background="#14FFFFFF"
+            BorderBrush="#26FFFFFF"
+            BorderThickness="1"
+            CornerRadius="5"
+            Cursor="IBeam"
+            MouseLeftButtonUp="OnDisplayClick"
+            ToolTip="Click to edit (hh:mm:ss)">
+            <TextBlock
+                x:Name="DisplayText"
+                Margin="0"
+                HorizontalAlignment="Center"
+                VerticalAlignment="Center"
+                FontFamily="Consolas"
+                FontSize="14"
+                Foreground="#ECECF2" />
+        </Border>
+
+        <Grid x:Name="EditGrid" Margin="0,3,0,0" Visibility="Collapsed">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="*" />
                 <ColumnDefinition Width="Auto" />

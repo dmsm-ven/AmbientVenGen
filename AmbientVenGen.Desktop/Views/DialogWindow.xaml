@@ -1,0 +1,80 @@
+<ui:FluentWindow
+    x:Class="AmbientVenGen.Desktop.Views.DialogWindow"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
+    Icon="pack://application:,,,/Assets/app-icon.ico"
+    Title="Ambient Forge"
+    Width="420"
+    Background="#E617171D"
+    ExtendsContentIntoTitleBar="True"
+    Foreground="#ECECF2"
+    KeyDown="OnKeyDown"
+    ResizeMode="NoResize"
+    ShowInTaskbar="False"
+    SizeToContent="Height"
+    WindowBackdropType="Mica"
+    WindowStartupLocation="CenterOwner">
+
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+        </Grid.RowDefinitions>
+
+        <ui:TitleBar
+            x:Name="Bar"
+            Grid.Row="0"
+            Title="Ambient Forge"
+            Icon="pack://application:,,,/Assets/app-icon.ico"
+            ShowMaximize="False"
+            ShowMinimize="False" />
+
+        <!-- Icon + message -->
+        <Grid Grid.Row="1" Margin="24,12,24,4">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="Auto" />
+                <ColumnDefinition Width="*" />
+            </Grid.ColumnDefinitions>
+
+            <ui:SymbolIcon
+                x:Name="KindIcon"
+                Margin="0,2,16,0"
+                VerticalAlignment="Top"
+                FontSize="34" />
+            <TextBlock
+                x:Name="MessageText"
+                Grid.Column="1"
+                Margin="0"
+                VerticalAlignment="Center"
+                FontSize="14"
+                TextWrapping="Wrap" />
+        </Grid>
+
+        <!-- Buttons: Primary is the default (Enter), Cancel closes with Esc -->
+        <StackPanel
+            Grid.Row="2"
+            Margin="24,18,24,20"
+            HorizontalAlignment="Right"
+            Orientation="Horizontal">
+            <ui:Button
+                x:Name="PrimaryButton"
+                MinWidth="92"
+                Appearance="Primary"
+                Click="OnPrimary"
+                IsDefault="True" />
+            <ui:Button
+                x:Name="SecondaryButton"
+                MinWidth="92"
+                Margin="8,0,0,0"
+                Click="OnSecondary" />
+            <ui:Button
+                x:Name="CancelButton"
+                MinWidth="92"
+                Margin="8,0,0,0"
+                Click="OnCancel"
+                IsCancel="True" />
+        </StackPanel>
+    </Grid>
+</ui:FluentWindow>

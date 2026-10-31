@@ -8,6 +8,8 @@ public sealed partial class Layer : ObservableObject
 {
     public const double MinPitchHz = 20;
     public const double MaxPitchHz = 1000;
+    public const double MinSpeed = 0.25;
+    public const double MaxSpeed = 4.0;
 
     public Guid Id { get; } = Guid.NewGuid();
 
@@ -73,6 +75,10 @@ public sealed partial class Layer : ObservableObject
     private int _seed = Random.Shared.Next(1, int.MaxValue);
 
     /// <summary>Audio file of a field-record layer (null for synthesized layers).</summary>
+    /// <summary>Playback speed of a field recording: 0.5 is half speed (and an octave lower), 2 is double.</summary>
+    [ObservableProperty]
+    private double _speed = 1.0;
+
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(SourceName))]
     private string? _sourcePath;
@@ -97,7 +103,8 @@ public sealed partial class Layer : ObservableObject
         Pan,
         Muted,
         Seed,
-        SourcePath);
+        SourcePath,
+        Speed);
 
     /// <summary>Creates a layer from a spec, clamping values read from a file to sane ranges.</summary>
     public static Layer FromSpec(LayerSpec spec)
@@ -126,7 +133,8 @@ public sealed partial class Layer : ObservableObject
             Pan = Math.Clamp(spec.Pan, -1, 1),
             Muted = spec.Muted,
             Seed = spec.Seed,
-            SourcePath = spec.SourcePath
+            SourcePath = spec.SourcePath,
+            Speed = Math.Clamp(spec.Speed <= 0 ? 1.0 : spec.Speed, MinSpeed, MaxSpeed)
         };
     }
 

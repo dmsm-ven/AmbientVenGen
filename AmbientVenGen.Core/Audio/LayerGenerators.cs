@@ -12,9 +12,13 @@ internal readonly struct BlockParams
     /// <summary>Time since the layer started, at the start of the block (recordings play from it).</summary>
     public readonly double LocalSeconds;
 
-    public BlockParams(float brightness, float modulation, float pitchHz, double localSeconds = 0)
+    /// <summary>Playback speed of a recording (1 = original).</summary>
+    public readonly float Speed;
+
+    public BlockParams(float brightness, float modulation, float pitchHz, double localSeconds = 0, float speed = 1f)
     {
         LocalSeconds = localSeconds;
+        Speed = speed;
         Brightness = brightness;
         Modulation = modulation;
         PitchHz = pitchHz;
@@ -276,8 +280,9 @@ internal sealed class PadGenerator : LayerGenerator
 }
 
 /// <summary>
-/// Plays a decoded recording in a loop (the end is cross-faded into the beginning). The position is
-/// derived from the layer time, so seeking and re-rendering always give the same sound.
+/// Plays a decoded recording in a loop (the end is cross-faded into the beginning) at an adjustable speed
+/// (like a tape: slower is also lower). The read position is kept as a running value, so changing the speed
+/// while playing is smooth; after a seek it is recomputed from the layer time.
 /// Brightness is a low-pass filter, modulation a slow breathing of the level.
 /// </summary>
 internal sealed class FieldRecordGenerator : LayerGenerator
@@ -290,6 +295,8 @@ internal sealed class FieldRecordGenerator : LayerGenerator
     private float _lowL;
     private float _lowR;
     private DecodedSample? _sample;
+    private double _position;
+    private double _expectedLocalSeconds = double.NaN;
 
     public FieldRecordGenerator(int seed, string? path)
     {
@@ -323,9 +330,13 @@ internal sealed class FieldRecordGenerator : LayerGenerator
         int frames = sample.Frames;
         int crossfade = (int)Math.Min(MaxCrossfadeSeconds * SampleRate, frames / 4);
         int period = frames - crossfade;
+        double speed = Math.Clamp(p.Speed, 0.05f, 8f);
 
-        long start = (long)Math.Round(Math.Max(0.0, p.LocalSeconds) * SampleRate);
-        int position = (int)(start % period);
+        // Continue from where the last block ended; jump only after a seek (time did not follow on).
+        if (double.IsNaN(_expectedLocalSeconds) || Math.Abs(p.LocalSeconds - _expectedLocalSeconds) > 0.02)
+            _position = Math.Max(0.0, p.LocalSeconds) * SampleRate * speed % period;
+
+        _expectedLocalSeconds = p.LocalSeconds + left.Length / (double)SampleRate;
 
         // Brightness 0..1 -> low-pass cutoff about 300 Hz .. 19 kHz.
         double cutoff = Math.Min(300.0 * Math.Pow(2.0, Math.Clamp(p.Brightness, 0f, 1f) * 6.0), SampleRate * 0.45);
@@ -334,23 +345,26 @@ internal sealed class FieldRecordGenerator : LayerGenerator
 
         for (int n = 0; n < left.Length; n++)
         {
-            float l = sample.Left[position];
-            float r = sample.Right[position];
+            int index = (int)_position;
+            float fraction = (float)(_position - index);
 
-            if (position < crossfade)
+            float l = Interpolate(sample.Left, index, fraction, frames);
+            float r = Interpolate(sample.Right, index, fraction, frames);
+
+            if (index < crossfade)
             {
                 // Beginning blended with the tail that follows the loop point (equal power).
-                double angle = (double)position / crossfade * Math.PI / 2.0;
+                double angle = _position / crossfade * Math.PI / 2.0;
                 float fadeIn = (float)Math.Sin(angle);
                 float fadeOut = (float)Math.Cos(angle);
 
-                l = l * fadeIn + sample.Left[period + position] * fadeOut;
-                r = r * fadeIn + sample.Right[period + position] * fadeOut;
+                l = l * fadeIn + Interpolate(sample.Left, period + index, fraction, frames) * fadeOut;
+                r = r * fadeIn + Interpolate(sample.Right, period + index, fraction, frames) * fadeOut;
             }
 
-            position++;
-            if (position >= period)
-                position = 0;
+            _position += speed;
+            if (_position >= period)
+                _position -= period;
 
             _lowL += alpha * (l - _lowL);
             _lowR += alpha * (r - _lowR);
@@ -362,5 +376,11 @@ internal sealed class FieldRecordGenerator : LayerGenerator
             left[n] = _lowL * breath;
             right[n] = _lowR * breath;
         }
+    }
+
+    private static float Interpolate(float[] data, int index, float fraction, int frames)
+    {
+        int next = Math.Min(index + 1, frames - 1);
+        return data[index] + (data[next] - data[index]) * fraction;
     }
 }

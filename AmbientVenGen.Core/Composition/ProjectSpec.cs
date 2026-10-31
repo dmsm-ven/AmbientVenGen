@@ -36,7 +36,8 @@ public sealed record LayerSpec(
     double Pan,
     bool Muted,
     int Seed,
-    string? SourcePath = null)
+    string? SourcePath = null,
+    double Speed = 1.0)
 {
     public double Progress(double localSeconds) =>
         DurationSeconds > 0 ? Math.Clamp(localSeconds / DurationSeconds, 0.0, 1.0) : 0.0;

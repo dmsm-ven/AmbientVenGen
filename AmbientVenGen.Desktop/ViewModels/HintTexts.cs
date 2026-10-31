@@ -45,6 +45,9 @@ public static class HintTexts
     public const string TrackLength =
         "Total length of the track. Layers can be placed anywhere inside it.";
 
+    public const string Speed =
+        "Playback speed of the recording, like a tape: below 1 it is slower and lower, above 1 faster and higher. Click the value to type it.";
+
     public const string Source =
         "The audio file this layer plays. It is looped (the end fades into the beginning), so any length works. Brightness softens the high frequencies.";
 }

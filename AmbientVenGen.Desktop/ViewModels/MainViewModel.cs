@@ -52,6 +52,7 @@ public partial class MainViewModel : ObservableObject, IDisposable
     [NotifyPropertyChangedFor(nameof(HasSelectedLayer))]
     [NotifyPropertyChangedFor(nameof(IsLayerSelectionEmpty))]
     [NotifyCanExecuteChangedFor(nameof(DeleteSelectedLayerCommand))]
+    [NotifyCanExecuteChangedFor(nameof(RandomizeSelectedLayerCommand))]
     private Layer? _selectedLayer;
 
     [ObservableProperty]
@@ -339,7 +340,10 @@ public partial class MainViewModel : ObservableObject, IDisposable
             return;
 
         if (Project.Layers.Count > 0
-            && !_messageService.Confirm($"Replace the current layers with the \"{template.Name}\" template?"))
+            && !_messageService.Confirm(
+                $"Replace the current layers with the \"{template.Name}\" template?",
+                "Replace",
+                "Cancel"))
         {
             return;
         }

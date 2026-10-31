@@ -129,7 +129,14 @@ public partial class LabeledSlider : UserControl
         double value = e.NewValue;
 
         if (IsLogarithmic && Minimum > 0)
-            value = Math.Clamp(Math.Round(Math.Exp(value), 1), Minimum, Math.Max(Maximum, Minimum));
+        {
+            value = Math.Exp(value);
+
+            if (Step > 0)
+                value = Math.Round(value / Step) * Step;
+
+            value = Math.Clamp(Math.Round(value, 4), Minimum, Math.Max(Maximum, Minimum));
+        }
 
         // SetCurrentValue keeps (and pushes through) a two-way binding.
         SetCurrentValue(ValueProperty, value);
@@ -243,6 +250,8 @@ public partial class LabeledSlider : UserControl
         string cleaned = text.Trim();
         if (cleaned.EndsWith("Hz", StringComparison.OrdinalIgnoreCase))
             cleaned = cleaned[..^2].Trim();
+        else if (cleaned.EndsWith('x') || cleaned.EndsWith('X') || cleaned.EndsWith('\u00D7'))
+            cleaned = cleaned[..^1].Trim();
 
         return double.TryParse(cleaned, NumberStyles.Float, CultureInfo.CurrentCulture, out number)
             || double.TryParse(cleaned.Replace(',', '.'), NumberStyles.Float, CultureInfo.InvariantCulture, out number);

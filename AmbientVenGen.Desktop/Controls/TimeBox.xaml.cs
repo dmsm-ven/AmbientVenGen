@@ -78,6 +78,23 @@ public partial class TimeBox : UserControl
         HeaderText.Text = Header;
         HeaderHint.Text = Hint;
         Input.Text = Format(Value);
+        DisplayText.Text = Format(Value);
+    }
+
+    private void OnDisplayClick(object sender, MouseButtonEventArgs e)
+    {
+        DisplayBox.Visibility = Visibility.Collapsed;
+        EditGrid.Visibility = Visibility.Visible;
+        Input.Focus();
+        Input.SelectAll();
+        e.Handled = true;
+    }
+
+    // Back to the plain label.
+    private void EndEditing()
+    {
+        EditGrid.Visibility = Visibility.Collapsed;
+        DisplayBox.Visibility = Visibility.Visible;
     }
 
     private double Clamp(double seconds) => Math.Clamp(seconds, Minimum, Math.Max(Maximum, Minimum));
@@ -113,7 +130,11 @@ public partial class TimeBox : UserControl
 
     private void OnInputGotFocus(object sender, KeyboardFocusChangedEventArgs e) => Input.SelectAll();
 
-    private void OnInputLostFocus(object sender, KeyboardFocusChangedEventArgs e) => Commit();
+    private void OnInputLostFocus(object sender, KeyboardFocusChangedEventArgs e)
+    {
+        Commit();
+        EndEditing();
+    }
 
     private void OnInputKeyDown(object sender, KeyEventArgs e)
     {
@@ -121,13 +142,13 @@ public partial class TimeBox : UserControl
         {
             case Key.Enter:
                 Commit();
-                Input.SelectAll();
+                EndEditing();
                 e.Handled = true;
                 break;
 
             case Key.Escape:
                 Sync();
-                Input.SelectAll();
+                EndEditing();
                 e.Handled = true;
                 break;
 

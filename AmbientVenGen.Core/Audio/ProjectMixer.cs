@@ -130,7 +130,8 @@ public sealed class ProjectMixer : ISampleProvider
             (float)layer.BrightnessAt(curveTime),
             (float)layer.ModulationAt(curveTime),
             (float)layer.PitchHz,
-            Math.Max(0.0, local - count * 0.5 / SampleRate));
+            Math.Max(0.0, local - count * 0.5 / SampleRate),
+            (float)layer.Speed);
 
         var scratchLeft = _scratchLeft.AsSpan(0, count);
         var scratchRight = _scratchRight.AsSpan(0, count);

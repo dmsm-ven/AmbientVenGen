@@ -16,7 +16,7 @@ namespace AmbientVenGen.Desktop.Controls;
 /// </summary>
 public sealed class TimelineControl : FrameworkElement
 {
-    private const double HeaderWidth = 172;
+    private const double HeaderWidth = 204;
     private const double RulerHeight = 30;
     private const double LaneHeight = 68;
     private const double LanePadding = 7;
@@ -77,6 +77,7 @@ public sealed class TimelineControl : FrameworkElement
     // Header hover: the row under the mouse and which arrow (-1 up, +1 down, 0 none) is under it.
     private int _hoverLane = -1;
     private int _hoverArrow;
+    private bool _hoverMute;
     private double _dragStartTime;
     private double _originalStart;
     private double _originalDuration;
@@ -148,9 +149,16 @@ public sealed class TimelineControl : FrameworkElement
         Math.Max(2, layer.DurationSeconds * PixelsPerSecond),
         LaneHeight - 2 * LanePadding);
 
-    // The two arrows (up and down) live where the mute badge is: 24 px wide, one above the other.
-    private static Rect ArrowRect(int lane, int direction) => new(
+    // The mute button is at the right edge of the header; the reorder arrows (shown on hover) are next to it.
+    private static Rect MuteRect(int lane) => new(
         HeaderWidth - 36,
+        LaneTop(lane) + (LaneHeight - 20) / 2.0,
+        24,
+        20);
+
+    // The two arrows (up and down): 24 px wide, one above the other, left of the mute button.
+    private static Rect ArrowRect(int lane, int direction) => new(
+        HeaderWidth - 66,
         LaneTop(lane) + (LaneHeight - 30) / 2.0 + (direction > 0 ? 16 : 0),
         24,
         14);
@@ -435,7 +443,7 @@ public sealed class TimelineControl : FrameworkElement
                 2,
                 2);
 
-            FormattedText name = MakeText(layer.Name, 13, Color.FromArgb(0xF0, 0xEC, 0xEC, 0xF2), bold: true, maxWidth: HeaderWidth - 64);
+            FormattedText name = MakeText(layer.Name, 13, Color.FromArgb(0xF0, 0xEC, 0xEC, 0xF2), bold: true, maxWidth: HeaderWidth - 96);
             dc.DrawText(name, new Point(20, top + LaneHeight / 2.0 - 17));
 
             string detail = layer.Type switch
@@ -444,7 +452,7 @@ public sealed class TimelineControl : FrameworkElement
                 LayerType.FieldRecord => $"{layer.TypeLabel} · {layer.SourceName}",
                 _ => $"{layer.TypeLabel} · {layer.PitchHz:0.#} Hz"
             };
-            FormattedText sub = MakeText(detail, 10.5, Color.FromArgb(0xA0, 0xC9, 0xC8, 0xD6), maxWidth: HeaderWidth - 64);
+            FormattedText sub = MakeText(detail, 10.5, Color.FromArgb(0xA0, 0xC9, 0xC8, 0xD6), maxWidth: HeaderWidth - 96);
             dc.DrawText(sub, new Point(20, top + LaneHeight / 2.0 + 2));
 
             dc.Pop();
@@ -455,24 +463,24 @@ public sealed class TimelineControl : FrameworkElement
                 DrawArrow(dc, lane, -1);
                 DrawArrow(dc, lane, 1);
             }
-            else
-            {
-                // The "M" mark is always there: amber when the layer is muted, a quiet outline otherwise.
-                // (The mute switch itself is in the "Selected layer" panel.)
-                var badge = new Rect(HeaderWidth - 36, top + (LaneHeight - 20) / 2.0, 24, 20);
-                Color fill = layer.Muted ? Color.FromArgb(0xE0, 0xFF, 0xC1, 0x5C) : Color.FromArgb(0x16, 0xFF, 0xFF, 0xFF);
-                Color text = layer.Muted ? Color.FromRgb(0x20, 0x16, 0x08) : Color.FromArgb(0xB0, 0xC9, 0xC8, 0xD6);
 
-                dc.DrawRoundedRectangle(
-                    BrushOf(fill),
-                    new Pen(BrushOf(Color.FromArgb(0x30, 0xFF, 0xFF, 0xFF)), 1),
-                    badge,
-                    5,
-                    5);
+            // The mute button ("M") is always there and always clickable: amber when the layer is muted.
+            bool muteHot = lane == _hoverLane && _hoverMute;
+            Rect badge = MuteRect(lane);
+            Color fill = layer.Muted
+                ? Color.FromArgb(muteHot ? (byte)0xFF : (byte)0xE0, 0xFF, 0xC1, 0x5C)
+                : Color.FromArgb(muteHot ? (byte)0x40 : (byte)0x16, 0xFF, 0xFF, 0xFF);
+            Color text = layer.Muted ? Color.FromRgb(0x20, 0x16, 0x08) : Color.FromArgb(0xB0, 0xC9, 0xC8, 0xD6);
 
-                FormattedText m = MakeText("M", 11, text, bold: true);
-                dc.DrawText(m, new Point(badge.Left + (badge.Width - m.Width) / 2.0, badge.Top + (badge.Height - m.Height) / 2.0));
-            }
+            dc.DrawRoundedRectangle(
+                BrushOf(fill),
+                new Pen(BrushOf(Color.FromArgb(muteHot ? (byte)0x80 : (byte)0x30, 0xFF, 0xFF, 0xFF)), 1),
+                badge,
+                5,
+                5);
+
+            FormattedText m = MakeText("M", 11, text, bold: true);
+            dc.DrawText(m, new Point(badge.Left + (badge.Width - m.Width) / 2.0, badge.Top + (badge.Height - m.Height) / 2.0));
         }
 
         // Vertical line between the headers and the track.
@@ -875,7 +883,11 @@ public sealed class TimelineControl : FrameworkElement
 
                 SetCurrentValue(SelectedLayerProperty, layer);
 
-                if (direction != 0)
+                if (MuteRect(lane).Contains(point))
+                {
+                    layer.Muted = !layer.Muted;
+                }
+                else if (direction != 0)
                 {
                     project.MoveLayer(layer, direction);
                     UpdateHover(point);
@@ -999,10 +1011,11 @@ public sealed class TimelineControl : FrameworkElement
     {
         base.OnMouseLeave(e);
 
-        if (_hoverLane != -1 || _hoverArrow != 0)
+        if (_hoverLane != -1 || _hoverArrow != 0 || _hoverMute)
         {
             _hoverLane = -1;
             _hoverArrow = 0;
+            _hoverMute = false;
             InvalidateContent();
         }
     }
@@ -1011,6 +1024,7 @@ public sealed class TimelineControl : FrameworkElement
     {
         int lane = -1;
         int arrow = 0;
+        bool mute = false;
 
         if (Project is { } project && point.X >= 0 && point.X < HeaderWidth && point.Y >= RulerHeight)
         {
@@ -1020,13 +1034,15 @@ public sealed class TimelineControl : FrameworkElement
             {
                 lane = candidate;
                 arrow = ArrowAt(point, lane);
+                mute = MuteRect(lane).Contains(point);
             }
         }
 
-        if (lane != _hoverLane || arrow != _hoverArrow)
+        if (lane != _hoverLane || arrow != _hoverArrow || mute != _hoverMute)
         {
             _hoverLane = lane;
             _hoverArrow = arrow;
+            _hoverMute = mute;
             InvalidateContent();
         }
     }
@@ -1127,7 +1143,7 @@ public sealed class TimelineControl : FrameworkElement
 
         if (point.X < HeaderWidth)
         {
-            Cursor = _hoverArrow != 0 ? Cursors.Hand : Cursors.Arrow;
+            Cursor = _hoverArrow != 0 || _hoverMute ? Cursors.Hand : Cursors.Arrow;
             return;
         }
 
