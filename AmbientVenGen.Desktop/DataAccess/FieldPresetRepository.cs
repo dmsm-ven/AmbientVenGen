@@ -59,7 +59,38 @@ public sealed class FieldPresetRepository
     {
         await using SqliteConnection connection = await OpenAsync();
 
+        await connection.ExecuteAsync("DELETE FROM PresetTags WHERE PresetId = @Id", new { Id = id });
         await connection.ExecuteAsync("DELETE FROM FieldPresets WHERE Id = @Id", new { Id = id });
+    }
+
+    /// <summary>Every tag of every preset.</summary>
+    public async Task<IReadOnlyList<PresetTagRow>> GetAllTagsAsync()
+    {
+        await using SqliteConnection connection = await OpenAsync();
+
+        IEnumerable<PresetTagRow> rows = await connection.QueryAsync<PresetTagRow>(
+            "SELECT PresetId, Tag FROM PresetTags ORDER BY Tag");
+
+        return rows.ToList();
+    }
+
+    /// <summary>Puts the tag on the preset (nothing happens if it is already there). The tag is created if it is new.</summary>
+    public async Task AddTagAsync(long presetId, string tag)
+    {
+        await using SqliteConnection connection = await OpenAsync();
+
+        await connection.ExecuteAsync(
+            "INSERT OR IGNORE INTO PresetTags (PresetId, Tag) VALUES (@PresetId, @Tag)",
+            new { PresetId = presetId, Tag = tag });
+    }
+
+    public async Task RemoveTagAsync(long presetId, string tag)
+    {
+        await using SqliteConnection connection = await OpenAsync();
+
+        await connection.ExecuteAsync(
+            "DELETE FROM PresetTags WHERE PresetId = @PresetId AND Tag = @Tag",
+            new { PresetId = presetId, Tag = tag });
     }
 
     private async Task<SqliteConnection> OpenAsync()
@@ -86,6 +117,12 @@ public sealed class FieldPresetRepository
                 DurationSeconds REAL    NOT NULL,
                 SizeBytes       INTEGER NOT NULL,
                 Extension       TEXT    NOT NULL
+            );
+
+            CREATE TABLE IF NOT EXISTS PresetTags (
+                PresetId INTEGER NOT NULL,
+                Tag      TEXT    NOT NULL COLLATE NOCASE,
+                PRIMARY KEY (PresetId, Tag)
             );
             """);
     }

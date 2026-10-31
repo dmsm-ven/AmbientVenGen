@@ -12,6 +12,9 @@ public sealed class PresetLibraryWindowService(IServiceProvider services)
 {
     private PresetLibraryWindow? _window;
 
+    /// <summary>Raised when the library window has been closed.</summary>
+    public event Action? WindowClosed;
+
     public void Show()
     {
         if (_window is not null)
@@ -27,7 +30,11 @@ public sealed class PresetLibraryWindowService(IServiceProvider services)
 
         // An owned window closes together with the main window.
         window.Owner = Application.Current.MainWindow;
-        window.Closed += (_, _) => _window = null;
+        window.Closed += (_, _) =>
+        {
+            _window = null;
+            WindowClosed?.Invoke();
+        };
 
         _window = window;
         window.Show();

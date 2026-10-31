@@ -1,5 +1,7 @@
 using AmbientVenGen.Desktop.Models;
+using AmbientVenGen.Desktop.Services;
 using CommunityToolkit.Mvvm.ComponentModel;
+using System.Collections.ObjectModel;
 using System.Globalization;
 using System.Windows.Media;
 
@@ -19,6 +21,21 @@ public sealed partial class FieldPresetItem : ObservableObject
     /// <summary>Loaded in the background after the row appears.</summary>
     [ObservableProperty]
     private ImageSource? _thumbnail;
+
+    /// <summary>Tags of this preset (kept in the database).</summary>
+    public ObservableCollection<string> Tags { get; } = [];
+
+    /// <summary>True while this file is being previewed.</summary>
+    [ObservableProperty]
+    private bool _isPlaying;
+
+    /// <summary>Preview position 0..1 (drawn as a vertical line over the waveform).</summary>
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(PlayX))]
+    private double _playProgress;
+
+    /// <summary>The same position in pixels of the waveform image.</summary>
+    public double PlayX => Math.Round(PlayProgress * WaveformRenderer.Width);
 
     /// <summary>True when the file is gone or cannot be read any more.</summary>
     [ObservableProperty]

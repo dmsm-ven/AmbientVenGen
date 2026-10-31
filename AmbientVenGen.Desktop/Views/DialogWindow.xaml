@@ -5,14 +5,16 @@
     xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
     Icon="pack://application:,,,/Assets/app-icon.ico"
     Title="Ambient Forge"
-    Width="420"
+    MinWidth="380"
+    MaxWidth="520"
+    MinHeight="0"
     Background="#E617171D"
     ExtendsContentIntoTitleBar="True"
     Foreground="#ECECF2"
     KeyDown="OnKeyDown"
     ResizeMode="NoResize"
     ShowInTaskbar="False"
-    SizeToContent="Height"
+    SizeToContent="WidthAndHeight"
     WindowBackdropType="Mica"
     WindowStartupLocation="CenterOwner">
 
@@ -49,13 +51,14 @@
                 Margin="0"
                 VerticalAlignment="Center"
                 FontSize="14"
+                MaxWidth="400"
                 TextWrapping="Wrap" />
         </Grid>
 
         <!-- Buttons: Primary is the default (Enter), Cancel closes with Esc -->
         <StackPanel
             Grid.Row="2"
-            Margin="24,18,24,20"
+            Margin="24,14,24,16"
             HorizontalAlignment="Right"
             Orientation="Horizontal">
             <ui:Button

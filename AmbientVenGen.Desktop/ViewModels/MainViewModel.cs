@@ -34,6 +34,9 @@ public partial class MainViewModel : ObservableObject, IDisposable
 
     private readonly Stack<DeletedLayer> _deletedLayers = new();
 
+    // Set while the library is open to choose a new file for an existing Field record layer.
+    private Layer? _layerAwaitingSource;
+
     private ExportOptions? _lastExportOptions;
     private CancellationTokenSource? _exportCts;
     private int _clipHoldTicks;
@@ -126,6 +129,7 @@ public partial class MainViewModel : ObservableObject, IDisposable
                 .Select(minutes => new Choice<double>($"{minutes} min", minutes * 60.0)));
 
         Project.Changed += OnProjectChanged;
+        _presetLibraryWindowService.WindowClosed += () => _layerAwaitingSource = null;
         WeakReferenceMessenger.Default.Register<MainViewModel, UseFieldPresetMessage>(
             this,
             static (viewModel, message) => viewModel.AddFieldRecordLayer(message.Path, message.Name));
@@ -238,19 +242,16 @@ public partial class MainViewModel : ObservableObject, IDisposable
         double total = Project.DurationSeconds;
         int number = Project.Layers.Count(layer => layer.Type == NewLayer.Type) + 1;
 
-        string? sourcePath = null;
-
         if (NewLayer.Type == LayerType.FieldRecord)
         {
-            // A recording layer needs a file: ask for it right away.
-            sourcePath = _fileDialogService.ChooseFieldPresetFile();
-            if (sourcePath is null)
-                return;
+            // A recording layer needs a file: choose it in the preset library ("Add to project" there adds the layer).
+            _layerAwaitingSource = null;
+            _presetLibraryWindowService.Show();
+            StatusMessage = "Choose a recording in the library and press \"Add to project\"";
+            return;
         }
 
-        Layer created = NewLayer.CreateLayer(
-            sourcePath is null ? $"{NewLayer.Type} {number}" : Path.GetFileNameWithoutExtension(sourcePath));
-        created.SourcePath = sourcePath;
+        Layer created = NewLayer.CreateLayer($"{NewLayer.Type} {number}");
         created.DurationSeconds = Math.Clamp(created.DurationSeconds, MinLayerSeconds, total);
         created.StartSeconds = Math.Clamp(created.StartSeconds, 0, Math.Max(0, total - created.DurationSeconds));
 
@@ -305,6 +306,20 @@ public partial class MainViewModel : ObservableObject, IDisposable
     /// <summary>Adds a recording (from the preset library) as a new Field record layer.</summary>
     private void AddFieldRecordLayer(string path, string name)
     {
+        // The library was opened from "Change file": the recording replaces the file of that layer.
+        if (_layerAwaitingSource is { } waiting)
+        {
+            _layerAwaitingSource = null;
+
+            if (Project.Layers.Contains(waiting))
+            {
+                waiting.SourcePath = path;
+                SelectedLayer = waiting;
+                StatusMessage = $"{waiting.Name}: {Path.GetFileName(path)}";
+                return;
+            }
+        }
+
         double total = Project.DurationSeconds;
 
         Layer layer = LayerDefaults.Create(LayerType.FieldRecord, name);
@@ -324,12 +339,9 @@ public partial class MainViewModel : ObservableObject, IDisposable
         if (SelectedLayer is not { Type: LayerType.FieldRecord } layer)
             return;
 
-        string? path = _fileDialogService.ChooseFieldPresetFile();
-        if (path is null)
-            return;
-
-        layer.SourcePath = path;
-        StatusMessage = $"{layer.Name}: {Path.GetFileName(path)}";
+        _layerAwaitingSource = layer;
+        _presetLibraryWindowService.Show();
+        StatusMessage = "Choose a recording in the library and press \"Add to project\" to use it for this layer";
     }
 
     [RelayCommand]

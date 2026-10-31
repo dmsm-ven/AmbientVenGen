@@ -9,9 +9,9 @@
     xmlns:vm="clr-namespace:AmbientVenGen.Desktop.ViewModels"
     Icon="pack://application:,,,/Assets/app-icon.ico"
     Title="Preset library"
-    Width="960"
+    Width="1100"
     Height="520"
-    MinWidth="780"
+    MinWidth="1040"
     MinHeight="360"
     d:DataContext="{d:DesignInstance IsDesignTimeCreatable=False,
                                      Type=vm:PresetLibraryViewModel}"
@@ -23,20 +23,34 @@
     mc:Ignorable="d">
 
     <ui:FluentWindow.Resources>
+        <BooleanToVisibilityConverter x:Key="BoolToVisibility" />
+
         <!--  The global TextBlock margin (see Styles.xaml) would shift the text inside table cells.  -->
         <Style TargetType="TextBlock">
             <Setter Property="Margin" Value="0" />
         </Style>
 
-        <!--  Row icon: headphones for audio, video camera for .mp4.  -->
-        <Style x:Key="PresetIcon" TargetType="ui:SymbolIcon">
-            <Setter Property="Symbol" Value="Headphones24" />
-            <Setter Property="FontSize" Value="20" />
+        <!--  Preview button: play, and stop while this row is playing.  -->
+        <Style
+            x:Key="PreviewButton"
+            BasedOn="{StaticResource ToolIconButton}"
+            TargetType="ui:Button">
             <Setter Property="Margin" Value="0,0,8,0" />
             <Setter Property="VerticalAlignment" Value="Center" />
+            <Setter Property="ToolTip" Value="Play preview" />
+            <Setter Property="Icon">
+                <Setter.Value>
+                    <ui:SymbolIcon Symbol="Play24" />
+                </Setter.Value>
+            </Setter>
             <Style.Triggers>
-                <DataTrigger Binding="{Binding IsVideo}" Value="True">
-                    <Setter Property="Symbol" Value="Video24" />
+                <DataTrigger Binding="{Binding IsPlaying}" Value="True">
+                    <Setter Property="ToolTip" Value="Stop preview" />
+                    <Setter Property="Icon">
+                        <Setter.Value>
+                            <ui:SymbolIcon Symbol="Stop24" />
+                        </Setter.Value>
+                    </Setter>
                 </DataTrigger>
             </Style.Triggers>
         </Style>
@@ -51,15 +65,41 @@
     <Grid>
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
             <RowDefinition Height="*" />
             <RowDefinition Height="Auto" />
         </Grid.RowDefinitions>
 
         <ui:TitleBar Icon="pack://application:,,,/Assets/app-icon.ico" Title="Preset library" Grid.Row="0" />
 
+        <!--  Under the title: one Loop switch for all previews  -->
+        <Border
+            Grid.Row="1"
+            Margin="10,2,10,0"
+            Padding="8,4"
+            Background="#661C1C24"
+            BorderBrush="#2EFFFFFF"
+            BorderThickness="1"
+            CornerRadius="8">
+            <StackPanel Orientation="Horizontal">
+                <ToggleButton
+                    VerticalAlignment="Center"
+                    IsChecked="{Binding Loop, Mode=TwoWay}"
+                    Style="{StaticResource ToolIconToggleButton}"
+                    ToolTip="Loop: repeat the previewed file (off: play it once)">
+                    <ui:SymbolIcon Symbol="ArrowRepeatAll24" />
+                </ToggleButton>
+                <TextBlock
+                    Margin="4,0,0,0"
+                    VerticalAlignment="Center"
+                    Foreground="#C9C8D6"
+                    Text="Loop preview" />
+            </StackPanel>
+        </Border>
+
         <!--  Table of presets  -->
         <ui:DataGrid
-            Grid.Row="1"
+            Grid.Row="2"
             Margin="10,6,10,6"
             AutoGenerateColumns="False"
             Background="#252526"
@@ -71,14 +111,19 @@
             GridLinesVisibility="Horizontal"
             HeadersVisibility="Column"
             IsReadOnly="True"
+            ScrollViewer.HorizontalScrollBarVisibility="Disabled"
             ItemsSource="{Binding Presets}"
             SelectedItem="{Binding SelectedPreset, Mode=TwoWay}"
             ScrollViewer.CanContentScroll="True"
             SelectionMode="Single"
             VirtualizingPanel.IsVirtualizing="True">
+            <ui:DataGrid.InputBindings>
+                <!--  Double click on a row = Add to project  -->
+                <MouseBinding Command="{Binding UsePresetCommand}" MouseAction="LeftDoubleClick" />
+            </ui:DataGrid.InputBindings>
             <ui:DataGrid.Columns>
                 <!--  Icon + preset name  -->
-                <DataGridTemplateColumn Width="230" Header="Preset">
+                <DataGridTemplateColumn Width="200" Header="Preset">
                     <DataGridTemplateColumn.CellTemplate>
                         <DataTemplate>
                             <StackPanel
@@ -95,7 +140,10 @@
                                         </Style.Triggers>
                                     </Style>
                                 </StackPanel.Style>
-                                <ui:SymbolIcon Style="{StaticResource PresetIcon}" />
+                                <ui:Button
+                                    Command="{Binding DataContext.TogglePreviewCommand, RelativeSource={RelativeSource AncestorType=DataGrid}}"
+                                    CommandParameter="{Binding}"
+                                    Style="{StaticResource PreviewButton}" />
                                 <TextBlock
                                     VerticalAlignment="Center"
                                     Foreground="White"
@@ -107,24 +155,82 @@
                 </DataGridTemplateColumn>
 
                 <DataGridTextColumn
-                    Width="100"
+                    Width="90"
                     Binding="{Binding AddedText}"
                     Header="Added" />
                 <DataGridTextColumn
-                    Width="90"
+                    Width="80"
                     Binding="{Binding DurationText}"
                     Header="Duration" />
                 <DataGridTextColumn
-                    Width="90"
+                    Width="80"
                     Binding="{Binding SizeText}"
                     Header="Size" />
                 <DataGridTextColumn
-                    Width="70"
+                    Width="60"
                     Binding="{Binding Extension}"
                     Header="Format" />
 
+                <!--  Tags: chips + a box to add one (type a new tag or pick an existing one)  -->
+                <DataGridTemplateColumn Width="250" Header="Tags">
+                    <DataGridTemplateColumn.CellTemplate>
+                        <DataTemplate>
+                            <Grid Margin="2">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="Auto" />
+                                </Grid.ColumnDefinitions>
+                                <ItemsControl VerticalAlignment="Center" ItemsSource="{Binding Tags}">
+                                    <ItemsControl.ItemsPanel>
+                                        <ItemsPanelTemplate>
+                                            <WrapPanel />
+                                        </ItemsPanelTemplate>
+                                    </ItemsControl.ItemsPanel>
+                                    <ItemsControl.ItemTemplate>
+                                        <DataTemplate>
+                                            <Border
+                                                Margin="0,1,4,1"
+                                                Padding="7,1,4,1"
+                                                Background="#33B7AFE9"
+                                                CornerRadius="9">
+                                                <StackPanel Orientation="Horizontal">
+                                                    <TextBlock
+                                                        VerticalAlignment="Center"
+                                                        FontSize="11"
+                                                        Foreground="#ECECF2"
+                                                        Text="{Binding}" />
+                                                    <TextBlock
+                                                        Margin="5,0,0,0"
+                                                        VerticalAlignment="Center"
+                                                        Cursor="Hand"
+                                                        FontSize="12"
+                                                        Foreground="#C9C8D6"
+                                                        MouseLeftButtonUp="OnRemoveTagClick"
+                                                        Tag="{Binding DataContext, RelativeSource={RelativeSource AncestorType=DataGridRow}}"
+                                                        Text="x"
+                                                        ToolTip="Remove tag" />
+                                                </StackPanel>
+                                            </Border>
+                                        </DataTemplate>
+                                    </ItemsControl.ItemTemplate>
+                                </ItemsControl>
+                                <ComboBox
+                                    Grid.Column="1"
+                                    Width="92"
+                                    Margin="4,0,0,0"
+                                    VerticalAlignment="Center"
+                                    IsEditable="True"
+                                    ItemsSource="{Binding DataContext.AllTags, RelativeSource={RelativeSource AncestorType=DataGrid}}"
+                                    KeyDown="OnTagKeyDown"
+                                    SelectionChanged="OnTagSelected"
+                                    ToolTip="Add a tag: type a name and press Enter, or pick an existing one" />
+                            </Grid>
+                        </DataTemplate>
+                    </DataGridTemplateColumn.CellTemplate>
+                </DataGridTemplateColumn>
+
                 <!--  Waveform thumbnail (appears when it is ready)  -->
-                <DataGridTemplateColumn Width="*" MinWidth="270" Header="Preview">
+                <DataGridTemplateColumn Width="*" MinWidth="262" Header="Preview">
                     <DataGridTemplateColumn.CellTemplate>
                         <DataTemplate>
                             <Grid
@@ -136,6 +242,17 @@
                                     RenderOptions.BitmapScalingMode="NearestNeighbor"
                                     Source="{Binding Thumbnail}"
                                     Stretch="Fill" />
+                                <!--  Preview position: a vertical line moving over the waveform  -->
+                                <Rectangle
+                                    Width="2"
+                                    HorizontalAlignment="Left"
+                                    Fill="#FFF2F2F8"
+                                    IsHitTestVisible="False"
+                                    Visibility="{Binding IsPlaying, Converter={StaticResource BoolToVisibility}}">
+                                    <Rectangle.RenderTransform>
+                                        <TranslateTransform X="{Binding PlayX}" />
+                                    </Rectangle.RenderTransform>
+                                </Rectangle>
                                 <!--  Shown while the waveform is being prepared  -->
                                 <ui:ProgressRing
                                     Width="24"
@@ -163,7 +280,7 @@
 
         <!--  Buttons (Add / Remove / Use)  -->
         <StackPanel
-            Grid.Row="2"
+            Grid.Row="3"
             Margin="10,0,10,10"
             Orientation="Horizontal">
             <ui:Button
