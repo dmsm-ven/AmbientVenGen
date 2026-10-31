@@ -85,7 +85,7 @@ public static class SampleLibrary
 
             while (left.Count < maxFrames)
             {
-                int read = source.Read(buffer, 0, buffer.Length);
+                int read = source.Read(buffer.AsSpan());
                 if (read <= 0)
                     break;
 
