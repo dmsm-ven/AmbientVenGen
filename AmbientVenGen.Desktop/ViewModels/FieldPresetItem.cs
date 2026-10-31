@@ -1,4 +1,4 @@
-using AmbientVenGen.Desktop.Models;
+﻿using AmbientVenGen.Desktop.DataAccess.Models;
 using AmbientVenGen.Desktop.Services;
 using CommunityToolkit.Mvvm.ComponentModel;
 using System.Collections.ObjectModel;

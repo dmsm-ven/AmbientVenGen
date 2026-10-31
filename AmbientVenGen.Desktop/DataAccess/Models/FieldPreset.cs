@@ -1,4 +1,4 @@
-namespace AmbientVenGen.Desktop.Models;
+﻿namespace AmbientVenGen.Desktop.DataAccess.Models;
 
 /// <summary>
 /// A field-recording preset: a reference to an audio/video file in the user's library.

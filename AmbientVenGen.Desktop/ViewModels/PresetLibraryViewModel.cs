@@ -1,6 +1,6 @@
-using AmbientVenGen.Desktop.Audio;
-using AmbientVenGen.Desktop.DataAccess;
-using AmbientVenGen.Desktop.Models;
+﻿using AmbientVenGen.Desktop.Audio;
+using AmbientVenGen.Desktop.DataAccess.Models;
+using AmbientVenGen.Desktop.DataAccess.Repositories;
 using AmbientVenGen.Desktop.Services;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;

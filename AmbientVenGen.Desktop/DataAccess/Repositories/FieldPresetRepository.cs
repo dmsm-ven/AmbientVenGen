@@ -1,9 +1,9 @@
-using AmbientVenGen.Desktop.Models;
+﻿using AmbientVenGen.Desktop.DataAccess.Models;
 using Dapper;
 using Microsoft.Data.Sqlite;
 using System.IO;
 
-namespace AmbientVenGen.Desktop.DataAccess;
+namespace AmbientVenGen.Desktop.DataAccess.Repositories;
 
 /// <summary>SQLite storage (through Dapper) for the field-preset library.</summary>
 public sealed class FieldPresetRepository

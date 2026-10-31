@@ -1,4 +1,4 @@
-namespace AmbientVenGen.Desktop.Models;
+﻿namespace AmbientVenGen.Desktop.DataAccess.Models;
 
 /// <summary>One tag put on one preset (a row of the PresetTags table).</summary>
 public sealed class PresetTagRow
