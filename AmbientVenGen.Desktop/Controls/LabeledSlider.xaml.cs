@@ -41,7 +41,21 @@ public partial class LabeledSlider : UserControl
         nameof(Hint), typeof(string), typeof(LabeledSlider),
         new PropertyMetadata(string.Empty, OnPropertyChanged));
 
+    /// <summary>
+    /// The slider moves along a logarithmic scale (equal distance = equal ratio). Good for pitch:
+    /// 20 Hz..5 kHz would otherwise leave the low notes squeezed into the first few pixels.
+    /// </summary>
+    public static readonly DependencyProperty IsLogarithmicProperty = DependencyProperty.Register(
+        nameof(IsLogarithmic), typeof(bool), typeof(LabeledSlider),
+        new PropertyMetadata(false, OnPropertyChanged));
+
     private bool _syncing;
+
+    public bool IsLogarithmic
+    {
+        get => (bool)GetValue(IsLogarithmicProperty);
+        set => SetValue(IsLogarithmicProperty, value);
+    }
 
     public string Header
     {
@@ -99,8 +113,13 @@ public partial class LabeledSlider : UserControl
         if (_syncing)
             return;
 
+        double value = e.NewValue;
+
+        if (IsLogarithmic && Minimum > 0)
+            value = Math.Clamp(Math.Round(Math.Exp(value), 1), Minimum, Math.Max(Maximum, Minimum));
+
         // SetCurrentValue keeps (and pushes through) a two-way binding.
-        SetCurrentValue(ValueProperty, e.NewValue);
+        SetCurrentValue(ValueProperty, value);
     }
 
     private void Sync()
@@ -114,10 +133,16 @@ public partial class LabeledSlider : UserControl
             double minimum = Minimum;
             double maximum = Math.Max(Maximum, minimum);
 
-            InnerSlider.Minimum = minimum;
-            InnerSlider.Maximum = maximum;
+            bool log = IsLogarithmic && minimum > 0;
 
-            if (Step > 0)
+            InnerSlider.Minimum = log ? Math.Log(minimum) : minimum;
+            InnerSlider.Maximum = log ? Math.Log(maximum) : maximum;
+
+            if (log)
+            {
+                InnerSlider.IsSnapToTickEnabled = false;
+            }
+            else if (Step > 0)
             {
                 InnerSlider.TickFrequency = Step;
                 InnerSlider.IsSnapToTickEnabled = true;
@@ -127,7 +152,7 @@ public partial class LabeledSlider : UserControl
                 InnerSlider.IsSnapToTickEnabled = false;
             }
 
-            InnerSlider.Value = Value;
+            InnerSlider.Value = log ? Math.Log(Math.Clamp(Value, minimum, maximum)) : Value;
 
             HeaderText.Text = Header;
             HeaderHint.Text = Hint;

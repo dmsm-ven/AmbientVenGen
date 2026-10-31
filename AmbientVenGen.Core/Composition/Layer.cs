@@ -1,10 +1,14 @@
 using CommunityToolkit.Mvvm.ComponentModel;
+using System.IO;
 
 namespace AmbientVenGen.Core.Composition;
 
 /// <summary>Editable (observable) layer shown on the timeline and in the inspector.</summary>
 public sealed partial class Layer : ObservableObject
 {
+    public const double MinPitchHz = 20;
+    public const double MaxPitchHz = 5000;
+
     public Guid Id { get; } = Guid.NewGuid();
 
     [ObservableProperty]
@@ -68,7 +72,14 @@ public sealed partial class Layer : ObservableObject
     [ObservableProperty]
     private int _seed = Random.Shared.Next(1, int.MaxValue);
 
-    public string TypeLabel => Type.ToString();
+    /// <summary>Audio file of a field-record layer (null for synthesized layers).</summary>
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(SourceName))]
+    private string? _sourcePath;
+
+    public string TypeLabel => Type == LayerType.FieldRecord ? "Field record" : Type.ToString();
+
+    public string SourceName => string.IsNullOrEmpty(SourcePath) ? "(no file)" : Path.GetFileName(SourcePath);
 
     public LayerSpec ToSpec() => new(
         Id,
@@ -85,7 +96,8 @@ public sealed partial class Layer : ObservableObject
         PitchHz,
         Pan,
         Muted,
-        Seed);
+        Seed,
+        SourcePath);
 
     /// <summary>Creates a layer from a spec, clamping values read from a file to sane ranges.</summary>
     public static Layer FromSpec(LayerSpec spec)
@@ -110,10 +122,11 @@ public sealed partial class Layer : ObservableObject
             ModulationFrom = Unit(spec.Modulation.From),
             ModulationTo = Unit(spec.Modulation.To),
             ModulationEasing = spec.Modulation.Easing,
-            PitchHz = Math.Clamp(spec.PitchHz, 20, 440),
+            PitchHz = Math.Clamp(spec.PitchHz, MinPitchHz, MaxPitchHz),
             Pan = Math.Clamp(spec.Pan, -1, 1),
             Muted = spec.Muted,
-            Seed = spec.Seed
+            Seed = spec.Seed,
+            SourcePath = spec.SourcePath
         };
     }
 

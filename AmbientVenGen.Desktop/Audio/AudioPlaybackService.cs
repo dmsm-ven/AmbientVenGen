@@ -23,6 +23,7 @@ public sealed class AudioPlaybackService : IDisposable
     public void Start(ProjectSpec spec, double startSeconds)
     {
         Stop();
+        SampleLibrary.RequestAll(spec);
 
         var mixer = new ProjectMixer(spec, Analyzer);
         mixer.Seek(startSeconds);
@@ -47,7 +48,11 @@ public sealed class AudioPlaybackService : IDisposable
     }
 
     /// <summary>Applies an edited project to the running playback.</summary>
-    public void Update(ProjectSpec spec) => _mixer?.SetSpec(spec);
+    public void Update(ProjectSpec spec)
+    {
+        SampleLibrary.RequestAll(spec);
+        _mixer?.SetSpec(spec);
+    }
 
     public void Seek(double seconds) => _mixer?.Seek(seconds);
 

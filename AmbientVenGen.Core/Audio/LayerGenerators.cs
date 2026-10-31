@@ -9,8 +9,12 @@ internal readonly struct BlockParams
     public readonly float Modulation;
     public readonly float PitchHz;
 
-    public BlockParams(float brightness, float modulation, float pitchHz)
+    /// <summary>Time since the layer started, at the start of the block (recordings play from it).</summary>
+    public readonly double LocalSeconds;
+
+    public BlockParams(float brightness, float modulation, float pitchHz, double localSeconds = 0)
     {
+        LocalSeconds = localSeconds;
         Brightness = brightness;
         Modulation = modulation;
         PitchHz = pitchHz;
@@ -26,10 +30,14 @@ internal abstract class LayerGenerator
     protected const int SampleRate = 44100;
     protected const double TwoPi = Math.PI * 2.0;
 
+    /// <summary>Highest frequency a partial may have (a little below Nyquist, to stay clean).</summary>
+    protected const double MaxPartialHz = SampleRate * 0.45;
+
     public abstract void Render(in BlockParams p, Span<float> left, Span<float> right);
 
-    public static LayerGenerator Create(LayerType type, int seed) => type switch
+    public static LayerGenerator Create(LayerType type, int seed, string? sourcePath = null) => type switch
     {
+        LayerType.FieldRecord => new FieldRecordGenerator(seed, sourcePath),
         LayerType.Noise => new NoiseGenerator(seed),
         LayerType.Pad => new PadGenerator(seed),
         _ => new DroneGenerator(seed)
@@ -96,6 +104,10 @@ internal sealed class DroneGenerator : LayerGenerator
             for (int k = 0; k < Partials; k++)
             {
                 double freq = pitch * Ratios[k] * drift;
+
+                // Partials above the Nyquist limit would fold back as false tones: leave them out.
+                if (freq >= MaxPartialHz)
+                    continue;
 
                 _phaseL[k] += TwoPi * freq * (1.0 + spread) / SampleRate;
                 _phaseR[k] += TwoPi * freq * (1.0 - spread) / SampleRate;
@@ -244,6 +256,9 @@ internal sealed class PadGenerator : LayerGenerator
                 {
                     double freq = pitch * Ratios[k] * vibrato;
 
+                    if (freq >= MaxPartialHz)
+                        continue;
+
                     _phaseL[k] += TwoPi * freq * (1.0 + spread) / SampleRate;
                     _phaseR[k] += TwoPi * freq * (1.0 - spread) / SampleRate;
                     Wrap(ref _phaseL[k]);
@@ -256,6 +271,96 @@ internal sealed class PadGenerator : LayerGenerator
                 left[n] = (float)sumL;
                 right[n] = (float)sumR;
             }
+        }
+    }
+}
+
+/// <summary>
+/// Plays a decoded recording in a loop (the end is cross-faded into the beginning). The position is
+/// derived from the layer time, so seeking and re-rendering always give the same sound.
+/// Brightness is a low-pass filter, modulation a slow breathing of the level.
+/// </summary>
+internal sealed class FieldRecordGenerator : LayerGenerator
+{
+    private const double MaxCrossfadeSeconds = 2.0;
+
+    private readonly string? _path;
+    private readonly double _breathRate;
+    private double _breathPhase;
+    private float _lowL;
+    private float _lowR;
+    private DecodedSample? _sample;
+
+    public FieldRecordGenerator(int seed, string? path)
+    {
+        var random = new Random(seed);
+
+        _path = path;
+        _breathPhase = random.NextDouble() * TwoPi;
+        _breathRate = 0.04 + random.NextDouble() * 0.06;
+    }
+
+    public override void Render(in BlockParams p, Span<float> left, Span<float> right)
+    {
+        if (_sample is null && !string.IsNullOrEmpty(_path))
+        {
+            // The file is decoded on a background thread; until it is ready the layer is silent.
+            _sample = SampleLibrary.TryGet(_path);
+
+            if (_sample is null)
+                SampleLibrary.Request(_path);
+        }
+
+        DecodedSample? sample = _sample;
+
+        if (sample is null || sample.Frames < 2)
+        {
+            left.Clear();
+            right.Clear();
+            return;
+        }
+
+        int frames = sample.Frames;
+        int crossfade = (int)Math.Min(MaxCrossfadeSeconds * SampleRate, frames / 4);
+        int period = frames - crossfade;
+
+        long start = (long)Math.Round(Math.Max(0.0, p.LocalSeconds) * SampleRate);
+        int position = (int)(start % period);
+
+        // Brightness 0..1 -> low-pass cutoff about 300 Hz .. 19 kHz.
+        double cutoff = Math.Min(300.0 * Math.Pow(2.0, Math.Clamp(p.Brightness, 0f, 1f) * 6.0), SampleRate * 0.45);
+        float alpha = (float)(1.0 - Math.Exp(-TwoPi * cutoff / SampleRate));
+        double depth = Math.Clamp(p.Modulation, 0f, 1f) * 0.35;
+
+        for (int n = 0; n < left.Length; n++)
+        {
+            float l = sample.Left[position];
+            float r = sample.Right[position];
+
+            if (position < crossfade)
+            {
+                // Beginning blended with the tail that follows the loop point (equal power).
+                double angle = (double)position / crossfade * Math.PI / 2.0;
+                float fadeIn = (float)Math.Sin(angle);
+                float fadeOut = (float)Math.Cos(angle);
+
+                l = l * fadeIn + sample.Left[period + position] * fadeOut;
+                r = r * fadeIn + sample.Right[period + position] * fadeOut;
+            }
+
+            position++;
+            if (position >= period)
+                position = 0;
+
+            _lowL += alpha * (l - _lowL);
+            _lowR += alpha * (r - _lowR);
+
+            _breathPhase += TwoPi * _breathRate / SampleRate;
+            Wrap(ref _breathPhase);
+            float breath = (float)(1.0 - depth * 0.5 * (1.0 + Math.Sin(_breathPhase)));
+
+            left[n] = _lowL * breath;
+            right[n] = _lowR * breath;
         }
     }
 }

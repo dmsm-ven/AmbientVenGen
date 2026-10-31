@@ -4,7 +4,7 @@ namespace AmbientVenGen.Desktop.ViewModels;
 public static class HintTexts
 {
     public const string LayerType =
-        "Drone: low sustained tones. Noise: a filtered noise texture (wind, dust). Pad: a soft harmonic 'choir'.";
+        "Drone: low sustained tones. Noise: a filtered noise texture (wind, dust). Pad: a soft harmonic 'choir'. Field record: your own audio file (wav, mp3, flac...), looped.";
 
     public const string Level =
         "Loudness of the layer. 'From' is the level at the start of the layer, 'To' at its end; the curve on the right sets how it moves between them.";
@@ -44,4 +44,7 @@ public static class HintTexts
 
     public const string TrackLength =
         "Total length of the track. Layers can be placed anywhere inside it.";
+
+    public const string Source =
+        "The audio file this layer plays. It is looped (the end fades into the beginning), so any length works. Brightness softens the high frequencies.";
 }

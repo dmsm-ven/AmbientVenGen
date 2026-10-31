@@ -25,7 +25,8 @@ public static class Choices
     [
         new("Drone", LayerType.Drone),
         new("Noise (texture)", LayerType.Noise),
-        new("Pad (choir)", LayerType.Pad)
+        new("Pad (choir)", LayerType.Pad),
+        new("Field record", LayerType.FieldRecord)
     ];
 }
 

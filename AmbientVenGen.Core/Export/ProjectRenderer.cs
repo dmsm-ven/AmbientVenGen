@@ -23,6 +23,9 @@ public static class ProjectRenderer
         CancellationToken cancellationToken = default,
         double progressScale = 1.0)
     {
+        // Offline render must not start before the recordings are decoded (live playback may).
+        SampleLibrary.Preload(spec);
+
         var duration = TimeSpan.FromSeconds(spec.DurationSeconds);
         ISampleProvider chain = new ProjectMixer(spec);
 

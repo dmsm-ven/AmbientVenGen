@@ -57,6 +57,18 @@
         <Setter Property="VerticalContentAlignment" Value="Center" />
     </Style>
 
+    <!--  30x30 icon button (25% larger) for the Play / Seed buttons in the Timeline section.  -->
+    <Style
+        x:Key="TimelineIconButton"
+        BasedOn="{StaticResource ToolIconButton}"
+        TargetType="ui:Button">
+        <Setter Property="Width" Value="30" />
+        <Setter Property="Height" Value="30" />
+        <Setter Property="MinWidth" Value="30" />
+        <Setter Property="MinHeight" Value="30" />
+        <Setter Property="FontSize" Value="17" />
+    </Style>
+
     <!--  24x24 icon-only toggle button for the tool panels. Checked = accent background.  -->
     <Style
         x:Key="ToolIconToggleButton"

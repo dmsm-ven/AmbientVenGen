@@ -4,7 +4,10 @@ public enum LayerType
 {
     Drone,
     Noise,
-    Pad
+    Pad,
+
+    /// <summary>A recorded sound (wav, mp3, flac...) looped under the other layers.</summary>
+    FieldRecord
 }
 
 /// <summary>A parameter that moves from one value to another over the length of a layer.</summary>
@@ -32,7 +35,8 @@ public sealed record LayerSpec(
     double PitchHz,
     double Pan,
     bool Muted,
-    int Seed)
+    int Seed,
+    string? SourcePath = null)
 {
     public double Progress(double localSeconds) =>
         DurationSeconds > 0 ? Math.Clamp(localSeconds / DurationSeconds, 0.0, 1.0) : 0.0;
