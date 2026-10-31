@@ -155,7 +155,7 @@
                                         Foreground="#A9A7C2"
                                         Text="{Binding Description}"
                                         TextWrapping="Wrap"
-                                        Visibility="{Binding ShowDescriptions, ElementName=Root, Converter={StaticResource BoolToVisibility}}" />
+                                        Visibility="{Binding Path=(local:Hints.IsShown), ElementName=Root, Converter={StaticResource BoolToVisibility}}" />
                                 </StackPanel>
                             </StackPanel>
                         </DataTemplate>

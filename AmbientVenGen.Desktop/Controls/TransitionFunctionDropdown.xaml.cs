@@ -19,20 +19,10 @@ public partial class TransitionFunctionDropdown : UserControl
             FrameworkPropertyMetadataOptions.BindsTwoWayByDefault,
             (d, _) => ((TransitionFunctionDropdown)d).Sync()));
 
-    /// <summary>Follows the window-wide "Show hints" switch (inherited attached property).</summary>
-    public static readonly DependencyProperty ShowDescriptionsProperty =
-        Hints.IsShownProperty.AddOwner(typeof(TransitionFunctionDropdown));
-
     public Easing Value
     {
         get => (Easing)GetValue(ValueProperty);
         set => SetValue(ValueProperty, value);
-    }
-
-    public bool ShowDescriptions
-    {
-        get => (bool)GetValue(ShowDescriptionsProperty);
-        set => SetValue(ShowDescriptionsProperty, value);
     }
 
     public TransitionFunctionDropdown()
