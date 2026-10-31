@@ -342,9 +342,10 @@
                                             <ColumnDefinition Width="104" />
                                             <ColumnDefinition Width="*" />
                                             <ColumnDefinition Width="*" />
-                                            <ColumnDefinition Width="124" />
+                                            <ColumnDefinition Width="80" />
                                         </Grid.ColumnDefinitions>
                                         <Grid.RowDefinitions>
+                                            <RowDefinition Height="Auto" />
                                             <RowDefinition Height="Auto" />
                                             <RowDefinition Height="Auto" />
                                             <RowDefinition Height="Auto" />
@@ -380,14 +381,7 @@
                                             Minimum="0"
                                             Step="0.01"
                                             Value="{Binding LevelTo, Mode=TwoWay}" />
-                                        <ComboBox
-                                            Grid.Row="0"
-                                            Grid.Column="3"
-                                            Margin="0,0,0,8"
-                                            VerticalAlignment="Bottom"
-                                            ItemsSource="{x:Static vm:Choices.Easings}"
-                                            SelectedValue="{Binding LevelEasing, Mode=TwoWay}"
-                                            Style="{StaticResource ChoiceCombo}" />
+                                        <controls:TransitionFunctionDropdown Grid.Row="0" Grid.Column="3" Margin="0,0,0,8" VerticalAlignment="Bottom" Value="{Binding LevelEasing, Mode=TwoWay}" />
 
                                         <StackPanel
                                             Grid.Row="1"
@@ -419,14 +413,7 @@
                                             Minimum="0"
                                             Step="0.01"
                                             Value="{Binding BrightnessTo, Mode=TwoWay}" />
-                                        <ComboBox
-                                            Grid.Row="1"
-                                            Grid.Column="3"
-                                            Margin="0,0,0,8"
-                                            VerticalAlignment="Bottom"
-                                            ItemsSource="{x:Static vm:Choices.Easings}"
-                                            SelectedValue="{Binding BrightnessEasing, Mode=TwoWay}"
-                                            Style="{StaticResource ChoiceCombo}" />
+                                        <controls:TransitionFunctionDropdown Grid.Row="1" Grid.Column="3" Margin="0,0,0,8" VerticalAlignment="Bottom" Value="{Binding BrightnessEasing, Mode=TwoWay}" />
 
                                         <StackPanel
                                             Grid.Row="2"
@@ -441,7 +428,7 @@
                                         <controls:LabeledSlider
                                             Grid.Row="2"
                                             Grid.Column="1"
-                                            Margin="0,0,10,0"
+                                            Margin="0,0,10,8"
                                             Format="{}{0:P0}"
                                             Header="From"
                                             Maximum="1"
@@ -451,20 +438,30 @@
                                         <controls:LabeledSlider
                                             Grid.Row="2"
                                             Grid.Column="2"
-                                            Margin="0,0,10,0"
+                                            Margin="0,0,10,8"
                                             Format="{}{0:P0}"
                                             Header="To"
                                             Maximum="1"
                                             Minimum="0"
                                             Step="0.01"
                                             Value="{Binding ModulationTo, Mode=TwoWay}" />
-                                        <ComboBox
-                                            Grid.Row="2"
-                                            Grid.Column="3"
-                                            VerticalAlignment="Bottom"
-                                            ItemsSource="{x:Static vm:Choices.Easings}"
-                                            SelectedValue="{Binding ModulationEasing, Mode=TwoWay}"
-                                            Style="{StaticResource ChoiceCombo}" />
+                                        <controls:TransitionFunctionDropdown Grid.Row="2" Grid.Column="3" Margin="0,0,0,8" VerticalAlignment="Bottom" Value="{Binding ModulationEasing, Mode=TwoWay}" />
+                                        <!-- Fade in / fade out curve: right under the parameter rows -->
+                                        <StackPanel
+                                            Grid.Row="3"
+                                            VerticalAlignment="Center"
+                                            Orientation="Horizontal">
+                                            <ui:TextBlock
+                                                Margin="0"
+                                                FontWeight="SemiBold"
+                                                Text="Transition curve" />
+                                            <controls:HintIcon Margin="5,0,0,0" Text="{x:Static vm:HintTexts.TransitionCurve}" />
+                                        </StackPanel>
+                                        <controls:TransitionFunctionDropdown
+                                            Grid.Row="3"
+                                            Grid.Column="1"
+                                            Grid.ColumnSpan="2"
+                                            Value="{Binding FadeEasing, Mode=TwoWay}" />
                                     </Grid>
 
                                     <!-- Placement, fades, pitch, pan -->
@@ -535,20 +532,6 @@
                                             Minimum="0"
                                             Step="1"
                                             Value="{Binding FadeOutSeconds, Mode=TwoWay}" />
-                                        <StackPanel Grid.Row="2" Grid.Column="0">
-                                            <StackPanel Orientation="Horizontal">
-                                                <ui:TextBlock
-                                                    Margin="0"
-                                                    FontSize="12"
-                                                    Foreground="#C9C8D6"
-                                                    Text="Transition curve" />
-                                                <controls:HintIcon Margin="5,0,0,0" Text="{x:Static vm:HintTexts.TransitionCurve}" />
-                                            </StackPanel>
-                                            <ComboBox
-                                                ItemsSource="{x:Static vm:Choices.Easings}"
-                                                SelectedValue="{Binding FadeEasing, Mode=TwoWay}"
-                                                Style="{StaticResource ChoiceCombo}" />
-                                        </StackPanel>
                                     </Grid>
                                 </Grid>
                             </DataTemplate>
