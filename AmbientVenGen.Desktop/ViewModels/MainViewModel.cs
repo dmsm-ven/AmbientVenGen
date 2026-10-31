@@ -78,6 +78,10 @@ public partial class MainViewModel : ObservableObject, IDisposable
     [ObservableProperty]
     private double[]? _spectrumBands;
 
+    /// <summary>Shows the "?" hint icons next to parameter captions (the toggle in the tool panel).</summary>
+    [ObservableProperty]
+    private bool _showHints;
+
     [ObservableProperty]
     private bool _isDirty;
 

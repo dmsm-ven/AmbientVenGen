@@ -36,12 +36,23 @@ public partial class LabeledSlider : UserControl
         nameof(Format), typeof(string), typeof(LabeledSlider),
         new PropertyMetadata("{0:0.##}", OnPropertyChanged));
 
+    /// <summary>Explanation shown by the "?" icon after the caption (when hints are switched on).</summary>
+    public static readonly DependencyProperty HintProperty = DependencyProperty.Register(
+        nameof(Hint), typeof(string), typeof(LabeledSlider),
+        new PropertyMetadata(string.Empty, OnPropertyChanged));
+
     private bool _syncing;
 
     public string Header
     {
         get => (string)GetValue(HeaderProperty);
         set => SetValue(HeaderProperty, value);
+    }
+
+    public string Hint
+    {
+        get => (string)GetValue(HintProperty);
+        set => SetValue(HintProperty, value);
     }
 
     public double Value
@@ -119,6 +130,7 @@ public partial class LabeledSlider : UserControl
             InnerSlider.Value = Value;
 
             HeaderText.Text = Header;
+            HeaderHint.Text = Hint;
             ValueText.Text = FormatValue(Value);
         }
         finally

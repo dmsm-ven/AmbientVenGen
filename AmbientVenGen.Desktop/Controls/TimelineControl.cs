@@ -73,6 +73,10 @@ public sealed class TimelineControl : FrameworkElement
 
     private DragMode _mode = DragMode.None;
     private Layer? _dragLayer;
+
+    // Header hover: the row under the mouse and which arrow (-1 up, +1 down, 0 none) is under it.
+    private int _hoverLane = -1;
+    private int _hoverArrow;
     private double _dragStartTime;
     private double _originalStart;
     private double _originalDuration;
@@ -116,7 +120,8 @@ public sealed class TimelineControl : FrameworkElement
         FocusVisualStyle = null;
         ClipToBounds = true;
         ToolTip = "Drag clips to move, drag edges to resize, drag the round handles to set fades.\n"
-                  + "Click the ruler to move the playhead. Ctrl+wheel: zoom. Shift+wheel: scroll. Del: remove layer.";
+                  + "Click the ruler to move the playhead. Ctrl+wheel: zoom. Shift+wheel: scroll. Del: remove layer.\n"
+                  + "Hover a layer name and use the arrows (or Alt+Up/Down) to change the order of layers.";
     }
 
     protected override int VisualChildrenCount => 2;
@@ -143,11 +148,30 @@ public sealed class TimelineControl : FrameworkElement
         Math.Max(2, layer.DurationSeconds * PixelsPerSecond),
         LaneHeight - 2 * LanePadding);
 
-    private static Rect MuteRect(int lane) => new(
+    // The two arrows (up and down) live where the mute badge is: 24 px wide, one above the other.
+    private static Rect ArrowRect(int lane, int direction) => new(
         HeaderWidth - 36,
-        LaneTop(lane) + (LaneHeight - 20) / 2.0,
+        LaneTop(lane) + (LaneHeight - 30) / 2.0 + (direction > 0 ? 16 : 0),
         24,
-        20);
+        14);
+
+    private bool CanMove(int lane, int direction)
+    {
+        int target = lane + direction;
+        return Project is { } project && target >= 0 && target < project.Layers.Count;
+    }
+
+    /// <summary>-1 / +1 when the point is on an enabled arrow of the lane, otherwise 0.</summary>
+    private int ArrowAt(Point point, int lane)
+    {
+        foreach (int direction in new[] { -1, 1 })
+        {
+            if (CanMove(lane, direction) && ArrowRect(lane, direction).Contains(point))
+                return direction;
+        }
+
+        return 0;
+    }
 
     private void ClampView()
     {
@@ -384,6 +408,14 @@ public sealed class TimelineControl : FrameworkElement
                     BrushOf(Color.FromArgb(0x30, 0x10, 0x10, 0x16)),
                     null,
                     new Rect(0, top, HeaderWidth, LaneHeight));
+
+                if (lane == _hoverLane)
+                {
+                    dc.DrawRectangle(
+                        BrushOf(Color.FromArgb(0x14, 0xFF, 0xFF, 0xFF)),
+                        null,
+                        new Rect(0, top, HeaderWidth, LaneHeight));
+                }
             }
 
             if (laneLayer is null)
@@ -414,20 +446,22 @@ public sealed class TimelineControl : FrameworkElement
 
             dc.Pop();
 
-            // Mute toggle.
-            Rect mute = MuteRect(lane);
-            Color muteFill = layer.Muted ? Color.FromArgb(0xE0, 0xFF, 0xC1, 0x5C) : Color.FromArgb(0x16, 0xFF, 0xFF, 0xFF);
-            Color muteText = layer.Muted ? Color.FromRgb(0x20, 0x16, 0x08) : Color.FromArgb(0xB0, 0xC9, 0xC8, 0xD6);
+            if (lane == _hoverLane)
+            {
+                // Reorder arrows appear only while the mouse is over the header.
+                DrawArrow(dc, lane, -1);
+                DrawArrow(dc, lane, 1);
+            }
+            else if (layer.Muted)
+            {
+                // The mute switch is in the "Selected layer" panel; here a muted layer is only marked.
+                var badge = new Rect(HeaderWidth - 36, top + (LaneHeight - 20) / 2.0, 24, 20);
 
-            dc.DrawRoundedRectangle(
-                BrushOf(muteFill),
-                new Pen(BrushOf(Color.FromArgb(0x30, 0xFF, 0xFF, 0xFF)), 1),
-                mute,
-                5,
-                5);
+                dc.DrawRoundedRectangle(BrushOf(Color.FromArgb(0xE0, 0xFF, 0xC1, 0x5C)), null, badge, 5, 5);
 
-            FormattedText m = MakeText("M", 11, muteText, bold: true);
-            dc.DrawText(m, new Point(mute.Left + (mute.Width - m.Width) / 2.0, mute.Top + (mute.Height - m.Height) / 2.0));
+                FormattedText m = MakeText("M", 11, Color.FromRgb(0x20, 0x16, 0x08), bold: true);
+                dc.DrawText(m, new Point(badge.Left + (badge.Width - m.Width) / 2.0, badge.Top + (badge.Height - m.Height) / 2.0));
+            }
         }
 
         // Vertical line between the headers and the track.
@@ -435,6 +469,46 @@ public sealed class TimelineControl : FrameworkElement
             new Pen(BrushOf(Color.FromArgb(0x28, 0xFF, 0xFF, 0xFF)), 1),
             new Point(HeaderWidth - 0.5, RulerHeight),
             new Point(HeaderWidth - 0.5, ActualHeight));
+    }
+
+    private void DrawArrow(DrawingContext dc, int lane, int direction)
+    {
+        bool enabled = CanMove(lane, direction);
+        bool hot = enabled && _hoverArrow == direction;
+        Rect rect = ArrowRect(lane, direction);
+
+        dc.PushOpacity(enabled ? 1.0 : 0.3);
+
+        dc.DrawRoundedRectangle(
+            BrushOf(Color.FromArgb(hot ? (byte)0x50 : (byte)0x1C, 0xFF, 0xFF, 0xFF)),
+            new Pen(BrushOf(Color.FromArgb(hot ? (byte)0xC0 : (byte)0x38, 0xFF, 0xFF, 0xFF)), 1),
+            rect,
+            4,
+            4);
+
+        double cx = rect.Left + rect.Width / 2.0;
+        double cy = rect.Top + rect.Height / 2.0;
+        double apex = direction < 0 ? cy - 2.5 : cy + 2.5;
+        double ends = direction < 0 ? cy + 2.5 : cy - 2.5;
+
+        var chevron = new StreamGeometry();
+        using (StreamGeometryContext ctx = chevron.Open())
+        {
+            ctx.BeginFigure(new Point(cx - 4, ends), false, false);
+            ctx.LineTo(new Point(cx, apex), true, true);
+            ctx.LineTo(new Point(cx + 4, ends), true, true);
+        }
+        chevron.Freeze();
+
+        var pen = new Pen(BrushOf(Color.FromArgb(0xF0, 0xFF, 0xFF, 0xFF)), 1.6)
+        {
+            StartLineCap = PenLineCap.Round,
+            EndLineCap = PenLineCap.Round,
+            LineJoin = PenLineJoin.Round
+        };
+
+        dc.DrawGeometry(null, pen, chevron);
+        dc.Pop();
     }
 
     private void DrawRuler(DrawingContext dc, double width)
@@ -777,7 +851,7 @@ public sealed class TimelineControl : FrameworkElement
             return;
         }
 
-        // Layer header: select, or toggle mute.
+        // Layer header: select; the arrows (visible on hover) move the layer up or down.
         if (point.X < HeaderWidth)
         {
             int lane = (int)Math.Floor((point.Y - RulerHeight) / LaneHeight);
@@ -785,11 +859,15 @@ public sealed class TimelineControl : FrameworkElement
             if (point.Y >= RulerHeight && lane >= 0 && lane < project.Layers.Count)
             {
                 Layer layer = project.Layers[lane];
-
-                if (MuteRect(lane).Contains(point))
-                    layer.Muted = !layer.Muted;
+                int direction = ArrowAt(point, lane);
 
                 SetCurrentValue(SelectedLayerProperty, layer);
+
+                if (direction != 0)
+                {
+                    project.MoveLayer(layer, direction);
+                    UpdateHover(point);
+                }
             }
             else
             {
@@ -836,6 +914,7 @@ public sealed class TimelineControl : FrameworkElement
 
         if (_mode == DragMode.None)
         {
+            UpdateHover(point);
             UpdateCursor(point);
             return;
         }
@@ -904,6 +983,42 @@ public sealed class TimelineControl : FrameworkElement
         UpdateCursor(e.GetPosition(this));
     }
 
+    protected override void OnMouseLeave(MouseEventArgs e)
+    {
+        base.OnMouseLeave(e);
+
+        if (_hoverLane != -1 || _hoverArrow != 0)
+        {
+            _hoverLane = -1;
+            _hoverArrow = 0;
+            InvalidateContent();
+        }
+    }
+
+    private void UpdateHover(Point point)
+    {
+        int lane = -1;
+        int arrow = 0;
+
+        if (Project is { } project && point.X >= 0 && point.X < HeaderWidth && point.Y >= RulerHeight)
+        {
+            int candidate = (int)Math.Floor((point.Y - RulerHeight) / LaneHeight);
+
+            if (candidate >= 0 && candidate < project.Layers.Count)
+            {
+                lane = candidate;
+                arrow = ArrowAt(point, lane);
+            }
+        }
+
+        if (lane != _hoverLane || arrow != _hoverArrow)
+        {
+            _hoverLane = lane;
+            _hoverArrow = arrow;
+            InvalidateContent();
+        }
+    }
+
     protected override void OnLostMouseCapture(MouseEventArgs e)
     {
         base.OnLostMouseCapture(e);
@@ -963,6 +1078,18 @@ public sealed class TimelineControl : FrameworkElement
     {
         base.OnKeyDown(e);
 
+        Key key = e.Key == Key.System ? e.SystemKey : e.Key;
+
+        if (Keyboard.Modifiers == ModifierKeys.Alt
+            && (key == Key.Up || key == Key.Down)
+            && Project is { } project
+            && SelectedLayer is { } selected)
+        {
+            project.MoveLayer(selected, key == Key.Up ? -1 : 1);
+            e.Handled = true;
+            return;
+        }
+
         if (e.Key == Key.Delete && DeleteCommand is { } command && command.CanExecute(null))
         {
             command.Execute(null);
@@ -988,7 +1115,7 @@ public sealed class TimelineControl : FrameworkElement
 
         if (point.X < HeaderWidth)
         {
-            Cursor = Cursors.Arrow;
+            Cursor = _hoverArrow != 0 ? Cursors.Hand : Cursors.Arrow;
             return;
         }
 

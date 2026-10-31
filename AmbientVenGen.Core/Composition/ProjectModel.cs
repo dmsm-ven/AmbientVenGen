@@ -43,6 +43,22 @@ public sealed partial class ProjectModel : ObservableObject
         ReverbMix,
         Layers.Select(layer => layer.ToSpec()).ToArray());
 
+    /// <summary>
+    /// Moves the layer up (negative offset) or down (positive) in the list; the order is the order of the
+    /// rows on the timeline. Returns false when the layer is already at the edge.
+    /// </summary>
+    public bool MoveLayer(Layer layer, int offset)
+    {
+        int index = Layers.IndexOf(layer);
+        int target = index + offset;
+
+        if (index < 0 || offset == 0 || target < 0 || target >= Layers.Count)
+            return false;
+
+        Layers.Move(index, target);
+        return true;
+    }
+
     /// <summary>Replaces the whole project content and raises a single <see cref="Changed"/>.</summary>
     public void Load(ProjectSpec spec)
     {
