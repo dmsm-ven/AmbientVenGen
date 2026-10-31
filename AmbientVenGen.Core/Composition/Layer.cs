@@ -7,7 +7,7 @@ namespace AmbientVenGen.Core.Composition;
 public sealed partial class Layer : ObservableObject
 {
     public const double MinPitchHz = 20;
-    public const double MaxPitchHz = 5000;
+    public const double MaxPitchHz = 1000;
 
     public Guid Id { get; } = Guid.NewGuid();
 

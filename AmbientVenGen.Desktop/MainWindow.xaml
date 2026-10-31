@@ -290,9 +290,9 @@
                             <DataTemplate>
                                 <Grid>
                                     <Grid.ColumnDefinitions>
-                                        <ColumnDefinition Width="*" />
+                                        <ColumnDefinition Width="2*" />
                                         <ColumnDefinition Width="18" />
-                                        <ColumnDefinition Width="340" />
+                                        <ColumnDefinition Width="1*" MinWidth="300" />
                                     </Grid.ColumnDefinitions>
                                     <Grid.RowDefinitions>
                                         <RowDefinition Height="Auto" />
@@ -521,7 +521,8 @@
                                             Header="Pitch"
                                             Hint="{x:Static vm:HintTexts.Pitch}"
                                             IsLogarithmic="True"
-                                            Maximum="5000"
+                                            IsValueEditable="True"
+                                            Maximum="1000"
                                             Minimum="20"
                                             Step="0.1"
                                             Value="{Binding PitchHz, Mode=TwoWay}">

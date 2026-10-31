@@ -1,6 +1,7 @@
 using System.Globalization;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Input;
 
 namespace AmbientVenGen.Desktop.Controls;
 
@@ -43,13 +44,25 @@ public partial class LabeledSlider : UserControl
 
     /// <summary>
     /// The slider moves along a logarithmic scale (equal distance = equal ratio). Good for pitch:
-    /// 20 Hz..5 kHz would otherwise leave the low notes squeezed into the first few pixels.
+    /// 20 Hz..1 kHz would otherwise leave the low notes squeezed into the first few pixels.
     /// </summary>
     public static readonly DependencyProperty IsLogarithmicProperty = DependencyProperty.Register(
         nameof(IsLogarithmic), typeof(bool), typeof(LabeledSlider),
         new PropertyMetadata(false, OnPropertyChanged));
 
+    /// <summary>Click on the value to type an exact number instead of dragging.</summary>
+    public static readonly DependencyProperty IsValueEditableProperty = DependencyProperty.Register(
+        nameof(IsValueEditable), typeof(bool), typeof(LabeledSlider),
+        new PropertyMetadata(false, OnPropertyChanged));
+
     private bool _syncing;
+    private bool _editing;
+
+    public bool IsValueEditable
+    {
+        get => (bool)GetValue(IsValueEditableProperty);
+        set => SetValue(IsValueEditableProperty, value);
+    }
 
     public bool IsLogarithmic
     {
@@ -154,6 +167,9 @@ public partial class LabeledSlider : UserControl
 
             InnerSlider.Value = log ? Math.Log(Math.Clamp(Value, minimum, maximum)) : Value;
 
+            ValueText.Cursor = IsValueEditable ? Cursors.IBeam : Cursors.Arrow;
+            ValueText.ToolTip = IsValueEditable ? "Click to type an exact value" : null;
+
             HeaderText.Text = Header;
             HeaderHint.Text = Hint;
             ValueText.Text = FormatValue(Value);
@@ -162,6 +178,74 @@ public partial class LabeledSlider : UserControl
         {
             _syncing = false;
         }
+    }
+
+    private void OnValueTextClick(object sender, MouseButtonEventArgs e)
+    {
+        if (!IsValueEditable || _editing)
+            return;
+
+        _editing = true;
+        ValueEditor.Text = Value.ToString("0.##", CultureInfo.CurrentCulture);
+        ValueText.Visibility = Visibility.Collapsed;
+        ValueEditor.Visibility = Visibility.Visible;
+        ValueEditor.Focus();
+        ValueEditor.SelectAll();
+        e.Handled = true;
+    }
+
+    private void OnEditorKeyDown(object sender, KeyEventArgs e)
+    {
+        if (e.Key == Key.Enter)
+        {
+            EndEdit(commit: true);
+            e.Handled = true;
+        }
+        else if (e.Key == Key.Escape)
+        {
+            EndEdit(commit: false);
+            e.Handled = true;
+        }
+    }
+
+    private void OnEditorLostFocus(object sender, RoutedEventArgs e) => EndEdit(commit: true);
+
+    private void EndEdit(bool commit)
+    {
+        if (!_editing)
+            return;
+
+        _editing = false;
+
+        if (commit && TryParseNumber(ValueEditor.Text, out double typed))
+        {
+            double step = Step;
+            if (step > 0)
+                typed = Math.Round(typed / step) * step;
+
+            typed = Math.Round(typed, 4);
+            SetCurrentValue(ValueProperty, Math.Clamp(typed, Minimum, Math.Max(Maximum, Minimum)));
+        }
+
+        ValueEditor.Visibility = Visibility.Collapsed;
+        ValueText.Visibility = Visibility.Visible;
+        Sync();
+    }
+
+    // Accepts "82,4", "82.4" and a trailing "Hz".
+    private static bool TryParseNumber(string? text, out double number)
+    {
+        number = 0;
+
+        if (string.IsNullOrWhiteSpace(text))
+            return false;
+
+        string cleaned = text.Trim();
+        if (cleaned.EndsWith("Hz", StringComparison.OrdinalIgnoreCase))
+            cleaned = cleaned[..^2].Trim();
+
+        return double.TryParse(cleaned, NumberStyles.Float, CultureInfo.CurrentCulture, out number)
+            || double.TryParse(cleaned.Replace(',', '.'), NumberStyles.Float, CultureInfo.InvariantCulture, out number);
     }
 
     private string FormatValue(double value)

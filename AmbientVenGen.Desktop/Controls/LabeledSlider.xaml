@@ -25,7 +25,22 @@
                 Grid.Column="1"
                 Margin="0"
                 FontSize="12"
-                Foreground="#B7AFE9" />
+                Foreground="#B7AFE9"
+                MouseLeftButtonUp="OnValueTextClick" />
+            <TextBox
+                x:Name="ValueEditor"
+                Grid.Column="1"
+                Width="76"
+                Height="22"
+                MinHeight="0"
+                Margin="0,-3"
+                Padding="4,0"
+                VerticalContentAlignment="Center"
+                FontSize="12"
+                KeyDown="OnEditorKeyDown"
+                LostKeyboardFocus="OnEditorLostFocus"
+                TextAlignment="Right"
+                Visibility="Collapsed" />
         </Grid>
         <Slider x:Name="InnerSlider" ValueChanged="OnInnerValueChanged" />
     </StackPanel>

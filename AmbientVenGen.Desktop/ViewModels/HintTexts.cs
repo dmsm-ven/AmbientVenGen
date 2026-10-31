@@ -16,7 +16,7 @@ public static class HintTexts
         "Depth of the slow movement: gentle pitch drift, volume 'breathing' and stereo width. Low is still, high is alive and shifting.";
 
     public const string Pitch =
-        "Base note of the layer in Hz. Lower is deeper and heavier (41 Hz is a low E); higher is lighter.";
+        "Base note of the layer in Hz. Lower is deeper and heavier (41 Hz is a low E); higher is lighter. Click the value to type an exact frequency (20-1000 Hz).";
 
     public const string Pan =
         "Position in the stereo field: -1 is fully left, 0 is the centre, +1 is fully right.";
