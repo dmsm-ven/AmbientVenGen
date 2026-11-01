@@ -5,6 +5,7 @@
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:i="http://schemas.microsoft.com/xaml/behaviors"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:controls="clr-namespace:AmbientVenGen.Desktop.Controls"
     xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
     xmlns:vm="clr-namespace:AmbientVenGen.Desktop.ViewModels"
     Title="Preset library"
@@ -106,7 +107,12 @@
         <ui:TitleBar
             Title="Preset library"
             Grid.Row="0"
-            Icon="pack://application:,,,/Assets/app-icon.ico" />
+            Icon="pack://application:,,,/Assets/app-icon.ico"
+            ShowClose="False">
+            <ui:TitleBar.TrailingContent>
+                <controls:WindowCloseButton />
+            </ui:TitleBar.TrailingContent>
+        </ui:TitleBar>
 
         <!--  Under the title: one Loop switch for all previews  -->
         <Border

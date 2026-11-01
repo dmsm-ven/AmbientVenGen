@@ -26,7 +26,12 @@
             Grid.Row="0"
             Icon="pack://application:,,,/Assets/app-icon.ico"
             ShowMaximize="False"
-            ShowMinimize="False" />
+            ShowMinimize="False"
+            ShowClose="False">
+            <ui:TitleBar.TrailingContent>
+                <controls:WindowCloseButton />
+            </ui:TitleBar.TrailingContent>
+        </ui:TitleBar>
 
         <StackPanel Grid.Row="1" Margin="24,8,24,22">
             <ui:TextBlock
