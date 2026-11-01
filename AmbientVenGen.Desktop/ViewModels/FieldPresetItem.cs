@@ -1,4 +1,4 @@
-﻿using AmbientVenGen.Desktop.DataAccess.Models;
+using AmbientVenGen.Desktop.DataAccess.Models;
 using AmbientVenGen.Desktop.Services;
 using CommunityToolkit.Mvvm.ComponentModel;
 using System.Collections.ObjectModel;
@@ -59,8 +59,8 @@ public sealed partial class FieldPresetItem : ObservableObject
     internal Func<FieldPresetItem, Task>? ThumbnailLoader { get; set; }
 
     /// <summary>
-    /// Called when the row's preview cell appears on screen. The table only creates cells for the rows
-    /// that are visible, so thumbnails of rows far down the list are not built until they are scrolled to.
+    /// Called the first time the row is played: only played files get a waveform, and only until the window closes
+    /// (every opening of the library starts with a fresh list, so nothing is drawn or kept in advance).
     /// </summary>
     public void RequestThumbnail()
     {

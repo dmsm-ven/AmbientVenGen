@@ -106,12 +106,14 @@ public sealed class ProjectMixer : ISampleProvider
     {
         if (!_runtimes.TryGetValue(layer.Id, out LayerRuntime? runtime)
             || runtime.Type != layer.Type
-            || runtime.SourcePath != layer.SourcePath)
+            || runtime.SourcePath != layer.SourcePath
+            || runtime.NoiseType != layer.NoiseType)
         {
             runtime = new LayerRuntime(
                 layer.Type,
                 layer.SourcePath,
-                LayerGenerator.Create(layer.Type, MixSeed(projectSeed, layer.Seed), layer.SourcePath));
+                LayerGenerator.Create(layer.Type, MixSeed(projectSeed, layer.Seed), layer.SourcePath, layer.NoiseType),
+                layer.NoiseType);
             _runtimes[layer.Id] = runtime;
         }
 
@@ -176,8 +178,11 @@ public sealed class ProjectMixer : ISampleProvider
         public LayerGenerator Generator { get; }
         public float Gain { get; set; }
 
-        public LayerRuntime(LayerType type, string? sourcePath, LayerGenerator generator)
+        public NoiseType NoiseType { get; }
+
+        public LayerRuntime(LayerType type, string? sourcePath, LayerGenerator generator, NoiseType noiseType)
         {
+            NoiseType = noiseType;
             Type = type;
             SourcePath = sourcePath;
             Generator = generator;

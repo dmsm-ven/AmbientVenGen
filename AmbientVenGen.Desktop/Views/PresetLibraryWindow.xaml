@@ -1,4 +1,4 @@
-﻿<ui:FluentWindow
+<ui:FluentWindow
     x:Class="AmbientVenGen.Desktop.Views.PresetLibraryWindow"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
@@ -261,8 +261,7 @@
                             <Grid
                                 Width="250"
                                 Height="40"
-                                HorizontalAlignment="Left"
-                                Loaded="OnPreviewCellLoaded">
+                                HorizontalAlignment="Left">
                                 <Image
                                     RenderOptions.BitmapScalingMode="NearestNeighbor"
                                     Source="{Binding Thumbnail}"
