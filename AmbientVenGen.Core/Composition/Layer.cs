@@ -10,6 +10,8 @@ public sealed partial class Layer : ObservableObject
     public const double MaxPitchHz = 1000;
     public const double MinSpeed = 0.25;
     public const double MaxSpeed = 4.0;
+    public const int MaxRepeats = 99;
+    public const double MaxGapSeconds = 3600;
 
     public Guid Id { get; } = Guid.NewGuid();
 
@@ -24,7 +26,40 @@ public sealed partial class Layer : ObservableObject
     private double _startSeconds;
 
     [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(TotalSeconds))]
+    [NotifyPropertyChangedFor(nameof(PeriodSeconds))]
     private double _durationSeconds = 120;
+
+    /// <summary>How many times the layer (Start..Start+Duration) is played one after another; 1 = no repeat.</summary>
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(TotalSeconds))]
+    private int _repeats = 1;
+
+    /// <summary>Silence between two repeats, seconds.</summary>
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(TotalSeconds))]
+    [NotifyPropertyChangedFor(nameof(PeriodSeconds))]
+    private double _repeatGapSeconds;
+
+    /// <summary>Whole length on the timeline: Duration * Repeats + Gap * (Repeats - 1).</summary>
+    public double TotalSeconds => DurationSeconds * Math.Max(1, Repeats) + Math.Max(0, RepeatGapSeconds) * (Math.Max(1, Repeats) - 1);
+
+    /// <summary>Distance between the starts of two neighbouring plays.</summary>
+    public double PeriodSeconds => DurationSeconds + Math.Max(0, RepeatGapSeconds);
+
+    partial void OnRepeatsChanged(int value)
+    {
+        int clamped = Math.Clamp(value, 1, MaxRepeats);
+        if (clamped != value)
+            Repeats = clamped;
+    }
+
+    partial void OnRepeatGapSecondsChanged(double value)
+    {
+        double clamped = Math.Clamp(value, 0, MaxGapSeconds);
+        if (Math.Abs(clamped - value) > 1e-9)
+            RepeatGapSeconds = clamped;
+    }
 
     [ObservableProperty]
     private double _fadeInSeconds = 20;
@@ -109,7 +144,9 @@ public sealed partial class Layer : ObservableObject
         Seed,
         SourcePath,
         Speed,
-        NoiseType);
+        NoiseType,
+        Repeats,
+        RepeatGapSeconds);
 
     /// <summary>Creates a layer from a spec, clamping values read from a file to sane ranges.</summary>
     public static Layer FromSpec(LayerSpec spec)
@@ -140,7 +177,9 @@ public sealed partial class Layer : ObservableObject
             Seed = spec.Seed,
             SourcePath = spec.SourcePath,
             Speed = Math.Clamp(spec.Speed <= 0 ? 1.0 : spec.Speed, MinSpeed, MaxSpeed),
-            NoiseType = Enum.IsDefined(spec.NoiseType) ? spec.NoiseType : NoiseType.White
+            NoiseType = Enum.IsDefined(spec.NoiseType) ? spec.NoiseType : NoiseType.White,
+            Repeats = Math.Clamp(spec.Repeats, 1, MaxRepeats),
+            RepeatGapSeconds = Math.Clamp(spec.RepeatGapSeconds, 0, MaxGapSeconds)
         };
     }
 

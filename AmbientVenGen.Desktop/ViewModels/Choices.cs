@@ -23,6 +23,20 @@ public static class Choices
             "The mirror of Exponential: a very fast start that settles ever more slowly. Half of the whole change happens in the first 10% of the time.")
     ];
 
+    /// <summary>Musical intervals for "Pitch interval": the new pitch is the source pitch times the ratio.</summary>
+    public static IReadOnlyList<PitchInterval> PitchIntervals { get; } =
+    [
+        new("Unison", 1.0, "Same pitch"),
+        new("Octave", 2.0, "Twice as high"),
+        new("Fifth", 1.5, "Open and stable"),
+        new("Fourth", 4.0 / 3.0, "Suspended, calm"),
+        new("Major third", 1.25, "Bright, warm"),
+        new("Minor third", 1.2, "Dark, sad"),
+        new("Tritone", Math.Sqrt(2.0), "Tense, unresolved"),
+        new("Minor seventh", 1.78, "Soft tension"),
+        new("Major seventh", 1.89, "Dreamy, floating")
+    ];
+
     public static IReadOnlyList<NoiseOption> NoiseOptions { get; } =
     [
         new(NoiseType.White, "White noise",
@@ -49,6 +63,15 @@ public static class Choices
 }
 
 /// <summary>One entry of the transition function list: value, title and a short explanation.</summary>
+/// <summary>A pitch interval: name, frequency ratio and a short character description.</summary>
+public sealed record PitchInterval(string Name, double Ratio, string Description)
+{
+    public string Display => $"{Name}  \u00D7{Ratio:0.###}";
+}
+
+/// <summary>A layer offered as the source of an interval, with its pitch shown in the list.</summary>
+public sealed record IntervalSource(Layer Layer, string Text);
+
 /// <summary>One entry of the noise type list: value, title and a short explanation.</summary>
 public sealed record NoiseOption(NoiseType Value, string Label, string Description);
 

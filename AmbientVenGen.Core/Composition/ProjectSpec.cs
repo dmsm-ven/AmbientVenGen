@@ -49,8 +49,37 @@ public sealed record LayerSpec(
     int Seed,
     string? SourcePath = null,
     double Speed = 1.0,
-    NoiseType NoiseType = NoiseType.White)
+    NoiseType NoiseType = NoiseType.White,
+    int Repeats = 1,
+    double RepeatGapSeconds = 0)
 {
+    /// <summary>Number of plays (never less than 1).</summary>
+    public int PlayCount => Math.Max(1, Repeats);
+
+    /// <summary>Whole length on the timeline: Duration * Repeats + Gap * (Repeats - 1).</summary>
+    public double TotalSeconds => DurationSeconds * PlayCount + Math.Max(0, RepeatGapSeconds) * (PlayCount - 1);
+
+    /// <summary>
+    /// Maps time since the layer start to the position inside one play. Returns false inside a gap
+    /// (or outside the layer); <paramref name="iteration"/> is the zero-based number of the play.
+    /// </summary>
+    public bool TryGetPlayTime(double localSeconds, out double withinSeconds, out int iteration)
+    {
+        withinSeconds = localSeconds;
+        iteration = 0;
+
+        if (localSeconds < 0 || localSeconds > TotalSeconds)
+            return false;
+
+        double period = DurationSeconds + Math.Max(0, RepeatGapSeconds);
+        if (period <= 0)
+            return false;
+
+        iteration = (int)Math.Min(PlayCount - 1, Math.Floor(localSeconds / period));
+        withinSeconds = localSeconds - iteration * period;
+        return withinSeconds <= DurationSeconds;
+    }
+
     public double Progress(double localSeconds) =>
         DurationSeconds > 0 ? Math.Clamp(localSeconds / DurationSeconds, 0.0, 1.0) : 0.0;
 

@@ -221,14 +221,14 @@ public partial class LabeledSlider : UserControl
             InnerKnob.IsLabelClickable = IsValueEditable;
             InnerKnob.ToolTip = string.IsNullOrEmpty(Hint) ? null : $"{Header}: {Hint}";
 
-            HeaderGrid.Visibility = knob && !_editing ? Visibility.Collapsed : Visibility.Visible;
+            HeaderGrid.Visibility = knob ? Visibility.Collapsed : Visibility.Visible;
             HeaderPanel.Visibility = knob ? Visibility.Collapsed : Visibility.Visible;
 
             if (!_editing)
                 ValueText.Visibility = knob ? Visibility.Collapsed : Visibility.Visible;
 
-            Grid.SetColumnSpan(ValueEditor, knob ? 2 : 1);
             ValueEditor.HorizontalAlignment = knob ? HorizontalAlignment.Center : HorizontalAlignment.Right;
+            ValueEditor.Margin = knob ? new Thickness(0, 16, 0, 0) : new Thickness(0, -3, 0, 0);
 
             ValueText.Cursor = IsValueEditable ? Cursors.IBeam : Cursors.Arrow;
             ValueText.ToolTip = IsValueEditable ? "Click to type an exact value" : null;
@@ -259,7 +259,7 @@ public partial class LabeledSlider : UserControl
         Sync();
 
         ValueEditor.Text = Value.ToString("0.##", CultureInfo.CurrentCulture);
-        ValueText.Visibility = Visibility.Collapsed;
+        ValueText.Visibility = Visibility.Hidden; // hidden, not collapsed: the layout stays as it is
         ValueEditor.Visibility = Visibility.Visible;
         ValueEditor.Focus();
         ValueEditor.SelectAll();

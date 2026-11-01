@@ -1,4 +1,4 @@
-﻿<ui:FluentWindow
+<ui:FluentWindow
     x:Class="AmbientVenGen.Desktop.MainWindow"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
@@ -21,6 +21,7 @@
 
     <ui:FluentWindow.Resources>
         <BooleanToVisibilityConverter x:Key="BoolToVisibility" />
+        <controls:GreaterThanOneConverter x:Key="GreaterThanOne" />
 
         <!--  Generic styles (TextBlock, Slider, ComboBox, SectionCard, ToolIconButton) are in Resources/Styles.xaml.  -->
 
@@ -290,6 +291,67 @@
                             FontSize="14"
                             FontWeight="SemiBold"
                             Text="Selected layer" />
+                        <!-- Pitch interval: header (source layer) / body (interval) / footer (Apply) -->
+                        <ui:Button
+                            x:Name="IntervalButton"
+                            Margin="0,0,60,0"
+                            HorizontalAlignment="Right"
+                            Command="{Binding OpenIntervalPanelCommand}"
+                            Content="&#9834;"
+                            FontSize="16"
+                            Style="{StaticResource ToolIconButton}"
+                            ToolTip="Pitch interval: set this layer's pitch relative to another layer (Drone / Pad)" />
+                        <Popup
+                            AllowsTransparency="True"
+                            IsOpen="{Binding IsIntervalPanelOpen, Mode=TwoWay}"
+                            Placement="Bottom"
+                            PlacementTarget="{Binding ElementName=IntervalButton}"
+                            StaysOpen="False"
+                            VerticalOffset="4">
+                            <Border
+                                Width="300"
+                                Background="#F2181821"
+                                BorderBrush="#44FFFFFF"
+                                BorderThickness="1"
+                                CornerRadius="10">
+                                <StackPanel>
+                                    <StackPanel Margin="14,12,14,12">
+                                        <TextBlock Margin="0,0,0,6" FontSize="12" Foreground="#C9C8D6" Text="Take the pitch from layer" />
+                                        <ComboBox
+                                            DisplayMemberPath="Text"
+                                            ItemsSource="{Binding IntervalSources}"
+                                            SelectedItem="{Binding IntervalSource, Mode=TwoWay}" />
+                                    </StackPanel>
+                                    <Border Height="1" Background="#2EFFFFFF" />
+                                    <StackPanel Margin="14,12,14,12">
+                                        <TextBlock Margin="0,0,0,6" FontSize="12" Foreground="#C9C8D6" Text="Interval" />
+                                        <ComboBox
+                                            DisplayMemberPath="Display"
+                                            ItemsSource="{x:Static vm:Choices.PitchIntervals}"
+                                            SelectedItem="{Binding SelectedInterval, Mode=TwoWay}" />
+                                        <TextBlock
+                                            Margin="0,6,0,0"
+                                            FontSize="11"
+                                            Foreground="#A9A7C2"
+                                            Text="{Binding SelectedInterval.Description}" />
+                                        <TextBlock
+                                            Margin="0,8,0,0"
+                                            FontSize="12"
+                                            Foreground="#8FD16A"
+                                            Text="{Binding IntervalResultText}"
+                                            TextWrapping="Wrap" />
+                                    </StackPanel>
+                                    <Border Height="1" Background="#2EFFFFFF" />
+                                    <Grid Margin="14,10,14,12">
+                                        <ui:Button
+                                            HorizontalAlignment="Right"
+                                            Appearance="Primary"
+                                            Command="{Binding ApplyIntervalCommand}"
+                                            Content="Apply" />
+                                    </Grid>
+                                </StackPanel>
+                            </Border>
+                        </Popup>
                         <ui:Button
                             Margin="0,0,30,0"
                             HorizontalAlignment="Right"
@@ -391,8 +453,51 @@
                                                 Hint="{x:Static vm:HintTexts.Duration}"
                                                 IsInline="True"
                                                 Maximum="{Binding DataContext.Project.DurationSeconds, RelativeSource={RelativeSource AncestorType=Window}}"
+                                                Margin="0,0,0,0"
                                                 Minimum="2"
                                                 Value="{Binding DurationSeconds, Mode=TwoWay}" />
+                                            <!-- Repeats: how many plays, the pause between them and the resulting length -->
+                                            <StackPanel Margin="18,0,0,0" Orientation="Horizontal">
+                                                <TextBlock
+                                                    Margin="0"
+                                                    VerticalAlignment="Center"
+                                                    FontSize="12"
+                                                    Foreground="#C9C8D6"
+                                                    Text="Repeats" />
+                                                <controls:HintIcon Margin="5,0,0,0" VerticalAlignment="Center" Text="{x:Static vm:HintTexts.Repeats}" />
+                                                <TextBox
+                                                    Width="48"
+                                                    Margin="8,0,18,0"
+                                                    VerticalAlignment="Center"
+                                                    HorizontalContentAlignment="Center"
+                                                    MaxLength="2"
+                                                    Text="{Binding Repeats, Mode=TwoWay, UpdateSourceTrigger=LostFocus}"
+                                                    ToolTip="1 - 99" />
+                                                <controls:TimeBox
+                                                    Margin="0,0,14,0"
+                                                    Header="Gap"
+                                                    Hint="{x:Static vm:HintTexts.RepeatGap}"
+                                                    IsInline="True"
+                                                    Maximum="3600"
+                                                    Minimum="0"
+                                                    Value="{Binding RepeatGapSeconds, Mode=TwoWay}" />
+                                                <TextBlock
+                                                    VerticalAlignment="Center"
+                                                    Foreground="#8FD16A"
+                                                    Text="{Binding TotalSeconds, StringFormat='= {0:0.#} s'}"
+                                                    ToolTip="Whole length of the layer with repeats">
+                                                    <TextBlock.Style>
+                                                        <Style BasedOn="{StaticResource {x:Type TextBlock}}" TargetType="TextBlock">
+                                                            <Setter Property="Visibility" Value="Collapsed" />
+                                                            <Style.Triggers>
+                                                                <DataTrigger Binding="{Binding Repeats, Converter={StaticResource GreaterThanOne}}" Value="True">
+                                                                    <Setter Property="Visibility" Value="Visible" />
+                                                                </DataTrigger>
+                                                            </Style.Triggers>
+                                                        </Style>
+                                                    </TextBlock.Style>
+                                                </TextBlock>
+                                            </StackPanel>
                                         </StackPanel>
 
                                         <!--  Noise colour (Noise layers only)  -->

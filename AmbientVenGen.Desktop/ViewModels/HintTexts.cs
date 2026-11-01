@@ -27,6 +27,12 @@ public static class HintTexts
     public const string Duration =
         "How long the layer lasts (hh:mm:ss). You can also drag the edges of the clip on the timeline.";
 
+    public const string Repeats =
+        "How many times the layer is played one after another (1 = no repeat). Every play restarts the curves and fades.";
+
+    public const string RepeatGap =
+        "Silence between two plays. Whole length = Duration x Repeats + Gap x (Repeats - 1).";
+
     public const string FadeIn =
         "Time the layer takes to rise from silence at its start.";
 

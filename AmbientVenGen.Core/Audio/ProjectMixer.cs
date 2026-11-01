@@ -118,8 +118,11 @@ public sealed class ProjectMixer : ISampleProvider
         }
 
         double local = blockTime - layer.StartSeconds;
-        bool active = !layer.Muted && local >= 0 && local <= layer.DurationSeconds;
-        float target = active ? (float)layer.GainAt(local) : 0f;
+
+        // Repeats: time inside the current play (curves, fades and recordings restart with every play); a gap is silent.
+        bool inPlay = layer.TryGetPlayTime(local, out double within, out _);
+        bool active = !layer.Muted && inPlay;
+        float target = active ? (float)layer.GainAt(within) : 0f;
 
         if (target <= 0f && runtime.Gain < 1e-5f)
         {
@@ -127,12 +130,12 @@ public sealed class ProjectMixer : ISampleProvider
             return;
         }
 
-        double curveTime = Math.Clamp(local, 0, layer.DurationSeconds);
+        double curveTime = Math.Clamp(inPlay ? within : local, 0, layer.DurationSeconds);
         var block = new BlockParams(
             (float)layer.BrightnessAt(curveTime),
             (float)layer.ModulationAt(curveTime),
             (float)layer.PitchHz,
-            Math.Max(0.0, local - count * 0.5 / SampleRate),
+            Math.Max(0.0, (inPlay ? within : local) - count * 0.5 / SampleRate),
             (float)layer.Speed);
 
         var scratchLeft = _scratchLeft.AsSpan(0, count);
