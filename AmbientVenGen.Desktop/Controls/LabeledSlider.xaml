@@ -4,7 +4,7 @@
     xmlns:local="clr-namespace:AmbientVenGen.Desktop.Controls"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
     <StackPanel>
-        <Grid>
+        <Grid x:Name="HeaderGrid">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="*" />
                 <ColumnDefinition Width="Auto" />

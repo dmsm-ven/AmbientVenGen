@@ -28,6 +28,7 @@ public sealed class Knob : FrameworkElement
     private static readonly Brush TrackBrush = Frozen(new SolidColorBrush(Color.FromRgb(0x2E, 0x2E, 0x3B)));
     private static readonly Brush FillBrush = Frozen(new SolidColorBrush(Color.FromRgb(0x8B, 0x7C, 0xFF)));
     private static readonly Brush CapBrush = Frozen(new SolidColorBrush(Color.FromRgb(0x23, 0x23, 0x2E)));
+    private static readonly Brush CaptionBrush = Frozen(new SolidColorBrush(Color.FromRgb(0xA9, 0xA7, 0xC2)));
     private static readonly Brush TextBrush = Frozen(new SolidColorBrush(Color.FromRgb(0xEC, 0xEC, 0xF2)));
     private static readonly Brush HitBrush = Brushes.Transparent;
 
@@ -61,15 +62,28 @@ public sealed class Knob : FrameworkElement
         nameof(ValueText), typeof(string), typeof(Knob),
         new FrameworkPropertyMetadata(string.Empty, FrameworkPropertyMetadataOptions.AffectsRender));
 
+    /// <summary>The name of the parameter, written inside the arc under the value (e.g. "Pitch").</summary>
+    public static readonly DependencyProperty CaptionProperty = DependencyProperty.Register(
+        nameof(Caption), typeof(string), typeof(Knob),
+        new FrameworkPropertyMetadata(string.Empty, FrameworkPropertyMetadataOptions.AffectsRender));
+
+    /// <summary>When true a click on the written value raises <see cref="LabelClicked"/> (to type an exact number).</summary>
+    public static readonly DependencyProperty IsLabelClickableProperty = DependencyProperty.Register(
+        nameof(IsLabelClickable), typeof(bool), typeof(Knob), new PropertyMetadata(false));
+
     /// <summary>Where the arc is drawn now (0..1); it moves towards the value with an animation.</summary>
     public static readonly DependencyProperty DisplayedFractionProperty = DependencyProperty.Register(
         nameof(DisplayedFraction), typeof(double), typeof(Knob),
         new FrameworkPropertyMetadata(0.0, FrameworkPropertyMetadataOptions.AffectsRender));
 
     private bool _isDragging;
+    private Rect _labelRect;
 
     /// <summary>Raised when the value changed (by the user or from code).</summary>
     public event Action<double>? ValueChanged;
+
+    /// <summary>Raised when the written value (inside the arc) was clicked and <see cref="IsLabelClickable"/> is on.</summary>
+    public event Action? LabelClicked;
 
     public double Value
     {
@@ -99,6 +113,18 @@ public sealed class Knob : FrameworkElement
     {
         get => (string)GetValue(FormatProperty);
         set => SetValue(FormatProperty, value);
+    }
+
+    public string Caption
+    {
+        get => (string)GetValue(CaptionProperty);
+        set => SetValue(CaptionProperty, value);
+    }
+
+    public bool IsLabelClickable
+    {
+        get => (bool)GetValue(IsLabelClickableProperty);
+        set => SetValue(IsLabelClickableProperty, value);
     }
 
     public string ValueText
@@ -184,16 +210,45 @@ public sealed class Knob : FrameworkElement
         dc.DrawEllipse(TextBrush, new Pen(FillBrush, 2), tip, 5, 5);
 
         // The value, in the middle of the arc (inside the half circle, above its base line).
+        double dpi = VisualTreeHelper.GetDpi(this).PixelsPerDip;
+
         var text = new FormattedText(
             DisplayText(),
             CultureInfo.CurrentCulture,
             FlowDirection.LeftToRight,
-            new Typeface("Segoe UI"),
+            new Typeface("Segoe UI Semibold"),
             13,
             TextBrush,
-            VisualTreeHelper.GetDpi(this).PixelsPerDip);
+            dpi);
 
-        dc.DrawText(text, new Point(center.X - text.Width / 2.0, center.Y - text.Height - 4));
+        // The caption (parameter name) takes the place of the old value line; the value sits just above it.
+        double bottom = center.Y - 3;
+        Rect labelRect = Rect.Empty;
+
+        if (!string.IsNullOrEmpty(Caption))
+        {
+            var caption = new FormattedText(
+                Caption,
+                CultureInfo.CurrentCulture,
+                FlowDirection.LeftToRight,
+                new Typeface("Segoe UI"),
+                10.5,
+                CaptionBrush,
+                dpi);
+
+            var captionAt = new Point(center.X - caption.Width / 2.0, bottom - caption.Height);
+            dc.DrawText(caption, captionAt);
+            labelRect = new Rect(captionAt, new Size(caption.Width, caption.Height));
+            bottom = captionAt.Y - 1;
+        }
+
+        var valueAt = new Point(center.X - text.Width / 2.0, bottom - text.Height);
+        dc.DrawText(text, valueAt);
+
+        var valueRect = new Rect(valueAt, new Size(text.Width, text.Height));
+        labelRect.Union(valueRect);
+        labelRect.Inflate(4, 2);
+        _labelRect = labelRect;
     }
 
     private static void DrawCap(DrawingContext dc, Point at, bool lit)
@@ -233,6 +288,16 @@ public sealed class Knob : FrameworkElement
         Point point = e.GetPosition(this);
         (Point center, double radius) = Layout();
 
+        // The written value: it types an exact number when that is allowed, and never moves the knob.
+        if (_labelRect.Contains(point))
+        {
+            if (IsLabelClickable)
+                LabelClicked?.Invoke();
+
+            e.Handled = true;
+            return;
+        }
+
         // The round buttons at the ends set the exact minimum / maximum.
         if (Distance(point, OnArc(center, radius, 0)) <= CapHitRadius)
         {
@@ -266,7 +331,10 @@ public sealed class Knob : FrameworkElement
         {
             SetFromPoint(e.GetPosition(this));
             e.Handled = true;
+            return;
         }
+
+        Cursor = IsLabelClickable && _labelRect.Contains(e.GetPosition(this)) ? Cursors.IBeam : Cursors.Hand;
     }
 
     protected override void OnMouseLeftButtonUp(MouseButtonEventArgs e)
