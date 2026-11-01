@@ -9,7 +9,7 @@
                 <ColumnDefinition Width="*" />
                 <ColumnDefinition Width="Auto" />
             </Grid.ColumnDefinitions>
-            <StackPanel Orientation="Horizontal">
+            <StackPanel x:Name="HeaderPanel" Orientation="Horizontal">
                 <TextBlock
                     x:Name="HeaderText"
                     Margin="0"
@@ -43,5 +43,10 @@
                 Visibility="Collapsed" />
         </Grid>
         <Slider x:Name="InnerSlider" ValueChanged="OnInnerValueChanged" />
+        <local:Knob
+            x:Name="InnerKnob"
+            Margin="0,2,0,0"
+            HorizontalAlignment="Center"
+            Visibility="Collapsed" />
     </StackPanel>
 </UserControl>

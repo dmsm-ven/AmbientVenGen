@@ -13,6 +13,7 @@
     MinHeight="720"
     Background="#E617171D"
     controls:Hints.IsShown="{Binding ShowHints}"
+    controls:InputStyle.UseKnobs="{Binding Settings.UseKnobs}"
     ExtendsContentIntoTitleBar="True"
     Foreground="#ECECF2"
     WindowBackdropType="Mica"
@@ -126,6 +127,14 @@
                         Height="16"
                         Margin="6,0,10,0"
                         Fill="#3A3945" />
+                    <ui:Button
+                        Command="{Binding OpenSettingsCommand}"
+                        Style="{StaticResource ToolIconButton}"
+                        ToolTip="Settings">
+                        <ui:Button.Icon>
+                            <ui:SymbolIcon Symbol="Settings24" />
+                        </ui:Button.Icon>
+                    </ui:Button>
                     <ToggleButton
                         IsChecked="{Binding ShowHints, Mode=TwoWay}"
                         Style="{StaticResource ToolIconToggleButton}"

@@ -25,6 +25,14 @@ public sealed partial class FieldPresetItem : ObservableObject
     /// <summary>Tags of this preset (kept in the database).</summary>
     public ObservableCollection<string> Tags { get; } = [];
 
+    /// <summary>The tag box is shown only for the clicked (or just added) row.</summary>
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(ShowTagHint))]
+    private bool _isTagEditing;
+
+    /// <summary>A quiet "+ tag" text for rows without tags while the tag box is hidden.</summary>
+    public bool ShowTagHint => Tags.Count == 0 && !IsTagEditing;
+
     /// <summary>True while this file is being previewed.</summary>
     [ObservableProperty]
     private bool _isPlaying;
@@ -78,6 +86,8 @@ public sealed partial class FieldPresetItem : ObservableObject
         Name = preset.Name;
         FilePath = preset.FilePath;
         Extension = preset.Extension;
+
+        Tags.CollectionChanged += (_, _) => OnPropertyChanged(nameof(ShowTagHint));
         AddedAt = DateTimeOffset.FromUnixTimeSeconds(preset.AddedAtUnix).LocalDateTime;
         Duration = TimeSpan.FromSeconds(preset.DurationSeconds);
         SizeBytes = preset.SizeBytes;

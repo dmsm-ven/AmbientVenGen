@@ -1,28 +1,36 @@
+using System.Globalization;
 using System.Windows;
-using System.Windows.Controls;
 using System.Windows.Input;
+using System.Windows.Media;
+using System.Windows.Media.Animation;
 
 namespace AmbientVenGen.Desktop.Controls;
 
 /// <summary>
-/// Rotary knob. Press and drag up/down to change the value: the drag distance is measured
-/// from the point of the click. The look is defined in Resources/CustomControls.xaml.
-/// Property names match <see cref="LabeledSlider"/> (Minimum, Maximum, Step, Format, Value),
-/// so the two can be swapped in XAML.
+/// Gauge-style rotary control: a half-circle arc that is empty at the minimum and filled from left to
+/// right (180 degrees) at the maximum, with the value written under the arc.
+/// Click or drag anywhere on the gauge to set the value by the angle (straight up = the middle);
+/// the two round buttons at the ends of the arc set the minimum / maximum directly.
+/// The arc follows the value with a short animation (about 0.15 s for the whole arc).
+/// Property names match <see cref="LabeledSlider"/> (Minimum, Maximum, Step, Format, Value).
 /// </summary>
-public class Knob : Control
+public sealed class Knob : FrameworkElement
 {
-    private const double MinAngle = -135.0;
-    private const double MaxAngle = 135.0;
+    private const double DefaultWidth = 120;
+    private const double DefaultHeight = 84;
+    private const double ArcThickness = 8;
+    private const double CapRadius = 7;
+    private const double CapHitRadius = 11;
+    private const double LabelHeight = 20;
 
-    /// <summary>Mouse travel (in pixels) that corresponds to the whole value range.</summary>
-    private const double DragRangePixels = 150.0;
+    /// <summary>Seconds a full sweep (minimum to maximum) takes.</summary>
+    private const double FullSweepSeconds = 0.15;
 
-    private static readonly DependencyPropertyKey AngleKey = DependencyProperty.RegisterReadOnly(
-        nameof(Angle), typeof(double), typeof(Knob), new PropertyMetadata(MinAngle));
-
-    private static readonly DependencyPropertyKey DisplayTextKey = DependencyProperty.RegisterReadOnly(
-        nameof(DisplayText), typeof(string), typeof(Knob), new PropertyMetadata(string.Empty));
+    private static readonly Brush TrackBrush = Frozen(new SolidColorBrush(Color.FromRgb(0x2E, 0x2E, 0x3B)));
+    private static readonly Brush FillBrush = Frozen(new SolidColorBrush(Color.FromRgb(0x8B, 0x7C, 0xFF)));
+    private static readonly Brush CapBrush = Frozen(new SolidColorBrush(Color.FromRgb(0x23, 0x23, 0x2E)));
+    private static readonly Brush TextBrush = Frozen(new SolidColorBrush(Color.FromRgb(0xEC, 0xEC, 0xF2)));
+    private static readonly Brush HitBrush = Brushes.Transparent;
 
     public static readonly DependencyProperty ValueProperty = DependencyProperty.Register(
         nameof(Value), typeof(double), typeof(Knob),
@@ -46,15 +54,23 @@ public class Knob : Control
 
     /// <summary>Composite format ("{0:F0}") or a plain suffix (" Hz") for the value text.</summary>
     public static readonly DependencyProperty FormatProperty = DependencyProperty.Register(
-        nameof(Format), typeof(string), typeof(Knob), new PropertyMetadata("{0:F0}", OnFormatChanged));
+        nameof(Format), typeof(string), typeof(Knob),
+        new FrameworkPropertyMetadata("{0:F0}", FrameworkPropertyMetadataOptions.AffectsRender));
 
-    public static readonly DependencyProperty AngleProperty = AngleKey.DependencyProperty;
+    /// <summary>When not empty, shown instead of the formatted value (e.g. when the scale is logarithmic).</summary>
+    public static readonly DependencyProperty ValueTextProperty = DependencyProperty.Register(
+        nameof(ValueText), typeof(string), typeof(Knob),
+        new FrameworkPropertyMetadata(string.Empty, FrameworkPropertyMetadataOptions.AffectsRender));
 
-    public static readonly DependencyProperty DisplayTextProperty = DisplayTextKey.DependencyProperty;
+    /// <summary>Where the arc is drawn now (0..1); it moves towards the value with an animation.</summary>
+    public static readonly DependencyProperty DisplayedFractionProperty = DependencyProperty.Register(
+        nameof(DisplayedFraction), typeof(double), typeof(Knob),
+        new FrameworkPropertyMetadata(0.0, FrameworkPropertyMetadataOptions.AffectsRender));
 
-    private Point _startMousePosition;
-    private double _startValue;
     private bool _isDragging;
+
+    /// <summary>Raised when the value changed (by the user or from code).</summary>
+    public event Action<double>? ValueChanged;
 
     public double Value
     {
@@ -86,33 +102,171 @@ public class Knob : Control
         set => SetValue(FormatProperty, value);
     }
 
-    /// <summary>Rotation of the indicator in degrees (read-only, used by the template).</summary>
-    public double Angle => (double)GetValue(AngleProperty);
+    public string ValueText
+    {
+        get => (string)GetValue(ValueTextProperty);
+        set => SetValue(ValueTextProperty, value);
+    }
 
-    /// <summary>The value formatted with <see cref="Format"/> (read-only, used by the template).</summary>
-    public string DisplayText => (string)GetValue(DisplayTextProperty);
+    public double DisplayedFraction
+    {
+        get => (double)GetValue(DisplayedFractionProperty);
+        set => SetValue(DisplayedFractionProperty, value);
+    }
 
     static Knob()
     {
-        DefaultStyleKeyProperty.OverrideMetadata(typeof(Knob), new FrameworkPropertyMetadata(typeof(Knob)));
+        // The default size is twice the old knob (which was 60 wide).
+        WidthProperty.OverrideMetadata(typeof(Knob), new FrameworkPropertyMetadata(DefaultWidth));
+        HeightProperty.OverrideMetadata(typeof(Knob), new FrameworkPropertyMetadata(DefaultHeight));
+        CursorProperty.OverrideMetadata(typeof(Knob), new FrameworkPropertyMetadata(Cursors.Hand));
+        FocusableProperty.OverrideMetadata(typeof(Knob), new FrameworkPropertyMetadata(false));
     }
 
-    public override void OnApplyTemplate()
+    // ------------------------------------------------------------------ geometry
+
+    private (Point Center, double Radius) Layout()
     {
-        base.OnApplyTemplate();
-        UpdateVisuals();
+        double radius = Math.Max(10, Math.Min(ActualWidth / 2.0 - CapRadius - 1, ActualHeight - LabelHeight - CapRadius - 2));
+        var center = new Point(ActualWidth / 2.0, CapRadius + 2 + radius);
+        return (center, radius);
     }
+
+    private static Point OnArc(Point center, double radius, double fraction)
+    {
+        // fraction 0 = left end, 0.5 = straight up, 1 = right end.
+        double angle = Math.PI * (1.0 - Math.Clamp(fraction, 0.0, 1.0));
+        return new Point(center.X + radius * Math.Cos(angle), center.Y - radius * Math.Sin(angle));
+    }
+
+    private static StreamGeometry Arc(Point center, double radius, double fromFraction, double toFraction)
+    {
+        var geometry = new StreamGeometry();
+
+        using (StreamGeometryContext ctx = geometry.Open())
+        {
+            int steps = Math.Max(2, (int)Math.Ceiling((toFraction - fromFraction) * 72));
+            ctx.BeginFigure(OnArc(center, radius, fromFraction), false, false);
+
+            for (int i = 1; i <= steps; i++)
+                ctx.LineTo(OnArc(center, radius, fromFraction + (toFraction - fromFraction) * i / steps), true, true);
+        }
+
+        geometry.Freeze();
+        return geometry;
+    }
+
+    // ------------------------------------------------------------------ drawing
+
+    protected override void OnRender(DrawingContext dc)
+    {
+        (Point center, double radius) = Layout();
+
+        // An invisible background makes the whole area react to the mouse.
+        dc.DrawRectangle(HitBrush, null, new Rect(0, 0, ActualWidth, ActualHeight));
+
+        double fraction = Math.Clamp(DisplayedFraction, 0.0, 1.0);
+
+        var trackPen = new Pen(TrackBrush, ArcThickness) { StartLineCap = PenLineCap.Round, EndLineCap = PenLineCap.Round };
+        var fillPen = new Pen(FillBrush, ArcThickness) { StartLineCap = PenLineCap.Round, EndLineCap = PenLineCap.Round };
+
+        dc.DrawGeometry(null, trackPen, Arc(center, radius, 0, 1));
+
+        if (fraction > 0.002)
+            dc.DrawGeometry(null, fillPen, Arc(center, radius, 0, fraction));
+
+        // Minimum / maximum buttons at the ends of the arc: lit when the value is at that end.
+        DrawCap(dc, OnArc(center, radius, 0), fraction <= 0.002);
+        DrawCap(dc, OnArc(center, radius, 1), fraction >= 0.998);
+
+        // A dot at the end of the filled part.
+        Point tip = OnArc(center, radius, fraction);
+        dc.DrawEllipse(TextBrush, new Pen(FillBrush, 2), tip, 5, 5);
+
+        // The value, a little below the centre of the arc.
+        var text = new FormattedText(
+            DisplayText(),
+            CultureInfo.CurrentCulture,
+            FlowDirection.LeftToRight,
+            new Typeface("Segoe UI"),
+            12.5,
+            TextBrush,
+            VisualTreeHelper.GetDpi(this).PixelsPerDip);
+
+        dc.DrawText(text, new Point(center.X - text.Width / 2.0, center.Y + 3));
+    }
+
+    private static void DrawCap(DrawingContext dc, Point at, bool lit)
+    {
+        dc.DrawEllipse(
+            lit ? FillBrush : CapBrush,
+            new Pen(FillBrush, 1.6),
+            at,
+            CapRadius,
+            CapRadius);
+    }
+
+    private string DisplayText()
+    {
+        if (!string.IsNullOrEmpty(ValueText))
+            return ValueText;
+
+        string format = Format ?? "{0:F0}";
+
+        try
+        {
+            // Without a placeholder the format is a suffix, e.g. " Hz".
+            return format.Contains("{0") ? string.Format(CultureInfo.CurrentCulture, format, Value) : $"{Value} {format}";
+        }
+        catch (FormatException)
+        {
+            return Value.ToString(CultureInfo.CurrentCulture);
+        }
+    }
+
+    // ------------------------------------------------------------------ mouse
 
     protected override void OnMouseLeftButtonDown(MouseButtonEventArgs e)
     {
         base.OnMouseLeftButtonDown(e);
 
-        _isDragging = true;
-        _startMousePosition = e.GetPosition(this);
-        _startValue = Value;
+        Point point = e.GetPosition(this);
+        (Point center, double radius) = Layout();
 
+        // The round buttons at the ends set the exact minimum / maximum.
+        if (Distance(point, OnArc(center, radius, 0)) <= CapHitRadius)
+        {
+            Value = Minimum;
+            e.Handled = true;
+            return;
+        }
+
+        if (Distance(point, OnArc(center, radius, 1)) <= CapHitRadius)
+        {
+            Value = Maximum;
+            e.Handled = true;
+            return;
+        }
+
+        // The text under the arc and the dead spot in the middle do not react.
+        if (point.Y > center.Y + CapRadius + 2 || Distance(point, center) < 8)
+            return;
+
+        _isDragging = true;
         CaptureMouse();
+        SetFromPoint(point);
         e.Handled = true;
+    }
+
+    protected override void OnMouseMove(MouseEventArgs e)
+    {
+        base.OnMouseMove(e);
+
+        if (_isDragging)
+        {
+            SetFromPoint(e.GetPosition(this));
+            e.Handled = true;
+        }
     }
 
     protected override void OnMouseLeftButtonUp(MouseButtonEventArgs e)
@@ -127,76 +281,114 @@ public class Knob : Control
         base.OnMouseLeftButtonUp(e);
     }
 
-    protected override void OnMouseMove(MouseEventArgs e)
-    {
-        base.OnMouseMove(e);
-
-        if (!_isDragging)
-            return;
-
-        // Up is plus, down is minus, measured from the point of the click.
-        double deltaY = _startMousePosition.Y - e.GetPosition(this).Y;
-        double range = Maximum - Minimum;
-
-        // CoerceValue clamps the result and applies the step.
-        Value = _startValue + deltaY / DragRangePixels * range;
-
-        e.Handled = true;
-    }
-
     protected override void OnLostMouseCapture(MouseEventArgs e)
     {
         base.OnLostMouseCapture(e);
         _isDragging = false;
     }
 
+    protected override void OnMouseWheel(MouseWheelEventArgs e)
+    {
+        base.OnMouseWheel(e);
+
+        double range = Maximum - Minimum;
+        double step = Step > 0 ? Step : range / 50.0;
+
+        Value += e.Delta > 0 ? step : -step;
+        e.Handled = true;
+    }
+
+    // Angle of the point as seen from the centre of the arc: left = minimum, up = middle, right = maximum.
+    private void SetFromPoint(Point point)
+    {
+        (Point center, _) = Layout();
+
+        double dx = point.X - center.X;
+        double dy = center.Y - point.Y;
+        double fraction;
+
+        if (dy <= 0)
+        {
+            // Below the baseline while dragging: stick to the nearer end.
+            fraction = dx < 0 ? 0.0 : 1.0;
+        }
+        else
+        {
+            fraction = 1.0 - Math.Atan2(dy, dx) / Math.PI;
+        }
+
+        // CoerceValue clamps the result and applies the step.
+        Value = Minimum + Math.Clamp(fraction, 0.0, 1.0) * (Maximum - Minimum);
+    }
+
+    private static double Distance(Point a, Point b) => Math.Sqrt((a.X - b.X) * (a.X - b.X) + (a.Y - b.Y) * (a.Y - b.Y));
+
+    // ------------------------------------------------------------------ value
+
     private static object CoerceValue(DependencyObject d, object baseValue)
     {
         var knob = (Knob)d;
-        double value = Math.Clamp((double)baseValue, knob.Minimum, Math.Max(knob.Minimum, knob.Maximum));
+        double max = Math.Max(knob.Minimum, knob.Maximum);
+        double value = Math.Clamp((double)baseValue, knob.Minimum, max);
 
         if (knob.Step > 0)
         {
             double steps = Math.Round((value - knob.Minimum) / knob.Step);
-            value = Math.Clamp(knob.Minimum + steps * knob.Step, knob.Minimum, Math.Max(knob.Minimum, knob.Maximum));
+            value = Math.Clamp(knob.Minimum + steps * knob.Step, knob.Minimum, max);
         }
 
         return value;
     }
 
-    private static void OnValueChanged(DependencyObject d, DependencyPropertyChangedEventArgs e) =>
-        ((Knob)d).UpdateVisuals();
+    private static void OnValueChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
+    {
+        var knob = (Knob)d;
+        knob.MoveArc();
+        knob.ValueChanged?.Invoke((double)e.NewValue);
+    }
 
     private static void OnLimitsChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
     {
         d.CoerceValue(ValueProperty);
-        ((Knob)d).UpdateVisuals();
+        ((Knob)d).MoveArc();
     }
 
-    private static void OnFormatChanged(DependencyObject d, DependencyPropertyChangedEventArgs e) =>
-        ((Knob)d).UpdateDisplayText();
-
-    private void UpdateVisuals()
+    private double TargetFraction()
     {
         double range = Maximum - Minimum;
-        double fraction = range > 0 ? (Value - Minimum) / range : 0.0;
-
-        SetValue(AngleKey, MinAngle + Math.Clamp(fraction, 0.0, 1.0) * (MaxAngle - MinAngle));
-        UpdateDisplayText();
+        return range > 0 ? Math.Clamp((Value - Minimum) / range, 0.0, 1.0) : 0.0;
     }
 
-    private void UpdateDisplayText()
+    // The arc glides to the new value: a full sweep takes FullSweepSeconds, a shorter move proportionally less.
+    private void MoveArc()
     {
-        string format = Format ?? "{0:F0}";
+        double target = TargetFraction();
 
-        try
+        if (!IsLoaded)
         {
-            // Without a placeholder the format is a suffix, e.g. " Hz".
-            SetValue(DisplayTextKey, format.Contains("{0") ? string.Format(format, Value) : $"{Value} {format}");
+            BeginAnimation(DisplayedFractionProperty, null);
+            SetValue(DisplayedFractionProperty, target);
+            return;
         }
-        catch (FormatException)
+
+        double from = DisplayedFraction;
+        double seconds = FullSweepSeconds * Math.Abs(target - from);
+
+        if (seconds < 0.004)
         {
-            SetValue(DisplayTextKey, Value.ToString());
+            BeginAnimation(DisplayedFractionProperty, null);
+            SetValue(DisplayedFractionProperty, target);
+            return;
         }
+
+        BeginAnimation(
+            DisplayedFractionProperty,
+            new DoubleAnimation(from, target, TimeSpan.FromSeconds(seconds)) { FillBehavior = FillBehavior.HoldEnd });
+    }
+
+    private static Brush Frozen(SolidColorBrush brush)
+    {
+        brush.Freeze();
+        return brush;
     }
 }

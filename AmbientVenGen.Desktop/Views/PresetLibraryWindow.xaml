@@ -25,6 +25,39 @@
     <ui:FluentWindow.Resources>
         <BooleanToVisibilityConverter x:Key="BoolToVisibility" />
 
+        <!--  Tag filter chip: a toggle that looks like a pill.  -->
+        <Style x:Key="TagChip" TargetType="ToggleButton">
+            <Setter Property="FontSize" Value="11" />
+            <Setter Property="Foreground" Value="#ECECF2" />
+            <Setter Property="Cursor" Value="Hand" />
+            <Setter Property="Focusable" Value="False" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="ToggleButton">
+                        <Border
+                            x:Name="Chip"
+                            Margin="0,2,6,2"
+                            Padding="9,2"
+                            Background="#22FFFFFF"
+                            BorderBrush="#33FFFFFF"
+                            BorderThickness="1"
+                            CornerRadius="10">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="Chip" Property="Background" Value="#38FFFFFF" />
+                            </Trigger>
+                            <Trigger Property="IsChecked" Value="True">
+                                <Setter TargetName="Chip" Property="Background" Value="#668B7CFF" />
+                                <Setter TargetName="Chip" Property="BorderBrush" Value="#B7AFE9" />
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
         <!--  The global TextBlock margin (see Styles.xaml) would shift the text inside table cells.  -->
         <Style TargetType="TextBlock">
             <Setter Property="Margin" Value="0" />
@@ -84,6 +117,13 @@
             BorderBrush="#2EFFFFFF"
             BorderThickness="1"
             CornerRadius="8">
+            <Grid>
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="Auto" />
+                <ColumnDefinition Width="Auto" />
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="Auto" />
+            </Grid.ColumnDefinitions>
             <StackPanel Orientation="Horizontal">
                 <ToggleButton
                     VerticalAlignment="Center"
@@ -98,6 +138,43 @@
                     Foreground="#C9C8D6"
                     Text="Loop preview" />
             </StackPanel>
+
+            <Rectangle
+                Grid.Column="1"
+                Width="1"
+                Margin="12,2,12,2"
+                Fill="#3A3945" />
+
+            <!--  Tag filter: all tags, the most used first; the presets must have every switched-on tag  -->
+            <ItemsControl
+                Grid.Column="2"
+                VerticalAlignment="Center"
+                ItemsSource="{Binding TagFilters}"
+                ToolTip="Filter by tags: only presets that have all the switched-on tags are shown">
+                <ItemsControl.ItemsPanel>
+                    <ItemsPanelTemplate>
+                        <WrapPanel />
+                    </ItemsPanelTemplate>
+                </ItemsControl.ItemsPanel>
+                <ItemsControl.ItemTemplate>
+                    <DataTemplate>
+                        <ToggleButton
+                            Content="{Binding Label}"
+                            IsChecked="{Binding IsSelected, Mode=TwoWay}"
+                            Style="{StaticResource TagChip}" />
+                    </DataTemplate>
+                </ItemsControl.ItemTemplate>
+            </ItemsControl>
+
+            <ui:Button
+                Grid.Column="3"
+                Margin="8,0,0,0"
+                VerticalAlignment="Center"
+                Command="{Binding ClearTagFilterCommand}"
+                Content="Clear"
+                ToolTip="Switch off all tag filters"
+                Visibility="{Binding HasTagFilter, Converter={StaticResource BoolToVisibility}}" />
+            </Grid>
         </Border>
 
         <!--  Table of presets  -->
@@ -225,11 +302,20 @@
                 <DataGridTemplateColumn Width="250" Header="Tags">
                     <DataGridTemplateColumn.CellTemplate>
                         <DataTemplate>
-                            <Grid Margin="2">
+                            <Grid
+                                Margin="2"
+                                Background="Transparent"
+                                MouseLeftButtonDown="OnTagCellMouseDown">
                                 <Grid.ColumnDefinitions>
                                     <ColumnDefinition Width="*" />
                                     <ColumnDefinition Width="Auto" />
                                 </Grid.ColumnDefinitions>
+                                <TextBlock
+                                    VerticalAlignment="Center"
+                                    FontSize="11"
+                                    Foreground="#7C7B94"
+                                    Text="+ tag"
+                                    Visibility="{Binding ShowTagHint, Converter={StaticResource BoolToVisibility}}" />
                                 <ItemsControl VerticalAlignment="Center" ItemsSource="{Binding Tags}">
                                     <ItemsControl.ItemsPanel>
                                         <ItemsPanelTemplate>
@@ -271,6 +357,7 @@
                     VerticalAlignment="Center"
                     IsEditable="True"
                     ItemsSource="{Binding DataContext.AllTags, RelativeSource={RelativeSource AncestorType=DataGrid}}"
+                    Visibility="{Binding IsTagEditing, Converter={StaticResource BoolToVisibility}}"
                     KeyDown="OnTagKeyDown"
                     SelectionChanged="OnTagSelected"
                     ToolTip="Add a tag: type a name and press Enter, or pick an existing one" />

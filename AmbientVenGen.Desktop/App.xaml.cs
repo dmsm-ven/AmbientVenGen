@@ -27,6 +27,9 @@ public partial class App : Application
 
                 services.AddSingleton<AudioPlaybackService>();
                 services.AddSingleton<PresetPreviewService>();
+                services.AddSingleton<AppSettings>();
+                services.AddSingleton<SettingsWindowService>();
+                services.AddTransient<SettingsWindow>();
                 services.AddSingleton<AudioExportService>();
                 services.AddSingleton<FileDialogService>();
                 services.AddSingleton<ExportOptionsDialogService>();

@@ -6,7 +6,9 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using CommunityToolkit.Mvvm.Messaging;
 using System.Collections.ObjectModel;
+using System.ComponentModel;
 using System.IO;
+using System.Windows.Data;
 using System.Windows.Threading;
 
 namespace AmbientVenGen.Desktop.ViewModels;
@@ -29,6 +31,12 @@ public partial class PresetLibraryViewModel : ObservableObject
 
     /// <summary>Every tag that exists in the database (offered by the tag boxes).</summary>
     public ObservableCollection<string> AllTags { get; } = [];
+
+    /// <summary>Every tag with the number of presets that have it, the most used first. Switched-on tags filter the table.</summary>
+    public ObservableCollection<TagFilterItem> TagFilters { get; } = [];
+
+    [ObservableProperty]
+    private bool _hasTagFilter;
 
     /// <summary>One switch for all rows: repeat the previewed file or play it once.</summary>
     [ObservableProperty]
@@ -55,6 +63,9 @@ public partial class PresetLibraryViewModel : ObservableObject
         _preview.Loop = Loop;
         _preview.Ended += OnPreviewEnded;
 
+        // The table shows only the presets that have every switched-on tag.
+        CollectionViewSource.GetDefaultView(Presets).Filter = MatchesTagFilter;
+
         _progressTimer = new DispatcherTimer(DispatcherPriority.Render) { Interval = TimeSpan.FromMilliseconds(33) };
         _progressTimer.Tick += (_, _) =>
         {
@@ -64,6 +75,60 @@ public partial class PresetLibraryViewModel : ObservableObject
     }
 
     partial void OnLoopChanged(bool value) => _preview.Loop = value;
+
+    // The tag box of a row is shown only while that row is the selected one.
+    partial void OnSelectedPresetChanged(FieldPresetItem? oldValue, FieldPresetItem? newValue)
+    {
+        if (oldValue is not null)
+            oldValue.IsTagEditing = false;
+    }
+
+    private bool MatchesTagFilter(object row)
+    {
+        if (row is not FieldPresetItem item)
+            return false;
+
+        foreach (TagFilterItem filter in TagFilters)
+        {
+            if (filter.IsSelected && !item.Tags.Any(t => string.Equals(t, filter.Name, StringComparison.OrdinalIgnoreCase)))
+                return false;
+        }
+
+        return true;
+    }
+
+    // Rebuilds the filter bar (counts, order) after any change of tags or rows; keeps the switched-on tags.
+    private void RebuildTagFilters()
+    {
+        var selected = TagFilters.Where(f => f.IsSelected).Select(f => f.Name).ToHashSet(StringComparer.OrdinalIgnoreCase);
+
+        var counts = Presets
+            .SelectMany(p => p.Tags)
+            .GroupBy(t => t, StringComparer.OrdinalIgnoreCase)
+            .Select(g => (Name: g.First(), Count: g.Count()))
+            .OrderByDescending(x => x.Count)
+            .ThenBy(x => x.Name, StringComparer.CurrentCultureIgnoreCase)
+            .ToList();
+
+        TagFilters.Clear();
+        foreach ((string name, int count) in counts)
+            TagFilters.Add(new TagFilterItem(name, count, selected.Contains(name), OnTagFilterChanged));
+
+        OnTagFilterChanged();
+    }
+
+    private void OnTagFilterChanged()
+    {
+        HasTagFilter = TagFilters.Any(f => f.IsSelected);
+        CollectionViewSource.GetDefaultView(Presets).Refresh();
+    }
+
+    [RelayCommand]
+    private void ClearTagFilter()
+    {
+        foreach (TagFilterItem filter in TagFilters.ToList())
+            filter.IsSelected = false;
+    }
 
     /// <summary>Play (or stop, when it is already playing) the preview of a row.</summary>
     [RelayCommand]
@@ -153,6 +218,8 @@ public partial class PresetLibraryViewModel : ObservableObject
 
         if (existing is null)
             InsertSorted(AllTags, tag);
+
+        RebuildTagFilters();
     }
 
     public async Task RemoveTagAsync(FieldPresetItem item, string tag)
@@ -168,6 +235,7 @@ public partial class PresetLibraryViewModel : ObservableObject
         }
 
         item.Tags.Remove(tag);
+        RebuildTagFilters();
 
         // A tag nobody uses any more disappears from the list.
         if (!Presets.Any(p => p.Tags.Any(t => string.Equals(t, tag, StringComparison.OrdinalIgnoreCase))))
@@ -213,6 +281,8 @@ public partial class PresetLibraryViewModel : ObservableObject
             {
                 AllTags.Add(tag);
             }
+
+            RebuildTagFilters();
         }
         catch (Exception ex)
         {
@@ -260,6 +330,9 @@ public partial class PresetLibraryViewModel : ObservableObject
         FieldPresetItem item = CreateItem(preset);
         Presets.Add(item);
         SelectedPreset = item;
+
+        // A new record: the tag box is open at once.
+        item.IsTagEditing = true;
     }
 
     private FieldPresetItem CreateItem(FieldPreset preset) =>
@@ -300,6 +373,7 @@ public partial class PresetLibraryViewModel : ObservableObject
 
         SelectedPreset = null;
         Presets.Remove(item);
+        RebuildTagFilters();
     }
 
     // Decoding happens on a background thread; the bitmap is drawn on the UI thread.

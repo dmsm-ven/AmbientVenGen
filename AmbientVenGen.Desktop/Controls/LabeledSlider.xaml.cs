@@ -55,6 +55,11 @@ public partial class LabeledSlider : UserControl
         nameof(IsValueEditable), typeof(bool), typeof(LabeledSlider),
         new PropertyMetadata(false, OnPropertyChanged));
 
+    /// <summary>Follows the window-wide "Slider / Knob" setting (inherited attached property).</summary>
+    public static readonly DependencyProperty UseKnobsProperty = InputStyle.UseKnobsProperty.AddOwner(
+        typeof(LabeledSlider),
+        new FrameworkPropertyMetadata(false, FrameworkPropertyMetadataOptions.Inherits, OnPropertyChanged));
+
     private bool _syncing;
     private bool _editing;
 
@@ -115,18 +120,24 @@ public partial class LabeledSlider : UserControl
     public LabeledSlider()
     {
         InitializeComponent();
+        InnerKnob.ValueChanged += OnInnerKnobValueChanged;
         Sync();
     }
 
     private static void OnPropertyChanged(DependencyObject d, DependencyPropertyChangedEventArgs e) =>
         ((LabeledSlider)d).Sync();
 
-    private void OnInnerValueChanged(object sender, RoutedPropertyChangedEventArgs<double> e)
+    private void OnInnerValueChanged(object sender, RoutedPropertyChangedEventArgs<double> e) => ApplyInnerValue(e.NewValue);
+
+    private void OnInnerKnobValueChanged(double value) => ApplyInnerValue(value);
+
+    // The slider and the knob work in the same (linear or logarithmic) scale; this turns their value into ours.
+    private void ApplyInnerValue(double raw)
     {
         if (_syncing)
             return;
 
-        double value = e.NewValue;
+        double value = raw;
 
         if (IsLogarithmic && Minimum > 0)
         {
@@ -173,6 +184,22 @@ public partial class LabeledSlider : UserControl
             }
 
             InnerSlider.Value = log ? Math.Log(Math.Clamp(Value, minimum, maximum)) : Value;
+
+            // The knob mirrors the slider (same scale, same value); its label shows our formatted value.
+            InnerKnob.Minimum = InnerSlider.Minimum;
+            InnerKnob.Maximum = InnerSlider.Maximum;
+            InnerKnob.Step = log ? 0 : Step;
+            InnerKnob.Value = InnerSlider.Value;
+            InnerKnob.ValueText = FormatValue(Value);
+
+            bool knob = UseKnobs;
+            InnerSlider.Visibility = knob ? Visibility.Collapsed : Visibility.Visible;
+            InnerKnob.Visibility = knob ? Visibility.Visible : Visibility.Collapsed;
+            HeaderPanel.HorizontalAlignment = knob ? HorizontalAlignment.Center : HorizontalAlignment.Left;
+
+            // The knob writes its value itself; the separate value text stays only where it can be clicked to type.
+            if (!_editing)
+                ValueText.Visibility = knob && !IsValueEditable ? Visibility.Collapsed : Visibility.Visible;
 
             ValueText.Cursor = IsValueEditable ? Cursors.IBeam : Cursors.Arrow;
             ValueText.ToolTip = IsValueEditable ? "Click to type an exact value" : null;

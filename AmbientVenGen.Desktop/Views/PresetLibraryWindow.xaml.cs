@@ -20,6 +20,13 @@ public partial class PresetLibraryWindow : FluentWindow
 
     // ---- tags
 
+    // A click on the tags cell opens the tag box of that row.
+    private void OnTagCellMouseDown(object sender, MouseButtonEventArgs e)
+    {
+        if (sender is FrameworkElement { DataContext: FieldPresetItem item })
+            item.IsTagEditing = true;
+    }
+
     private async void OnTagKeyDown(object sender, KeyEventArgs e)
     {
         if (e.Key != Key.Enter || sender is not ComboBox box)

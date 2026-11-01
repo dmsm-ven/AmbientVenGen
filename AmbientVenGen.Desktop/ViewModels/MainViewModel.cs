@@ -27,6 +27,7 @@ public partial class MainViewModel : ObservableObject, IDisposable
     private readonly FileDialogService _fileDialogService;
     private readonly ExportOptionsDialogService _exportOptionsDialogService;
     private readonly PresetLibraryWindowService _presetLibraryWindowService;
+    private readonly SettingsWindowService _settingsWindowService;
     private readonly ProjectFileService _projectFileService;
     private readonly MessageService _messageService;
     private readonly SpectrumProcessor _spectrum = new();
@@ -44,6 +45,9 @@ public partial class MainViewModel : ObservableObject, IDisposable
     private bool _disposed;
 
     public ProjectModel Project { get; } = new();
+
+    /// <summary>User settings (slider or knob controls).</summary>
+    public AppSettings Settings { get; }
     public NewLayerFormViewModel NewLayer { get; } = new();
     public IReadOnlyList<ProjectTemplate> Templates { get; }
     public ObservableCollection<Choice<double>> LengthOptions { get; }
@@ -110,8 +114,12 @@ public partial class MainViewModel : ObservableObject, IDisposable
         ProjectFileService projectFileService,
         MessageService messageService,
         TemplateService templateService,
-        PresetLibraryWindowService presetLibraryWindowService)
+        PresetLibraryWindowService presetLibraryWindowService,
+        AppSettings settings,
+        SettingsWindowService settingsWindowService)
     {
+        Settings = settings ?? throw new ArgumentNullException(nameof(settings));
+        _settingsWindowService = settingsWindowService ?? throw new ArgumentNullException(nameof(settingsWindowService));
         _playbackService = playbackService ?? throw new ArgumentNullException(nameof(playbackService));
         _exportService = exportService ?? throw new ArgumentNullException(nameof(exportService));
         _fileDialogService = fileDialogService ?? throw new ArgumentNullException(nameof(fileDialogService));
@@ -517,6 +525,9 @@ public partial class MainViewModel : ObservableObject, IDisposable
     }
 
     // ---------------------------------------------------------------- preset library
+
+    [RelayCommand]
+    private void OpenSettings() => _settingsWindowService.Show();
 
     [RelayCommand]
     private void OpenPresetLibrary() => _presetLibraryWindowService.Show();
