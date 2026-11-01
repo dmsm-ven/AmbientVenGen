@@ -16,8 +16,8 @@ namespace AmbientVenGen.Desktop.Controls;
 /// </summary>
 public sealed class Knob : FrameworkElement
 {
-    private const double DefaultWidth = 120;
-    private const double DefaultHeight = 71; // 15% lower than before (84): the value is written inside the arc
+    private const double DefaultWidth = 134;
+    private const double DefaultHeight = 60; // another 15% lower (71); the gauge is a stretched half-ellipse
     private const double ArcThickness = 8;
     private const double CapRadius = 7;
     private const double CapHitRadius = 11;
@@ -150,22 +150,24 @@ public sealed class Knob : FrameworkElement
 
     // ------------------------------------------------------------------ geometry
 
-    private (Point Center, double Radius) Layout()
+    // The gauge is a half-ellipse (wider than high), not a half-circle: Radius.Width / Radius.Height are its semi-axes.
+    private (Point Center, Size Radius) Layout()
     {
         // The base line of the arc is near the bottom edge (room for the round end buttons).
         double baseY = ActualHeight - CapRadius - 2;
-        double radius = Math.Max(10, Math.Min(ActualWidth / 2.0 - CapRadius - 1, baseY - ArcThickness / 2.0 - 2));
-        return (new Point(ActualWidth / 2.0, baseY), radius);
+        double rx = Math.Max(10, ActualWidth / 2.0 - CapRadius - 1);
+        double ry = Math.Max(10, baseY - ArcThickness / 2.0 - 2);
+        return (new Point(ActualWidth / 2.0, baseY), new Size(rx, ry));
     }
 
-    private static Point OnArc(Point center, double radius, double fraction)
+    private static Point OnArc(Point center, Size radius, double fraction)
     {
         // fraction 0 = left end, 0.5 = straight up, 1 = right end.
         double angle = Math.PI * (1.0 - Math.Clamp(fraction, 0.0, 1.0));
-        return new Point(center.X + radius * Math.Cos(angle), center.Y - radius * Math.Sin(angle));
+        return new Point(center.X + radius.Width * Math.Cos(angle), center.Y - radius.Height * Math.Sin(angle));
     }
 
-    private static StreamGeometry Arc(Point center, double radius, double fromFraction, double toFraction)
+    private static StreamGeometry Arc(Point center, Size radius, double fromFraction, double toFraction)
     {
         var geometry = new StreamGeometry();
 
@@ -186,7 +188,7 @@ public sealed class Knob : FrameworkElement
 
     protected override void OnRender(DrawingContext dc)
     {
-        (Point center, double radius) = Layout();
+        (Point center, Size radius) = Layout();
 
         // An invisible background makes the whole area react to the mouse.
         dc.DrawRectangle(HitBrush, null, new Rect(0, 0, ActualWidth, ActualHeight));
@@ -286,7 +288,7 @@ public sealed class Knob : FrameworkElement
         base.OnMouseLeftButtonDown(e);
 
         Point point = e.GetPosition(this);
-        (Point center, double radius) = Layout();
+        (Point center, Size radius) = Layout();
 
         // The written value: it types an exact number when that is allowed, and never moves the knob.
         if (_labelRect.Contains(point))
@@ -369,10 +371,11 @@ public sealed class Knob : FrameworkElement
     // Angle of the point as seen from the centre of the arc: left = minimum, up = middle, right = maximum.
     private void SetFromPoint(Point point)
     {
-        (Point center, _) = Layout();
+        (Point center, Size radius) = Layout();
 
-        double dx = point.X - center.X;
-        double dy = center.Y - point.Y;
+        // Normalised to the ellipse, so the angle is measured as on a circle.
+        double dx = (point.X - center.X) / radius.Width;
+        double dy = (center.Y - point.Y) / radius.Height;
         double fraction;
 
         if (dy <= 0)

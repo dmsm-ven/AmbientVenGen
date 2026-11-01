@@ -7,15 +7,12 @@
     plain net10.0) when the engine has to run outside Windows, e.g. in tests on a Linux build agent.
   -->
   <PropertyGroup>
-    <TargetFramework>net10.0-windows</TargetFramework>
-    <Nullable>enable</Nullable>
-    <ImplicitUsings>enable</ImplicitUsings>
     <RootNamespace>AmbientVenGen.Core</RootNamespace>
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="NAudio" Version="3.3.0" />
-    <PackageReference Include="CommunityToolkit.Mvvm" Version="8.4.0" />
+    <PackageReference Include="NAudio" />
+    <PackageReference Include="CommunityToolkit.Mvvm" />
   </ItemGroup>
 
 </Project>

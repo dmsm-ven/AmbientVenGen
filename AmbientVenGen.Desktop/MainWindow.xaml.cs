@@ -34,6 +34,7 @@ public partial class MainWindow : FluentWindow
                 case Key.S: Run(viewModel.SaveProjectCommand, e); return;
                 case Key.O: Run(viewModel.OpenProjectCommand, e); return;
                 case Key.N: Run(viewModel.NewProjectCommand, e); return;
+                case Key.D: Run(viewModel.DuplicateSelectedLayerCommand, e); return;
             }
 
             return;

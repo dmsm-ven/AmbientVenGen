@@ -58,7 +58,14 @@
             <RowDefinition Height="Auto" />
         </Grid.RowDefinitions>
 
-        <ui:TitleBar Icon="pack://application:,,,/Assets/app-icon.ico" Grid.Row="0" Title="{Binding WindowTitle}" />
+        <!-- The header has its own, lighter solid color (the window itself is a darker translucent Mica). -->
+        <ui:TitleBar
+            Grid.Row="0"
+            Background="#FF2A2A38"
+            ButtonsBackground="Transparent"
+            ButtonsForeground="#ECECF2"
+            Icon="pack://application:,,,/Assets/app-icon.ico"
+            Title="{Binding WindowTitle}" />
 
         <!-- Top tool panel -->
         <Border
@@ -791,6 +798,7 @@
                         VerticalAlignment="Bottom"
                         Format="{}{0:P0}"
                         Header="Space (reverb)"
+                        UseKnobs="False"
                         Hint="{x:Static vm:HintTexts.Reverb}"
                         Maximum="1"
                         Minimum="0"

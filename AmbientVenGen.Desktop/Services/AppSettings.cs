@@ -32,6 +32,23 @@ public sealed partial class AppSettings : ObservableObject
     [NotifyPropertyChangedFor(nameof(IsKnobStyle))]
     private ControlStyle _controlStyle = ControlStyle.Slider;
 
+    /// <summary>The project file that was opened or saved last; it is reopened at the next start.</summary>
+    public string? LastProjectPath
+    {
+        get => _lastProjectPath;
+        set
+        {
+            if (_lastProjectPath == value)
+                return;
+
+            _lastProjectPath = value;
+            OnPropertyChanged();
+            Save();
+        }
+    }
+
+    private string? _lastProjectPath;
+
     public bool UseKnobs => ControlStyle == ControlStyle.Knob;
 
     // Two-way properties for the radio buttons of the settings window.
@@ -76,7 +93,10 @@ public sealed partial class AppSettings : ObservableObject
 
             SettingsFile? file = JsonSerializer.Deserialize<SettingsFile>(File.ReadAllText(_path), Options);
             if (file is not null)
+            {
                 ControlStyle = file.ControlStyle;
+                _lastProjectPath = file.LastProjectPath;
+            }
         }
         catch (Exception)
         {
@@ -89,7 +109,7 @@ public sealed partial class AppSettings : ObservableObject
         try
         {
             Directory.CreateDirectory(Path.GetDirectoryName(_path)!);
-            File.WriteAllText(_path, JsonSerializer.Serialize(new SettingsFile { ControlStyle = ControlStyle }, Options));
+            File.WriteAllText(_path, JsonSerializer.Serialize(new SettingsFile { ControlStyle = ControlStyle, LastProjectPath = LastProjectPath }, Options));
         }
         catch (Exception)
         {
@@ -100,5 +120,6 @@ public sealed partial class AppSettings : ObservableObject
     private sealed class SettingsFile
     {
         public ControlStyle ControlStyle { get; set; }
+        public string? LastProjectPath { get; set; }
     }
 }
