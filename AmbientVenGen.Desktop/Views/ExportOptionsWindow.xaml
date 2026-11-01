@@ -1,14 +1,14 @@
-<ui:FluentWindow
+﻿<ui:FluentWindow
     x:Class="AmbientVenGen.Desktop.Views.ExportOptionsWindow"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
-    Icon="pack://application:,,,/Assets/app-icon.ico"
     Title="Export"
     Width="380"
     Background="#17171D"
     ExtendsContentIntoTitleBar="True"
     Foreground="#ECECF2"
+    Icon="pack://application:,,,/Assets/app-icon.ico"
     ResizeMode="NoResize"
     ShowInTaskbar="False"
     SizeToContent="Height"
@@ -41,8 +41,11 @@
 
         <ui:TitleBar
             Title="Export"
-            Icon="pack://application:,,,/Assets/app-icon.ico"
             Grid.Row="0"
+            Background="{StaticResource WindowTitleBackground}"
+            ButtonsBackground="{StaticResource WindowTitleButtonsBackground}"
+            ButtonsForeground="{StaticResource WindowTitleButtonsForeground}"
+            Icon="pack://application:,,,/Assets/app-icon.ico"
             ShowMaximize="False"
             ShowMinimize="False" />
 
@@ -86,9 +89,7 @@
             </Grid>
             <Slider Value="{Binding FadeOutSeconds, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
 
-            <ui:TextBlock
-                Foreground="#AAA9BB"
-                Text="{Binding TrackLengthText, StringFormat=Track length: {0} (set in the main window)}" />
+            <ui:TextBlock Foreground="#AAA9BB" Text="{Binding TrackLengthText, StringFormat=Track length: {0} (set in the main window)}" />
         </StackPanel>
 
         <StackPanel

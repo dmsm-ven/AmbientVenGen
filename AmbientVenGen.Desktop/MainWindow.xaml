@@ -5,26 +5,26 @@
     xmlns:controls="clr-namespace:AmbientVenGen.Desktop.Controls"
     xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
     xmlns:vm="clr-namespace:AmbientVenGen.Desktop.ViewModels"
-    Icon="pack://application:,,,/Assets/app-icon.ico"
     Title="Ambient Forge"
     Width="1220"
     Height="820"
     MinWidth="1120"
     MinHeight="720"
-    Background="#E617171D"
     controls:Hints.IsShown="{Binding ShowHints}"
     controls:InputStyle.UseKnobs="{Binding Settings.UseKnobs}"
+    Background="#E617171D"
     ExtendsContentIntoTitleBar="True"
     Foreground="#ECECF2"
+    Icon="pack://application:,,,/Assets/app-icon.ico"
     WindowBackdropType="Mica"
     WindowStartupLocation="CenterScreen">
 
     <ui:FluentWindow.Resources>
         <BooleanToVisibilityConverter x:Key="BoolToVisibility" />
 
-        <!-- Generic styles (TextBlock, Slider, ComboBox, SectionCard, ToolIconButton) are in Resources/Styles.xaml. -->
+        <!--  Generic styles (TextBlock, Slider, ComboBox, SectionCard, ToolIconButton) are in Resources/Styles.xaml.  -->
 
-        <!-- Play / Stop in one button: the icon and tooltip follow MainViewModel.IsPlaying. -->
+        <!--  Play / Stop in one button: the icon and tooltip follow MainViewModel.IsPlaying.  -->
         <Style
             x:Key="PlayStopButton"
             BasedOn="{StaticResource TimelineIconButton}"
@@ -58,16 +58,16 @@
             <RowDefinition Height="Auto" />
         </Grid.RowDefinitions>
 
-        <!-- The header has its own, lighter solid color (the window itself is a darker translucent Mica). -->
+        <!--  The header has its own, lighter solid color (the window itself is a darker translucent Mica).  -->
         <ui:TitleBar
+            Title="{Binding WindowTitle}"
             Grid.Row="0"
-            Background="#FF2A2A38"
-            ButtonsBackground="Transparent"
-            ButtonsForeground="#ECECF2"
-            Icon="pack://application:,,,/Assets/app-icon.ico"
-            Title="{Binding WindowTitle}" />
+            Background="{StaticResource WindowTitleBackground}"
+            ButtonsBackground="{StaticResource WindowTitleButtonsBackground}"
+            ButtonsForeground="{StaticResource WindowTitleButtonsForeground}"
+            Icon="pack://application:,,,/Assets/app-icon.ico" />
 
-        <!-- Top tool panel -->
+        <!--  Top tool panel  -->
         <Border
             Grid.Row="1"
             Padding="12,6"
@@ -84,7 +84,7 @@
                 </Grid.ColumnDefinitions>
 
                 <StackPanel Grid.Column="0" Orientation="Horizontal">
-<ui:Button
+                    <ui:Button
                         Command="{Binding NewProjectCommand}"
                         Style="{StaticResource ToolIconButton}"
                         ToolTip="New project (Ctrl+N)">
@@ -178,7 +178,7 @@
             </Grid>
         </Border>
 
-        <!-- Top row: new layer form + selected layer inspector -->
+        <!--  Top row: new layer form + selected layer inspector  -->
         <Grid Grid.Row="2" Margin="12,10,12,0">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="224" />
@@ -186,85 +186,85 @@
                 <ColumnDefinition Width="*" />
             </Grid.ColumnDefinitions>
 
-            <!-- New layer: only the type; start, length and fades are edited after adding -->
+            <!--  New layer: only the type; start, length and fades are edited after adding  -->
             <Grid Grid.Column="0">
-            <Grid.RowDefinitions>
-                <RowDefinition Height="*" />
-                <RowDefinition Height="10" />
-                <RowDefinition Height="*" />
-            </Grid.RowDefinitions>
-            <Border Grid.Row="0" Style="{StaticResource SectionCard}">
-                <StackPanel>
-                    <Grid Margin="0,0,0,8">
-                        <ui:TextBlock
-                            Margin="0"
-                            VerticalAlignment="Center"
-                            FontSize="14"
-                            FontWeight="SemiBold"
-                            Text="New layer" />
-                        <ui:Button
-                            Margin="0,0,30,0"
-                            HorizontalAlignment="Right"
-                            Command="{Binding UndoDeleteCommand}"
-                            Style="{StaticResource ToolIconButton}"
-                            ToolTip="Restore the last removed layer">
-                            <ui:Button.Icon>
-                                <ui:SymbolIcon Symbol="ArrowUndo24" />
-                            </ui:Button.Icon>
-                        </ui:Button>
-                        <ui:Button
-                            Margin="0"
-                            HorizontalAlignment="Right"
-                            Command="{Binding AddLayerCommand}"
-                            Style="{StaticResource ToolIconButton}"
-                            ToolTip="Add layer">
-                            <ui:Button.Icon>
-                                <ui:SymbolIcon Symbol="Add24" />
-                            </ui:Button.Icon>
-                        </ui:Button>
-                    </Grid>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="*" />
+                    <RowDefinition Height="10" />
+                    <RowDefinition Height="*" />
+                </Grid.RowDefinitions>
+                <Border Grid.Row="0" Style="{StaticResource SectionCard}">
+                    <StackPanel>
+                        <Grid Margin="0,0,0,8">
+                            <ui:TextBlock
+                                Margin="0"
+                                VerticalAlignment="Center"
+                                FontSize="14"
+                                FontWeight="SemiBold"
+                                Text="New layer" />
+                            <ui:Button
+                                Margin="0,0,30,0"
+                                HorizontalAlignment="Right"
+                                Command="{Binding UndoDeleteCommand}"
+                                Style="{StaticResource ToolIconButton}"
+                                ToolTip="Restore the last removed layer">
+                                <ui:Button.Icon>
+                                    <ui:SymbolIcon Symbol="ArrowUndo24" />
+                                </ui:Button.Icon>
+                            </ui:Button>
+                            <ui:Button
+                                Margin="0"
+                                HorizontalAlignment="Right"
+                                Command="{Binding AddLayerCommand}"
+                                Style="{StaticResource ToolIconButton}"
+                                ToolTip="Add layer">
+                                <ui:Button.Icon>
+                                    <ui:SymbolIcon Symbol="Add24" />
+                                </ui:Button.Icon>
+                            </ui:Button>
+                        </Grid>
 
-                    <StackPanel Orientation="Horizontal">
-                        <ui:TextBlock
-                            Margin="0"
-                            FontSize="12"
-                            Foreground="#C9C8D6"
-                            Text="Type" />
-                        <controls:HintIcon Margin="5,0,0,0" Text="{x:Static vm:HintTexts.LayerType}" />
+                        <StackPanel Orientation="Horizontal">
+                            <ui:TextBlock
+                                Margin="0"
+                                FontSize="12"
+                                Foreground="#C9C8D6"
+                                Text="Type" />
+                            <controls:HintIcon Margin="5,0,0,0" Text="{x:Static vm:HintTexts.LayerType}" />
+                        </StackPanel>
+                        <ComboBox
+                            ItemsSource="{x:Static vm:Choices.LayerTypes}"
+                            SelectedValue="{Binding NewLayer.Type, Mode=TwoWay}"
+                            Style="{StaticResource ChoiceCombo}" />
                     </StackPanel>
-                    <ComboBox
-                        ItemsSource="{x:Static vm:Choices.LayerTypes}"
-                        SelectedValue="{Binding NewLayer.Type, Mode=TwoWay}"
-                        Style="{StaticResource ChoiceCombo}" />
-                </StackPanel>
-            </Border>
+                </Border>
 
-            <!-- Templates: a ready-made set of layers -->
-            <Border Grid.Row="2" Style="{StaticResource SectionCard}">
-                <StackPanel>
-                    <StackPanel Margin="0,0,0,4" Orientation="Horizontal">
-                        <ui:TextBlock
-                            Margin="0"
-                            FontSize="14"
-                            FontWeight="SemiBold"
-                            Text="Template" />
-                        <controls:HintIcon Margin="5,0,0,0" Text="{x:Static vm:HintTexts.Template}" />
+                <!--  Templates: a ready-made set of layers  -->
+                <Border Grid.Row="2" Style="{StaticResource SectionCard}">
+                    <StackPanel>
+                        <StackPanel Margin="0,0,0,4" Orientation="Horizontal">
+                            <ui:TextBlock
+                                Margin="0"
+                                FontSize="14"
+                                FontWeight="SemiBold"
+                                Text="Template" />
+                            <controls:HintIcon Margin="5,0,0,0" Text="{x:Static vm:HintTexts.Template}" />
+                        </StackPanel>
+                        <ComboBox
+                            DisplayMemberPath="Name"
+                            ItemsSource="{Binding Templates}"
+                            SelectedItem="{Binding SelectedTemplate, Mode=TwoWay}" />
+                        <ui:Button
+                            Margin="0,8,0,0"
+                            HorizontalAlignment="Stretch"
+                            Command="{Binding ApplyTemplateCommand}"
+                            Content="Apply template"
+                            ToolTip="Replaces all layers of the project with the template" />
                     </StackPanel>
-                    <ComboBox
-                        DisplayMemberPath="Name"
-                        ItemsSource="{Binding Templates}"
-                        SelectedItem="{Binding SelectedTemplate, Mode=TwoWay}" />
-                    <ui:Button
-                        Margin="0,8,0,0"
-                        HorizontalAlignment="Stretch"
-                        Command="{Binding ApplyTemplateCommand}"
-                        Content="Apply template"
-                        ToolTip="Replaces all layers of the project with the template" />
-                </StackPanel>
-            </Border>
+                </Border>
             </Grid>
 
-            <!-- Selected layer inspector -->
+            <!--  Selected layer inspector  -->
             <Border Grid.Column="2" Style="{StaticResource SectionCard}">
                 <Grid>
                     <Grid.RowDefinitions>
@@ -315,8 +315,11 @@
                                         <RowDefinition Height="Auto" />
                                     </Grid.RowDefinitions>
 
-                                    <!-- Name / type / mute / placement -->
-                                    <Grid Grid.Row="0" Grid.ColumnSpan="3" Margin="0,0,0,8">
+                                    <!--  Name / type / mute / placement  -->
+                                    <Grid
+                                        Grid.Row="0"
+                                        Grid.ColumnSpan="3"
+                                        Margin="0,0,0,8">
                                         <Grid.RowDefinitions>
                                             <RowDefinition Height="Auto" />
                                             <RowDefinition Height="Auto" />
@@ -357,7 +360,7 @@
                                                 </ui:SymbolIcon.Style>
                                             </ui:SymbolIcon>
                                         </ToggleButton>
-                                        <!-- Start and Duration on one line: caption left of the time -->
+                                        <!--  Start and Duration on one line: caption left of the time  -->
                                         <StackPanel
                                             Grid.Column="3"
                                             HorizontalAlignment="Left"
@@ -380,7 +383,7 @@
                                                 Value="{Binding DurationSeconds, Mode=TwoWay}" />
                                         </StackPanel>
 
-                                        <!-- Recording file (Field record layers only), one line: caption, file name, button -->
+                                        <!--  Recording file (Field record layers only), one line: caption, file name, button  -->
                                         <StackPanel
                                             Grid.Row="1"
                                             Grid.ColumnSpan="5"
@@ -421,7 +424,7 @@
                                         </StackPanel>
                                     </Grid>
 
-                                    <!-- Parameters that move over the layer: [from] - chain / curve - [to] -->
+                                    <!--  Parameters that move over the layer: [from] - chain / curve - [to]  -->
                                     <Grid Grid.Row="1" Grid.Column="0">
                                         <Grid.ColumnDefinitions>
                                             <ColumnDefinition Width="*" />
@@ -445,7 +448,7 @@
                                             Step="0.01"
                                             Value="{Binding LevelFrom, Mode=TwoWay}" />
 
-                                        <!-- Between the two knobs: name, chain (they belong together) and the curve of the change -->
+                                        <!--  Between the two knobs: name, chain (they belong together) and the curve of the change  -->
                                         <StackPanel
                                             Grid.Row="0"
                                             Grid.Column="1"
@@ -505,7 +508,7 @@
                                             Step="0.01"
                                             Value="{Binding BrightnessFrom, Mode=TwoWay}" />
 
-                                        <!-- Between the two knobs: name, chain (they belong together) and the curve of the change -->
+                                        <!--  Between the two knobs: name, chain (they belong together) and the curve of the change  -->
                                         <StackPanel
                                             Grid.Row="1"
                                             Grid.Column="1"
@@ -565,7 +568,7 @@
                                             Step="0.01"
                                             Value="{Binding ModulationFrom, Mode=TwoWay}" />
 
-                                        <!-- Between the two knobs: name, chain (they belong together) and the curve of the change -->
+                                        <!--  Between the two knobs: name, chain (they belong together) and the curve of the change  -->
                                         <StackPanel
                                             Grid.Row="2"
                                             Grid.Column="1"
@@ -615,7 +618,7 @@
                                             Value="{Binding ModulationTo, Mode=TwoWay}" />
                                     </Grid>
 
-                                    <!-- Placement, fades, pitch, pan -->
+                                    <!--  Placement, fades, pitch, pan  -->
                                     <Grid Grid.Row="1" Grid.Column="2">
                                         <Grid.ColumnDefinitions>
                                             <ColumnDefinition Width="*" />
@@ -696,7 +699,7 @@
                                             Step="1"
                                             Value="{Binding FadeOutSeconds, Mode=TwoWay}" />
 
-                                        <!-- Speed (recordings only; switched off for the other types) -->
+                                        <!--  Speed (recordings only; switched off for the other types)  -->
                                         <controls:LabeledSlider
                                             Grid.Row="2"
                                             Grid.Column="0"
@@ -727,7 +730,7 @@
                                             </controls:LabeledSlider.Style>
                                         </controls:LabeledSlider>
 
-                                        <!-- The curve of Fade in / Fade out -->
+                                        <!--  The curve of Fade in / Fade out  -->
                                         <StackPanel
                                             Grid.Row="2"
                                             Grid.Column="2"
@@ -751,7 +754,7 @@
             </Border>
         </Grid>
 
-        <!-- Timeline -->
+        <!--  Timeline  -->
         <Border
             Grid.Row="3"
             Margin="12,10,12,0"
@@ -771,7 +774,7 @@
                         <ColumnDefinition Width="Auto" />
                     </Grid.ColumnDefinitions>
 
-                    <!-- Title with Play / Stop and Seed under it -->
+                    <!--  Title with Play / Stop and Seed under it  -->
                     <StackPanel Grid.Column="0">
                         <ui:TextBlock
                             Margin="0"
@@ -798,14 +801,17 @@
                         VerticalAlignment="Bottom"
                         Format="{}{0:P0}"
                         Header="Space (reverb)"
-                        UseKnobs="False"
                         Hint="{x:Static vm:HintTexts.Reverb}"
                         Maximum="1"
                         Minimum="0"
                         Step="0.01"
+                        UseKnobs="False"
                         Value="{Binding Project.ReverbMix, Mode=TwoWay}" />
 
-                    <StackPanel Grid.Column="3" Width="110" VerticalAlignment="Bottom">
+                    <StackPanel
+                        Grid.Column="3"
+                        Width="110"
+                        VerticalAlignment="Bottom">
                         <StackPanel Orientation="Horizontal">
                             <ui:TextBlock
                                 Margin="0"
@@ -835,7 +841,7 @@
             </Grid>
         </Border>
 
-        <!-- Status line + export progress -->
+        <!--  Status line + export progress  -->
         <Border
             Grid.Row="4"
             Margin="0,10,0,0"
