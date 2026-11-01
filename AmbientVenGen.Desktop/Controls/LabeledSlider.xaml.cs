@@ -139,6 +139,7 @@ public partial class LabeledSlider : UserControl
     {
         InitializeComponent();
         InnerKnob.ValueChanged += OnInnerKnobValueChanged;
+        InnerKnob.LabelClicked += BeginEdit;
         Sync();
     }
 
@@ -213,12 +214,21 @@ public partial class LabeledSlider : UserControl
             bool knob = UseKnobs;
             InnerSlider.Visibility = knob ? Visibility.Collapsed : Visibility.Visible;
             InnerKnob.Visibility = knob ? Visibility.Visible : Visibility.Collapsed;
-            HeaderPanel.HorizontalAlignment = knob ? HorizontalAlignment.Center : HorizontalAlignment.Left;
-            HeaderPanel.Visibility = knob && !KnobHeaderVisible ? Visibility.Collapsed : Visibility.Visible;
 
-            // The knob writes its value itself; the separate value text stays only where it can be clicked to type.
+            // A knob carries the caption and the value inside its arc, so the header row is not needed
+            // (it appears only while an exact value is being typed).
+            InnerKnob.Caption = KnobHeaderVisible ? Header : string.Empty;
+            InnerKnob.IsLabelClickable = IsValueEditable;
+            InnerKnob.ToolTip = string.IsNullOrEmpty(Hint) ? null : $"{Header}: {Hint}";
+
+            HeaderGrid.Visibility = knob && !_editing ? Visibility.Collapsed : Visibility.Visible;
+            HeaderPanel.Visibility = knob ? Visibility.Collapsed : Visibility.Visible;
+
             if (!_editing)
-                ValueText.Visibility = knob && !IsValueEditable ? Visibility.Collapsed : Visibility.Visible;
+                ValueText.Visibility = knob ? Visibility.Collapsed : Visibility.Visible;
+
+            Grid.SetColumnSpan(ValueEditor, knob ? 2 : 1);
+            ValueEditor.HorizontalAlignment = knob ? HorizontalAlignment.Center : HorizontalAlignment.Right;
 
             ValueText.Cursor = IsValueEditable ? Cursors.IBeam : Cursors.Arrow;
             ValueText.ToolTip = IsValueEditable ? "Click to type an exact value" : null;
@@ -235,16 +245,24 @@ public partial class LabeledSlider : UserControl
 
     private void OnValueTextClick(object sender, MouseButtonEventArgs e)
     {
+        BeginEdit();
+        e.Handled = true;
+    }
+
+    // Typing an exact value: from a click on the value text (slider) or on the number inside the knob.
+    private void BeginEdit()
+    {
         if (!IsValueEditable || _editing)
             return;
 
         _editing = true;
+        Sync();
+
         ValueEditor.Text = Value.ToString("0.##", CultureInfo.CurrentCulture);
         ValueText.Visibility = Visibility.Collapsed;
         ValueEditor.Visibility = Visibility.Visible;
         ValueEditor.Focus();
         ValueEditor.SelectAll();
-        e.Handled = true;
     }
 
     private void OnEditorKeyDown(object sender, KeyEventArgs e)
