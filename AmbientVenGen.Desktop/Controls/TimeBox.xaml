@@ -35,8 +35,8 @@
         </Style>
     </UserControl.Resources>
 
-    <StackPanel>
-        <StackPanel Orientation="Horizontal">
+    <StackPanel x:Name="RootPanel">
+        <StackPanel x:Name="HeaderRow" Orientation="Horizontal">
             <TextBlock
                 x:Name="HeaderText"
                 Margin="0"
@@ -80,6 +80,7 @@
                 x:Name="Input"
                 Height="32"
                 MaxLength="9"
+                Padding="4,0"
                 FontFamily="Consolas"
                 FontSize="14"
                 GotKeyboardFocus="OnInputGotFocus"

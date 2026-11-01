@@ -309,7 +309,11 @@
                                     </Grid.RowDefinitions>
 
                                     <!-- Name / type / mute / placement -->
-                                    <Grid Grid.Row="0" Grid.ColumnSpan="3" Margin="0,0,0,10">
+                                    <Grid Grid.Row="0" Grid.ColumnSpan="3" Margin="0,0,0,8">
+                                        <Grid.RowDefinitions>
+                                            <RowDefinition Height="Auto" />
+                                            <RowDefinition Height="Auto" />
+                                        </Grid.RowDefinitions>
                                         <Grid.ColumnDefinitions>
                                             <ColumnDefinition Width="220" />
                                             <ColumnDefinition Width="Auto" />
@@ -346,11 +350,35 @@
                                                 </ui:SymbolIcon.Style>
                                             </ui:SymbolIcon>
                                         </ToggleButton>
-                                        <!-- Recording file (Field record layers only) -->
+                                        <!-- Start and Duration on one line: caption left of the time -->
                                         <StackPanel
-                                            Grid.Column="4"
-                                            Margin="22,0,0,0"
-                                            VerticalAlignment="Top">
+                                            Grid.Column="3"
+                                            HorizontalAlignment="Left"
+                                            VerticalAlignment="Top"
+                                            Orientation="Horizontal">
+                                            <controls:TimeBox
+                                                Margin="0,0,18,0"
+                                                Header="Start"
+                                                Hint="{x:Static vm:HintTexts.Start}"
+                                                IsInline="True"
+                                                Maximum="{Binding DataContext.Project.DurationSeconds, RelativeSource={RelativeSource AncestorType=Window}}"
+                                                Minimum="0"
+                                                Value="{Binding StartSeconds, Mode=TwoWay}" />
+                                            <controls:TimeBox
+                                                Header="Duration"
+                                                Hint="{x:Static vm:HintTexts.Duration}"
+                                                IsInline="True"
+                                                Maximum="{Binding DataContext.Project.DurationSeconds, RelativeSource={RelativeSource AncestorType=Window}}"
+                                                Minimum="2"
+                                                Value="{Binding DurationSeconds, Mode=TwoWay}" />
+                                        </StackPanel>
+
+                                        <!-- Recording file (Field record layers only), one line: caption, file name, button -->
+                                        <StackPanel
+                                            Grid.Row="1"
+                                            Grid.ColumnSpan="5"
+                                            Margin="0,8,0,0"
+                                            Orientation="Horizontal">
                                             <StackPanel.Style>
                                                 <Style TargetType="StackPanel">
                                                     <Setter Property="Visibility" Value="Collapsed" />
@@ -361,202 +389,229 @@
                                                     </Style.Triggers>
                                                 </Style>
                                             </StackPanel.Style>
-                                            <StackPanel Orientation="Horizontal">
-                                                <ui:TextBlock
-                                                    Margin="0"
-                                                    FontSize="12"
-                                                    Foreground="#C9C8D6"
-                                                    Text="Source file" />
-                                                <controls:HintIcon Margin="5,0,0,0" Text="{x:Static vm:HintTexts.Source}" />
-                                            </StackPanel>
                                             <ui:TextBlock
-                                                Margin="0,2,0,6"
+                                                Margin="0"
+                                                VerticalAlignment="Center"
+                                                FontSize="12"
+                                                Foreground="#C9C8D6"
+                                                Text="Source file" />
+                                            <controls:HintIcon
+                                                Margin="5,0,0,0"
+                                                VerticalAlignment="Center"
+                                                Text="{x:Static vm:HintTexts.Source}" />
+                                            <ui:TextBlock
+                                                MaxWidth="320"
+                                                Margin="12,0,12,0"
+                                                VerticalAlignment="Center"
                                                 Foreground="#8FD16A"
                                                 Text="{Binding SourceName}"
                                                 TextTrimming="CharacterEllipsis"
                                                 ToolTip="{Binding SourcePath}" />
                                             <ui:Button
+                                                VerticalAlignment="Center"
                                                 Command="{Binding DataContext.ChangeSourceCommand, RelativeSource={RelativeSource AncestorType=Window}}"
                                                 Content="Change file..." />
                                         </StackPanel>
-
-                                        <!-- Start over Duration: a fixed-width column, not stretched across the panel -->
-                                        <StackPanel
-                                            Grid.Column="3"
-                                            HorizontalAlignment="Left"
-                                            Orientation="Horizontal">
-                                            <controls:TimeBox
-                                                Width="106"
-                                                Margin="0,0,12,0"
-                                                Header="Start"
-                                                Hint="{x:Static vm:HintTexts.Start}"
-                                                Maximum="{Binding DataContext.Project.DurationSeconds, RelativeSource={RelativeSource AncestorType=Window}}"
-                                                Minimum="0"
-                                                Value="{Binding StartSeconds, Mode=TwoWay}" />
-                                            <controls:TimeBox
-                                                Width="106"
-                                                Header="Duration"
-                                                Hint="{x:Static vm:HintTexts.Duration}"
-                                                Maximum="{Binding DataContext.Project.DurationSeconds, RelativeSource={RelativeSource AncestorType=Window}}"
-                                                Minimum="2"
-                                                Value="{Binding DurationSeconds, Mode=TwoWay}" />
-                                        </StackPanel>
                                     </Grid>
 
-                                    <!-- Parameters that move over the layer: from -> to along a curve -->
+                                    <!-- Parameters that move over the layer: [from] - chain / curve - [to] -->
                                     <Grid Grid.Row="1" Grid.Column="0">
                                         <Grid.ColumnDefinitions>
-                                            <ColumnDefinition Width="104" />
                                             <ColumnDefinition Width="*" />
+                                            <ColumnDefinition Width="Auto" MinWidth="112" />
                                             <ColumnDefinition Width="*" />
                                         </Grid.ColumnDefinitions>
                                         <Grid.RowDefinitions>
                                             <RowDefinition Height="Auto" />
                                             <RowDefinition Height="Auto" />
                                             <RowDefinition Height="Auto" />
-                                            <RowDefinition Height="Auto" />
                                         </Grid.RowDefinitions>
 
-                                        <StackPanel
-                                            Grid.Row="0"
-                                            VerticalAlignment="Center"
-                                            Orientation="Horizontal">
-                                            <ui:TextBlock
-                                                Margin="0"
-                                                FontWeight="SemiBold"
-                                                Text="Level" />
-                                            <controls:HintIcon Margin="5,0,0,0" Text="{x:Static vm:HintTexts.Level}" />
-                                        </StackPanel>
                                         <controls:LabeledSlider
                                             Grid.Row="0"
-                                            Grid.Column="1"
-                                            Margin="0,0,10,8"
+                                            Grid.Column="0"
+                                            Margin="0,0,6,6"
                                             Format="{}{0:P0}"
                                             Header="From"
+                                            KnobHeaderVisible="False"
                                             Maximum="1"
                                             Minimum="0"
                                             Step="0.01"
                                             Value="{Binding LevelFrom, Mode=TwoWay}" />
+
+                                        <!-- Between the two knobs: name, chain (they belong together) and the curve of the change -->
+                                        <StackPanel
+                                            Grid.Row="0"
+                                            Grid.Column="1"
+                                            Margin="0,0,0,6"
+                                            VerticalAlignment="Center">
+                                            <StackPanel HorizontalAlignment="Center" Orientation="Horizontal">
+                                                <ui:TextBlock
+                                                    Margin="0"
+                                                    FontWeight="SemiBold"
+                                                    Text="Level" />
+                                                <controls:HintIcon Margin="5,0,0,0" Text="{x:Static vm:HintTexts.Level}" />
+                                            </StackPanel>
+                                            <Grid Margin="0,3,0,0" HorizontalAlignment="Center">
+                                                <Grid.ColumnDefinitions>
+                                                    <ColumnDefinition Width="Auto" />
+                                                    <ColumnDefinition Width="Auto" />
+                                                    <ColumnDefinition Width="Auto" />
+                                                </Grid.ColumnDefinitions>
+                                                <ui:SymbolIcon
+                                                    Margin="0,0,5,0"
+                                                    VerticalAlignment="Center"
+                                                    FontSize="15"
+                                                    Foreground="#8F8DB0"
+                                                    Symbol="Link24"
+                                                    ToolTip="Linked: the value moves from the left one to the right one over the layer, along this curve" />
+                                                <controls:TransitionFunctionDropdown Grid.Column="1" Value="{Binding LevelEasing, Mode=TwoWay}" />
+                                                <ui:SymbolIcon
+                                                    Grid.Column="2"
+                                                    Margin="5,0,0,0"
+                                                    VerticalAlignment="Center"
+                                                    FontSize="15"
+                                                    Foreground="#8F8DB0"
+                                                    Symbol="Link24"
+                                                    ToolTip="Linked: the value moves from the left one to the right one over the layer, along this curve" />
+                                            </Grid>
+                                        </StackPanel>
+
                                         <controls:LabeledSlider
                                             Grid.Row="0"
                                             Grid.Column="2"
-                                            Margin="0,0,10,8"
+                                            Margin="6,0,0,6"
                                             Format="{}{0:P0}"
                                             Header="To"
+                                            KnobHeaderVisible="False"
                                             Maximum="1"
                                             Minimum="0"
                                             Step="0.01"
                                             Value="{Binding LevelTo, Mode=TwoWay}" />
 
-                                        <StackPanel
-                                            Grid.Row="1"
-                                            VerticalAlignment="Center"
-                                            Orientation="Horizontal">
-                                            <ui:TextBlock
-                                                Margin="0"
-                                                FontWeight="SemiBold"
-                                                Text="Brightness" />
-                                            <controls:HintIcon Margin="5,0,0,0" Text="{x:Static vm:HintTexts.Brightness}" />
-                                        </StackPanel>
                                         <controls:LabeledSlider
                                             Grid.Row="1"
-                                            Grid.Column="1"
-                                            Margin="0,0,10,8"
+                                            Grid.Column="0"
+                                            Margin="0,0,6,6"
                                             Format="{}{0:P0}"
                                             Header="From"
+                                            KnobHeaderVisible="False"
                                             Maximum="1"
                                             Minimum="0"
                                             Step="0.01"
                                             Value="{Binding BrightnessFrom, Mode=TwoWay}" />
+
+                                        <!-- Between the two knobs: name, chain (they belong together) and the curve of the change -->
+                                        <StackPanel
+                                            Grid.Row="1"
+                                            Grid.Column="1"
+                                            Margin="0,0,0,6"
+                                            VerticalAlignment="Center">
+                                            <StackPanel HorizontalAlignment="Center" Orientation="Horizontal">
+                                                <ui:TextBlock
+                                                    Margin="0"
+                                                    FontWeight="SemiBold"
+                                                    Text="Brightness" />
+                                                <controls:HintIcon Margin="5,0,0,0" Text="{x:Static vm:HintTexts.Brightness}" />
+                                            </StackPanel>
+                                            <Grid Margin="0,3,0,0" HorizontalAlignment="Center">
+                                                <Grid.ColumnDefinitions>
+                                                    <ColumnDefinition Width="Auto" />
+                                                    <ColumnDefinition Width="Auto" />
+                                                    <ColumnDefinition Width="Auto" />
+                                                </Grid.ColumnDefinitions>
+                                                <ui:SymbolIcon
+                                                    Margin="0,0,5,0"
+                                                    VerticalAlignment="Center"
+                                                    FontSize="15"
+                                                    Foreground="#8F8DB0"
+                                                    Symbol="Link24"
+                                                    ToolTip="Linked: the value moves from the left one to the right one over the layer, along this curve" />
+                                                <controls:TransitionFunctionDropdown Grid.Column="1" Value="{Binding BrightnessEasing, Mode=TwoWay}" />
+                                                <ui:SymbolIcon
+                                                    Grid.Column="2"
+                                                    Margin="5,0,0,0"
+                                                    VerticalAlignment="Center"
+                                                    FontSize="15"
+                                                    Foreground="#8F8DB0"
+                                                    Symbol="Link24"
+                                                    ToolTip="Linked: the value moves from the left one to the right one over the layer, along this curve" />
+                                            </Grid>
+                                        </StackPanel>
+
                                         <controls:LabeledSlider
                                             Grid.Row="1"
                                             Grid.Column="2"
-                                            Margin="0,0,10,8"
+                                            Margin="6,0,0,6"
                                             Format="{}{0:P0}"
                                             Header="To"
+                                            KnobHeaderVisible="False"
                                             Maximum="1"
                                             Minimum="0"
                                             Step="0.01"
                                             Value="{Binding BrightnessTo, Mode=TwoWay}" />
 
-                                        <StackPanel
-                                            Grid.Row="2"
-                                            VerticalAlignment="Center"
-                                            Orientation="Horizontal">
-                                            <ui:TextBlock
-                                                Margin="0"
-                                                FontWeight="SemiBold"
-                                                Text="Modulation" />
-                                            <controls:HintIcon Margin="5,0,0,0" Text="{x:Static vm:HintTexts.Modulation}" />
-                                        </StackPanel>
                                         <controls:LabeledSlider
                                             Grid.Row="2"
-                                            Grid.Column="1"
-                                            Margin="0,0,10,8"
+                                            Grid.Column="0"
+                                            Margin="0,0,6,0"
                                             Format="{}{0:P0}"
                                             Header="From"
+                                            KnobHeaderVisible="False"
                                             Maximum="1"
                                             Minimum="0"
                                             Step="0.01"
                                             Value="{Binding ModulationFrom, Mode=TwoWay}" />
+
+                                        <!-- Between the two knobs: name, chain (they belong together) and the curve of the change -->
+                                        <StackPanel
+                                            Grid.Row="2"
+                                            Grid.Column="1"
+                                            Margin="0,0,0,0"
+                                            VerticalAlignment="Center">
+                                            <StackPanel HorizontalAlignment="Center" Orientation="Horizontal">
+                                                <ui:TextBlock
+                                                    Margin="0"
+                                                    FontWeight="SemiBold"
+                                                    Text="Modulation" />
+                                                <controls:HintIcon Margin="5,0,0,0" Text="{x:Static vm:HintTexts.Modulation}" />
+                                            </StackPanel>
+                                            <Grid Margin="0,3,0,0" HorizontalAlignment="Center">
+                                                <Grid.ColumnDefinitions>
+                                                    <ColumnDefinition Width="Auto" />
+                                                    <ColumnDefinition Width="Auto" />
+                                                    <ColumnDefinition Width="Auto" />
+                                                </Grid.ColumnDefinitions>
+                                                <ui:SymbolIcon
+                                                    Margin="0,0,5,0"
+                                                    VerticalAlignment="Center"
+                                                    FontSize="15"
+                                                    Foreground="#8F8DB0"
+                                                    Symbol="Link24"
+                                                    ToolTip="Linked: the value moves from the left one to the right one over the layer, along this curve" />
+                                                <controls:TransitionFunctionDropdown Grid.Column="1" Value="{Binding ModulationEasing, Mode=TwoWay}" />
+                                                <ui:SymbolIcon
+                                                    Grid.Column="2"
+                                                    Margin="5,0,0,0"
+                                                    VerticalAlignment="Center"
+                                                    FontSize="15"
+                                                    Foreground="#8F8DB0"
+                                                    Symbol="Link24"
+                                                    ToolTip="Linked: the value moves from the left one to the right one over the layer, along this curve" />
+                                            </Grid>
+                                        </StackPanel>
+
                                         <controls:LabeledSlider
                                             Grid.Row="2"
                                             Grid.Column="2"
-                                            Margin="0,0,10,8"
+                                            Margin="6,0,0,0"
                                             Format="{}{0:P0}"
                                             Header="To"
+                                            KnobHeaderVisible="False"
                                             Maximum="1"
                                             Minimum="0"
                                             Step="0.01"
                                             Value="{Binding ModulationTo, Mode=TwoWay}" />
-
-                                        <!-- Speed: only for recordings (switched off for the other layer types) -->
-                                        <StackPanel
-                                            Grid.Row="3"
-                                            VerticalAlignment="Center"
-                                            Orientation="Horizontal">
-                                            <ui:TextBlock
-                                                Margin="0"
-                                                FontWeight="SemiBold"
-                                                Text="Speed" />
-                                            <controls:HintIcon Margin="5,0,0,0" Text="{x:Static vm:HintTexts.Speed}" />
-                                            <StackPanel.Style>
-                                                <Style TargetType="StackPanel">
-                                                    <Setter Property="Opacity" Value="0.35" />
-                                                    <Style.Triggers>
-                                                        <DataTrigger Binding="{Binding Type}" Value="FieldRecord">
-                                                            <Setter Property="Opacity" Value="1" />
-                                                        </DataTrigger>
-                                                    </Style.Triggers>
-                                                </Style>
-                                            </StackPanel.Style>
-                                        </StackPanel>
-                                        <controls:LabeledSlider
-                                            Grid.Row="3"
-                                            Grid.Column="1"
-                                            Grid.ColumnSpan="2"
-                                            Margin="0,0,10,0"
-                                            Format="{}{0:0.00}x"
-                                            Header="Rate"
-                                            IsLogarithmic="True"
-                                            IsValueEditable="True"
-                                            Maximum="4"
-                                            Minimum="0.25"
-                                            Step="0.01"
-                                            Value="{Binding Speed, Mode=TwoWay}">
-                                            <controls:LabeledSlider.Style>
-                                                <Style TargetType="controls:LabeledSlider">
-                                                    <Setter Property="IsEnabled" Value="False" />
-                                                    <Setter Property="Opacity" Value="0.35" />
-                                                    <Style.Triggers>
-                                                        <DataTrigger Binding="{Binding Type}" Value="FieldRecord">
-                                                            <Setter Property="IsEnabled" Value="True" />
-                                                            <Setter Property="Opacity" Value="1" />
-                                                        </DataTrigger>
-                                                    </Style.Triggers>
-                                                </Style>
-                                            </controls:LabeledSlider.Style>
-                                        </controls:LabeledSlider>
                                     </Grid>
 
                                     <!-- Placement, fades, pitch, pan -->
@@ -640,53 +695,51 @@
                                             Step="1"
                                             Value="{Binding FadeOutSeconds, Mode=TwoWay}" />
 
-                                        <!-- Transition curves: Level, Brightness, Modulation and the fades, four in a row -->
+                                        <!-- Speed (recordings only; switched off for the other types) -->
+                                        <controls:LabeledSlider
+                                            Grid.Row="2"
+                                            Grid.Column="0"
+                                            Margin="0,0,0,0"
+                                            Format="{}{0:0.00}x"
+                                            Header="Speed"
+                                            Hint="{x:Static vm:HintTexts.Speed}"
+                                            IsLogarithmic="True"
+                                            IsValueEditable="True"
+                                            Maximum="4"
+                                            Minimum="0.25"
+                                            Step="0.01"
+                                            Value="{Binding Speed, Mode=TwoWay}">
+                                            <controls:LabeledSlider.Style>
+                                                <Style TargetType="controls:LabeledSlider">
+                                                    <Setter Property="IsEnabled" Value="False" />
+                                                    <Setter Property="Opacity" Value="0.35" />
+                                                    <Setter Property="ToolTip" Value="Speed is for Field record layers" />
+                                                    <Setter Property="ToolTipService.ShowOnDisabled" Value="True" />
+                                                    <Style.Triggers>
+                                                        <DataTrigger Binding="{Binding Type}" Value="FieldRecord">
+                                                            <Setter Property="IsEnabled" Value="True" />
+                                                            <Setter Property="Opacity" Value="1" />
+                                                            <Setter Property="ToolTip" Value="{x:Null}" />
+                                                        </DataTrigger>
+                                                    </Style.Triggers>
+                                                </Style>
+                                            </controls:LabeledSlider.Style>
+                                        </controls:LabeledSlider>
+
+                                        <!-- The curve of Fade in / Fade out -->
                                         <StackPanel
                                             Grid.Row="2"
-                                            Grid.ColumnSpan="3"
-                                            Margin="0,4,0,0">
-                                            <StackPanel Margin="0,0,0,4" Orientation="Horizontal">
+                                            Grid.Column="2"
+                                            HorizontalAlignment="Center">
+                                            <StackPanel Margin="0,0,0,3" Orientation="Horizontal">
                                                 <ui:TextBlock
                                                     Margin="0"
                                                     FontSize="12"
                                                     Foreground="#C9C8D6"
-                                                    Text="Transition curve" />
+                                                    Text="Fade curve" />
                                                 <controls:HintIcon Margin="5,0,0,0" Text="{x:Static vm:HintTexts.TransitionCurve}" />
                                             </StackPanel>
-                                            <StackPanel Orientation="Horizontal">
-                                            <StackPanel Margin="0,0,14,0">
-                                                <ui:TextBlock
-                                                    Margin="0,0,0,2"
-                                                    FontSize="11"
-                                                    Foreground="#C9C8D6"
-                                                    Text="Level" />
-                                                <controls:TransitionFunctionDropdown Value="{Binding LevelEasing, Mode=TwoWay}" />
-                                            </StackPanel>
-                                            <StackPanel Margin="0,0,14,0">
-                                                <ui:TextBlock
-                                                    Margin="0,0,0,2"
-                                                    FontSize="11"
-                                                    Foreground="#C9C8D6"
-                                                    Text="Brightness" />
-                                                <controls:TransitionFunctionDropdown Value="{Binding BrightnessEasing, Mode=TwoWay}" />
-                                            </StackPanel>
-                                            <StackPanel Margin="0,0,14,0">
-                                                <ui:TextBlock
-                                                    Margin="0,0,0,2"
-                                                    FontSize="11"
-                                                    Foreground="#C9C8D6"
-                                                    Text="Modulation" />
-                                                <controls:TransitionFunctionDropdown Value="{Binding ModulationEasing, Mode=TwoWay}" />
-                                            </StackPanel>
-                                            <StackPanel Margin="0">
-                                                <ui:TextBlock
-                                                    Margin="0,0,0,2"
-                                                    FontSize="11"
-                                                    Foreground="#C9C8D6"
-                                                    Text="Fades" />
-                                                <controls:TransitionFunctionDropdown Value="{Binding FadeEasing, Mode=TwoWay}" />
-                                            </StackPanel>
-                                            </StackPanel>
+                                            <controls:TransitionFunctionDropdown HorizontalAlignment="Center" Value="{Binding FadeEasing, Mode=TwoWay}" />
                                         </StackPanel>
                                     </Grid>
                                 </Grid>

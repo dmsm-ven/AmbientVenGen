@@ -17,11 +17,10 @@ namespace AmbientVenGen.Desktop.Controls;
 public sealed class Knob : FrameworkElement
 {
     private const double DefaultWidth = 120;
-    private const double DefaultHeight = 84;
+    private const double DefaultHeight = 71; // 15% lower than before (84): the value is written inside the arc
     private const double ArcThickness = 8;
     private const double CapRadius = 7;
     private const double CapHitRadius = 11;
-    private const double LabelHeight = 20;
 
     /// <summary>Seconds a full sweep (minimum to maximum) takes.</summary>
     private const double FullSweepSeconds = 0.15;
@@ -127,9 +126,10 @@ public sealed class Knob : FrameworkElement
 
     private (Point Center, double Radius) Layout()
     {
-        double radius = Math.Max(10, Math.Min(ActualWidth / 2.0 - CapRadius - 1, ActualHeight - LabelHeight - CapRadius - 2));
-        var center = new Point(ActualWidth / 2.0, CapRadius + 2 + radius);
-        return (center, radius);
+        // The base line of the arc is near the bottom edge (room for the round end buttons).
+        double baseY = ActualHeight - CapRadius - 2;
+        double radius = Math.Max(10, Math.Min(ActualWidth / 2.0 - CapRadius - 1, baseY - ArcThickness / 2.0 - 2));
+        return (new Point(ActualWidth / 2.0, baseY), radius);
     }
 
     private static Point OnArc(Point center, double radius, double fraction)
@@ -183,17 +183,17 @@ public sealed class Knob : FrameworkElement
         Point tip = OnArc(center, radius, fraction);
         dc.DrawEllipse(TextBrush, new Pen(FillBrush, 2), tip, 5, 5);
 
-        // The value, a little below the centre of the arc.
+        // The value, in the middle of the arc (inside the half circle, above its base line).
         var text = new FormattedText(
             DisplayText(),
             CultureInfo.CurrentCulture,
             FlowDirection.LeftToRight,
             new Typeface("Segoe UI"),
-            12.5,
+            13,
             TextBrush,
             VisualTreeHelper.GetDpi(this).PixelsPerDip);
 
-        dc.DrawText(text, new Point(center.X - text.Width / 2.0, center.Y + 3));
+        dc.DrawText(text, new Point(center.X - text.Width / 2.0, center.Y - text.Height - 4));
     }
 
     private static void DrawCap(DrawingContext dc, Point at, bool lit)
@@ -248,7 +248,7 @@ public sealed class Knob : FrameworkElement
             return;
         }
 
-        // The text under the arc and the dead spot in the middle do not react.
+        // Below the base line and the dead spot in the middle (under the number) do not react.
         if (point.Y > center.Y + CapRadius + 2 || Distance(point, center) < 8)
             return;
 

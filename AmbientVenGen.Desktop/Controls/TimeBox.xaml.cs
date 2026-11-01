@@ -31,6 +31,17 @@ public partial class TimeBox : UserControl
         nameof(Maximum), typeof(double), typeof(TimeBox),
         new PropertyMetadata(3600.0, OnPropertyChanged));
 
+    /// <summary>The caption stands to the left of the time (one line) instead of above it.</summary>
+    public static readonly DependencyProperty IsInlineProperty = DependencyProperty.Register(
+        nameof(IsInline), typeof(bool), typeof(TimeBox),
+        new PropertyMetadata(false, OnPropertyChanged));
+
+    public bool IsInline
+    {
+        get => (bool)GetValue(IsInlineProperty);
+        set => SetValue(IsInlineProperty, value);
+    }
+
     public string Header
     {
         get => (string)GetValue(HeaderProperty);
@@ -75,10 +86,29 @@ public partial class TimeBox : UserControl
         if (Input is null)
             return;
 
+        ApplyLayout();
+
         HeaderText.Text = Header;
         HeaderHint.Text = Hint;
         Input.Text = Format(Value);
         DisplayText.Text = Format(Value);
+    }
+
+    // Inline: "Start [00:00:00]" on one line. The label and the editor have the same width, so nothing moves when editing starts.
+    private void ApplyLayout()
+    {
+        bool inline = IsInline;
+
+        RootPanel.Orientation = inline ? Orientation.Horizontal : Orientation.Vertical;
+        HeaderRow.VerticalAlignment = inline ? VerticalAlignment.Center : VerticalAlignment.Top;
+        HeaderRow.Margin = inline ? new Thickness(0, 0, 8, 0) : new Thickness(0);
+
+        Thickness boxMargin = inline ? new Thickness(0) : new Thickness(0, 3, 0, 0);
+        DisplayBox.Margin = boxMargin;
+        EditGrid.Margin = boxMargin;
+
+        DisplayBox.Width = inline ? 104 : double.NaN;
+        EditGrid.Width = inline ? 104 : double.NaN;
     }
 
     private void OnDisplayClick(object sender, MouseButtonEventArgs e)

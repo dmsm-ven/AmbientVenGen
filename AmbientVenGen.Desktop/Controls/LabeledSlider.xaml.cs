@@ -60,8 +60,19 @@ public partial class LabeledSlider : UserControl
         typeof(LabeledSlider),
         new FrameworkPropertyMetadata(false, FrameworkPropertyMetadataOptions.Inherits, OnPropertyChanged));
 
+    /// <summary>In knob mode the caption is shown above the knob; switch it off when the meaning is clear from the layout.</summary>
+    public static readonly DependencyProperty KnobHeaderVisibleProperty = DependencyProperty.Register(
+        nameof(KnobHeaderVisible), typeof(bool), typeof(LabeledSlider),
+        new PropertyMetadata(true, OnPropertyChanged));
+
     private bool _syncing;
     private bool _editing;
+
+    public bool KnobHeaderVisible
+    {
+        get => (bool)GetValue(KnobHeaderVisibleProperty);
+        set => SetValue(KnobHeaderVisibleProperty, value);
+    }
 
     /// <summary>True when the window-wide setting asks for knobs instead of sliders.</summary>
     public bool UseKnobs
@@ -203,6 +214,7 @@ public partial class LabeledSlider : UserControl
             InnerSlider.Visibility = knob ? Visibility.Collapsed : Visibility.Visible;
             InnerKnob.Visibility = knob ? Visibility.Visible : Visibility.Collapsed;
             HeaderPanel.HorizontalAlignment = knob ? HorizontalAlignment.Center : HorizontalAlignment.Left;
+            HeaderPanel.Visibility = knob && !KnobHeaderVisible ? Visibility.Collapsed : Visibility.Visible;
 
             // The knob writes its value itself; the separate value text stays only where it can be clicked to type.
             if (!_editing)
