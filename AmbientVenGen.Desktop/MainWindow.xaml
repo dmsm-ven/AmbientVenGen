@@ -302,12 +302,12 @@
                             Style="{StaticResource ToolIconButton}"
                             ToolTip="Pitch interval: set this layer's pitch relative to another layer (Drone / Pad)" />
                         <Popup
+                            x:Name="IntervalPopup"
                             AllowsTransparency="True"
                             IsOpen="{Binding IsIntervalPanelOpen, Mode=TwoWay}"
-                            Placement="Bottom"
+                            Placement="Custom"
                             PlacementTarget="{Binding ElementName=IntervalButton}"
-                            StaysOpen="False"
-                            VerticalOffset="4">
+                            StaysOpen="False">
                             <Border
                                 Width="300"
                                 Background="#F2181821"
@@ -315,6 +315,7 @@
                                 BorderThickness="1"
                                 CornerRadius="10">
                                 <StackPanel>
+                                    <!-- Header: the layer the pitch is taken from -->
                                     <StackPanel Margin="14,12,14,12">
                                         <TextBlock Margin="0,0,0,6" FontSize="12" Foreground="#C9C8D6" Text="Take the pitch from layer" />
                                         <ComboBox
@@ -323,32 +324,39 @@
                                             SelectedItem="{Binding IntervalSource, Mode=TwoWay}" />
                                     </StackPanel>
                                     <Border Height="1" Background="#2EFFFFFF" />
-                                    <StackPanel Margin="14,12,14,12">
-                                        <TextBlock Margin="0,0,0,6" FontSize="12" Foreground="#C9C8D6" Text="Interval" />
-                                        <ComboBox
-                                            DisplayMemberPath="Display"
-                                            ItemsSource="{x:Static vm:Choices.PitchIntervals}"
-                                            SelectedItem="{Binding SelectedInterval, Mode=TwoWay}" />
-                                        <TextBlock
-                                            Margin="0,6,0,0"
-                                            FontSize="11"
-                                            Foreground="#A9A7C2"
-                                            Text="{Binding SelectedInterval.Description}" />
-                                        <TextBlock
-                                            Margin="0,8,0,0"
-                                            FontSize="12"
-                                            Foreground="#8FD16A"
-                                            Text="{Binding IntervalResultText}"
-                                            TextWrapping="Wrap" />
-                                    </StackPanel>
-                                    <Border Height="1" Background="#2EFFFFFF" />
-                                    <Grid Margin="14,10,14,12">
-                                        <ui:Button
-                                            HorizontalAlignment="Right"
-                                            Appearance="Primary"
-                                            Command="{Binding ApplyIntervalCommand}"
-                                            Content="Apply" />
-                                    </Grid>
+                                    <!-- Body: all intervals at once; [name] | [multiplier] | [Apply] -->
+                                    <ItemsControl Margin="14,8,14,10" ItemsSource="{x:Static vm:Choices.PitchIntervals}">
+                                        <ItemsControl.ItemTemplate>
+                                            <DataTemplate>
+                                                <Grid Margin="0,2" ToolTip="{Binding Description}">
+                                                    <Grid.ColumnDefinitions>
+                                                        <ColumnDefinition Width="*" />
+                                                        <ColumnDefinition Width="64" />
+                                                        <ColumnDefinition Width="Auto" />
+                                                    </Grid.ColumnDefinitions>
+                                                    <TextBlock
+                                                        Margin="0"
+                                                        VerticalAlignment="Center"
+                                                        FontSize="13"
+                                                        Foreground="#F2F2F8"
+                                                        Text="{Binding Name}" />
+                                                    <TextBlock
+                                                        Grid.Column="1"
+                                                        Margin="0"
+                                                        VerticalAlignment="Center"
+                                                        FontSize="13"
+                                                        Foreground="#B7AFE9"
+                                                        Text="{Binding Ratio, StringFormat='&#215;{0:0.###}'}" />
+                                                    <ui:Button
+                                                        Grid.Column="2"
+                                                        Padding="12,3"
+                                                        Command="{Binding DataContext.ApplyIntervalCommand, RelativeSource={RelativeSource AncestorType=Window}}"
+                                                        CommandParameter="{Binding}"
+                                                        Content="Apply" />
+                                                </Grid>
+                                            </DataTemplate>
+                                        </ItemsControl.ItemTemplate>
+                                    </ItemsControl>
                                 </StackPanel>
                             </Border>
                         </Popup>

@@ -13,6 +13,15 @@ public partial class MainWindow : FluentWindow
         InitializeComponent();
         DataContext = viewModel;
 
+        // The interval panel opens under its button but is pushed left so that at least 60 px stay free on the right.
+        IntervalPopup.CustomPopupPlacementCallback = (popupSize, targetSize, _) =>
+        {
+            double buttonX = IntervalButton.TransformToAncestor(this).Transform(new System.Windows.Point(0, 0)).X;
+            double roomRight = ActualWidth - buttonX - 60;
+            double x = Math.Min(0, roomRight - popupSize.Width);
+            return [new CustomPopupPlacement(new System.Windows.Point(x, targetSize.Height + 4), PopupPrimaryAxis.Horizontal)];
+        };
+
         PreviewKeyDown += OnPreviewKeyDown;
         Closing += OnClosing;
     }

@@ -63,7 +63,6 @@ public partial class MainViewModel : ObservableObject, IDisposable
     [NotifyCanExecuteChangedFor(nameof(DuplicateSelectedLayerCommand))]
     [NotifyCanExecuteChangedFor(nameof(OpenIntervalPanelCommand))]
     [NotifyCanExecuteChangedFor(nameof(ApplyIntervalCommand))]
-    [NotifyPropertyChangedFor(nameof(IntervalResultText))]
     private Layer? _selectedLayer;
 
     [ObservableProperty]
@@ -298,24 +297,10 @@ public partial class MainViewModel : ObservableObject, IDisposable
     private bool _isIntervalPanelOpen;
 
     [ObservableProperty]
-    [NotifyPropertyChangedFor(nameof(IntervalResultText))]
     [NotifyCanExecuteChangedFor(nameof(ApplyIntervalCommand))]
     private IntervalSource? _intervalSource;
 
-    [ObservableProperty]
-    [NotifyPropertyChangedFor(nameof(IntervalResultText))]
-    private PitchInterval _selectedInterval = Choices.PitchIntervals[2];
-
     private bool CanOpenIntervalPanel() => SelectedLayer is { Type: LayerType.Drone or LayerType.Pad };
-
-    /// <summary>The pitch the layer would get: the source pitch times the interval ratio, inside the allowed range.</summary>
-    private double? IntervalResult => IntervalSource is null
-        ? null
-        : Math.Round(Math.Clamp(IntervalSource.Layer.PitchHz * SelectedInterval.Ratio, Layer.MinPitchHz, Layer.MaxPitchHz), 1);
-
-    public string IntervalResultText => IntervalResult is { } hz
-        ? $"{(SelectedLayer?.PitchHz ?? 0):0.#} Hz \u2192 {hz:0.#} Hz"
-        : "No layer with a pitch to take as the source";
 
     /// <summary>Opens the mini panel; the source is the layer below the selected one by default.</summary>
     [RelayCommand(CanExecute = nameof(CanOpenIntervalPanel))]
@@ -333,18 +318,20 @@ public partial class MainViewModel : ObservableObject, IDisposable
         IsIntervalPanelOpen = true;
     }
 
+    /// <summary>Sets the pitch of the selected layer to the source pitch times the ratio of the clicked interval.</summary>
     [RelayCommand(CanExecute = nameof(CanApplyInterval))]
-    private void ApplyInterval()
+    private void ApplyInterval(PitchInterval? interval)
     {
-        if (SelectedLayer is not { } target || IntervalResult is not { } hz)
+        if (interval is null || SelectedLayer is not { } target || IntervalSource is not { } source)
             return;
 
+        double hz = Math.Round(Math.Clamp(source.Layer.PitchHz * interval.Ratio, Layer.MinPitchHz, Layer.MaxPitchHz), 1);
         target.PitchHz = hz;
         IsIntervalPanelOpen = false;
-        StatusMessage = $"{target.Name}: {SelectedInterval.Name} above {IntervalSource!.Layer.Name} = {hz:0.#} Hz";
+        StatusMessage = $"{target.Name}: {interval.Name} above {source.Layer.Name} = {hz:0.#} Hz";
     }
 
-    private bool CanApplyInterval() => IntervalSource is not null && SelectedLayer is not null;
+    private bool CanApplyInterval(PitchInterval? interval) => IntervalSource is not null && SelectedLayer is not null;
 
     /// <summary>Copies the selected layer (Ctrl+D); the copy is inserted right below it and selected.</summary>
     [RelayCommand(CanExecute = nameof(HasSelectedLayer))]
