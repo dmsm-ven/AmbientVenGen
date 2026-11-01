@@ -1,4 +1,10 @@
 <Solution>
-  <Project Path="AmbientVenGen.Core/AmbientVenGen.Core.csproj" />
-  <Project Path="AmbientVenGen.Desktop/AmbientVenGen.Desktop.csproj" />
+  <Folder Name="/SolutionItems/">
+    <File Path="Directory.Build.props" />
+    <File Path="Directory.Packages.props" />
+  </Folder>
+  <Folder Name="/src/">
+    <Project Path="AmbientVenGen.Core/AmbientVenGen.Core.csproj" />
+    <Project Path="AmbientVenGen.Desktop/AmbientVenGen.Desktop.csproj" />
+  </Folder>
 </Solution>
