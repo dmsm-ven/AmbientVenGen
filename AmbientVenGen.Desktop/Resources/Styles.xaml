@@ -1,4 +1,4 @@
-<ResourceDictionary
+﻿<ResourceDictionary
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:controls="clr-namespace:AmbientVenGen.Desktop.Controls"
@@ -101,36 +101,36 @@
         <Setter Property="ToolTip" Value="Mute / unmute layer" />
     </Style>
 
-    <!-- Caption close button: fully opaque, so it is always hit-testable (see WindowCloseButton). -->
-    <Style TargetType="controls:WindowCloseButton">
+    <!--  Caption close button: fully opaque, so it is always hit-testable (see WindowCloseButton).  -->
+    <Style TargetType="controls:WindowCaptionButton">
         <Setter Property="Width" Value="46" />
         <Setter Property="Height" Value="32" />
         <Setter Property="VerticalAlignment" Value="Top" />
         <Setter Property="Focusable" Value="False" />
-        <Setter Property="Cursor" Value="Arrow" />
-        <Setter Property="ToolTip" Value="Close" />
         <Setter Property="Template">
             <Setter.Value>
-                <ControlTemplate TargetType="controls:WindowCloseButton">
+                <ControlTemplate TargetType="controls:WindowCaptionButton">
                     <Border x:Name="Back" Background="#FF2A2A38">
                         <Path
                             Width="10"
                             Height="10"
                             HorizontalAlignment="Center"
                             VerticalAlignment="Center"
-                            Data="M0,0 L10,10 M10,0 L0,10"
+                            Data="{TemplateBinding Glyph}"
                             Stroke="#ECECF2"
-                            StrokeEndLineCap="Round"
-                            StrokeStartLineCap="Round"
                             StrokeThickness="1.2" />
                     </Border>
                     <ControlTemplate.Triggers>
                         <Trigger Property="IsMouseOver" Value="True">
+                            <Setter TargetName="Back" Property="Background" Value="#33FFFFFF" />
+                        </Trigger>
+                        <MultiTrigger>
+                            <MultiTrigger.Conditions>
+                                <Condition Property="IsMouseOver" Value="True" />
+                                <Condition Property="IsClose" Value="True" />
+                            </MultiTrigger.Conditions>
                             <Setter TargetName="Back" Property="Background" Value="#FFC42B1C" />
-                        </Trigger>
-                        <Trigger Property="IsPressed" Value="True">
-                            <Setter TargetName="Back" Property="Background" Value="#FF9E2216" />
-                        </Trigger>
+                        </MultiTrigger>
                     </ControlTemplate.Triggers>
                 </ControlTemplate>
             </Setter.Value>

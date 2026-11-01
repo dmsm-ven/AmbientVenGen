@@ -1,11 +1,11 @@
-<ui:FluentWindow
+﻿<ui:FluentWindow
     x:Class="AmbientVenGen.Desktop.Views.PresetLibraryWindow"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:controls="clr-namespace:AmbientVenGen.Desktop.Controls"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:i="http://schemas.microsoft.com/xaml/behaviors"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-    xmlns:controls="clr-namespace:AmbientVenGen.Desktop.Controls"
     xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
     xmlns:vm="clr-namespace:AmbientVenGen.Desktop.ViewModels"
     Title="Preset library"
@@ -108,9 +108,15 @@
             Title="Preset library"
             Grid.Row="0"
             Icon="pack://application:,,,/Assets/app-icon.ico"
-            ShowClose="False">
+            ShowClose="False"
+            ShowMaximize="False"
+            ShowMinimize="False">
             <ui:TitleBar.TrailingContent>
-                <controls:WindowCloseButton />
+                <StackPanel Orientation="Horizontal">
+                    <controls:WindowCaptionButton Kind="Minimize" ToolTip="Minimize" />
+                    <controls:WindowCaptionButton Kind="Maximize" ToolTip="Maximize" />
+                    <controls:WindowCaptionButton Kind="Close" ToolTip="Close" />
+                </StackPanel>
             </ui:TitleBar.TrailingContent>
         </ui:TitleBar>
 
@@ -124,62 +130,62 @@
             BorderThickness="1"
             CornerRadius="8">
             <Grid>
-            <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="Auto" />
-                <ColumnDefinition Width="Auto" />
-                <ColumnDefinition Width="*" />
-                <ColumnDefinition Width="Auto" />
-            </Grid.ColumnDefinitions>
-            <StackPanel Orientation="Horizontal">
-                <ToggleButton
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+                <StackPanel Orientation="Horizontal">
+                    <ToggleButton
+                        VerticalAlignment="Center"
+                        IsChecked="{Binding Loop, Mode=TwoWay}"
+                        Style="{StaticResource ToolIconToggleButton}"
+                        ToolTip="Loop: repeat the previewed file (off: play it once)">
+                        <ui:SymbolIcon Symbol="ArrowRepeatAll24" />
+                    </ToggleButton>
+                    <TextBlock
+                        Margin="4,0,0,0"
+                        VerticalAlignment="Center"
+                        Foreground="#C9C8D6"
+                        Text="Loop preview" />
+                </StackPanel>
+
+                <Rectangle
+                    Grid.Column="1"
+                    Width="1"
+                    Margin="12,2,12,2"
+                    Fill="#3A3945" />
+
+                <!--  Tag filter: all tags, the most used first; the presets must have every switched-on tag  -->
+                <ItemsControl
+                    Grid.Column="2"
                     VerticalAlignment="Center"
-                    IsChecked="{Binding Loop, Mode=TwoWay}"
-                    Style="{StaticResource ToolIconToggleButton}"
-                    ToolTip="Loop: repeat the previewed file (off: play it once)">
-                    <ui:SymbolIcon Symbol="ArrowRepeatAll24" />
-                </ToggleButton>
-                <TextBlock
-                    Margin="4,0,0,0"
+                    ItemsSource="{Binding TagFilters}"
+                    ToolTip="Filter by tags: only presets that have all the switched-on tags are shown">
+                    <ItemsControl.ItemsPanel>
+                        <ItemsPanelTemplate>
+                            <WrapPanel />
+                        </ItemsPanelTemplate>
+                    </ItemsControl.ItemsPanel>
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate>
+                            <ToggleButton
+                                Content="{Binding Label}"
+                                IsChecked="{Binding IsSelected, Mode=TwoWay}"
+                                Style="{StaticResource TagChip}" />
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+
+                <ui:Button
+                    Grid.Column="3"
+                    Margin="8,0,0,0"
                     VerticalAlignment="Center"
-                    Foreground="#C9C8D6"
-                    Text="Loop preview" />
-            </StackPanel>
-
-            <Rectangle
-                Grid.Column="1"
-                Width="1"
-                Margin="12,2,12,2"
-                Fill="#3A3945" />
-
-            <!--  Tag filter: all tags, the most used first; the presets must have every switched-on tag  -->
-            <ItemsControl
-                Grid.Column="2"
-                VerticalAlignment="Center"
-                ItemsSource="{Binding TagFilters}"
-                ToolTip="Filter by tags: only presets that have all the switched-on tags are shown">
-                <ItemsControl.ItemsPanel>
-                    <ItemsPanelTemplate>
-                        <WrapPanel />
-                    </ItemsPanelTemplate>
-                </ItemsControl.ItemsPanel>
-                <ItemsControl.ItemTemplate>
-                    <DataTemplate>
-                        <ToggleButton
-                            Content="{Binding Label}"
-                            IsChecked="{Binding IsSelected, Mode=TwoWay}"
-                            Style="{StaticResource TagChip}" />
-                    </DataTemplate>
-                </ItemsControl.ItemTemplate>
-            </ItemsControl>
-
-            <ui:Button
-                Grid.Column="3"
-                Margin="8,0,0,0"
-                VerticalAlignment="Center"
-                Command="{Binding ClearTagFilterCommand}"
-                Content="Clear"
-                ToolTip="Switch off all tag filters"
-                Visibility="{Binding HasTagFilter, Converter={StaticResource BoolToVisibility}}" />
+                    Command="{Binding ClearTagFilterCommand}"
+                    Content="Clear"
+                    ToolTip="Switch off all tag filters"
+                    Visibility="{Binding HasTagFilter, Converter={StaticResource BoolToVisibility}}" />
             </Grid>
         </Border>
 
@@ -252,7 +258,7 @@
                     Width="60"
                     Binding="{Binding Extension}"
                     Header="Format" />
-        
+
 
                 <!--  Waveform thumbnail (appears when it is ready)  -->
                 <DataGridTemplateColumn
@@ -330,43 +336,43 @@
                                     <ItemsControl.ItemTemplate>
                                         <DataTemplate>
                                             <Border
-                                Margin="0,1,4,1"
-                                Padding="7,1,4,1"
-                                Background="#33B7AFE9"
-                                CornerRadius="9">
+                                                Margin="0,1,4,1"
+                                                Padding="7,1,4,1"
+                                                Background="#33B7AFE9"
+                                                CornerRadius="9">
                                                 <StackPanel Orientation="Horizontal">
                                                     <TextBlock
-                                        VerticalAlignment="Center"
-                                        FontSize="11"
-                                        Foreground="#ECECF2"
-                                        Text="{Binding}" />
+                                                        VerticalAlignment="Center"
+                                                        FontSize="11"
+                                                        Foreground="#ECECF2"
+                                                        Text="{Binding}" />
                                                     <TextBlock
-                                        Margin="5,0,0,0"
-                                        VerticalAlignment="Center"
-                                        Cursor="Hand"
-                                        FontSize="12"
-                                        Foreground="#C9C8D6"
-                                        MouseLeftButtonUp="OnRemoveTagClick"
-                                        Tag="{Binding DataContext, RelativeSource={RelativeSource AncestorType=DataGridRow}}"
-                                        Text="x"
-                                        ToolTip="Remove tag" />
+                                                        Margin="5,0,0,0"
+                                                        VerticalAlignment="Center"
+                                                        Cursor="Hand"
+                                                        FontSize="12"
+                                                        Foreground="#C9C8D6"
+                                                        MouseLeftButtonUp="OnRemoveTagClick"
+                                                        Tag="{Binding DataContext, RelativeSource={RelativeSource AncestorType=DataGridRow}}"
+                                                        Text="x"
+                                                        ToolTip="Remove tag" />
                                                 </StackPanel>
                                             </Border>
                                         </DataTemplate>
                                     </ItemsControl.ItemTemplate>
                                 </ItemsControl>
                                 <ComboBox
-                    Grid.Column="1"
-                    Width="92"
-                    Margin="4,2,4,2"
-                    VerticalAlignment="Center"
-                    IsEditable="True"
-                    IsTextSearchEnabled="False"
-                    ItemsSource="{Binding DataContext.AllTags, RelativeSource={RelativeSource AncestorType=DataGrid}}"
-                    Visibility="{Binding IsTagEditing, Converter={StaticResource BoolToVisibility}}"
-                    KeyDown="OnTagKeyDown"
-                    SelectionChanged="OnTagSelected"
-                    ToolTip="Add a tag: type a name and press Enter, or pick an existing one" />
+                                    Grid.Column="1"
+                                    Width="92"
+                                    Margin="4,2,4,2"
+                                    VerticalAlignment="Center"
+                                    IsEditable="True"
+                                    IsTextSearchEnabled="False"
+                                    ItemsSource="{Binding DataContext.AllTags, RelativeSource={RelativeSource AncestorType=DataGrid}}"
+                                    KeyDown="OnTagKeyDown"
+                                    SelectionChanged="OnTagSelected"
+                                    ToolTip="Add a tag: type a name and press Enter, or pick an existing one"
+                                    Visibility="{Binding IsTagEditing, Converter={StaticResource BoolToVisibility}}" />
                             </Grid>
                         </DataTemplate>
                     </DataGridTemplateColumn.CellTemplate>

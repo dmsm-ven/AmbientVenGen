@@ -34,11 +34,15 @@
             ButtonsBackground="{StaticResource WindowTitleButtonsBackground}"
             ButtonsForeground="{StaticResource WindowTitleButtonsForeground}"
             Icon="pack://application:,,,/Assets/app-icon.ico"
+            ShowClose="False"
             ShowMaximize="False"
-            ShowMinimize="False"
-            ShowClose="False">
+            ShowMinimize="False">
             <ui:TitleBar.TrailingContent>
-                <controls:WindowCloseButton />
+                <StackPanel Orientation="Horizontal">
+                    <controls:WindowCaptionButton Kind="Minimize" ToolTip="Minimize" />
+                    <controls:WindowCaptionButton Kind="Maximize" ToolTip="Maximize" />
+                    <controls:WindowCaptionButton Kind="Close" ToolTip="Close" />
+                </StackPanel>
             </ui:TitleBar.TrailingContent>
         </ui:TitleBar>
 
