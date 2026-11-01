@@ -63,6 +63,13 @@ public partial class LabeledSlider : UserControl
     private bool _syncing;
     private bool _editing;
 
+    /// <summary>True when the window-wide setting asks for knobs instead of sliders.</summary>
+    public bool UseKnobs
+    {
+        get => (bool)GetValue(UseKnobsProperty);
+        set => SetValue(UseKnobsProperty, value);
+    }
+
     public bool IsValueEditable
     {
         get => (bool)GetValue(IsValueEditableProperty);
