@@ -57,11 +57,4 @@ public partial class PresetLibraryWindow : FluentWindow
         if (sender is FrameworkElement { DataContext: string tag, Tag: FieldPresetItem item } && ViewModel is { } viewModel)
             await viewModel.RemoveTagAsync(item, tag);
     }
-
-    // Raised only for the preview cells that are actually created (visible rows).
-    private void OnPreviewCellLoaded(object sender, RoutedEventArgs e)
-    {
-        if (sender is FrameworkElement { DataContext: FieldPresetItem item })
-            item.RequestThumbnail();
-    }
 }

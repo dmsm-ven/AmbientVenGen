@@ -1,4 +1,4 @@
-﻿using AmbientVenGen.Desktop.Audio;
+using AmbientVenGen.Desktop.Audio;
 using AmbientVenGen.Desktop.DataAccess.Models;
 using AmbientVenGen.Desktop.DataAccess.Repositories;
 using AmbientVenGen.Desktop.Services;
@@ -158,6 +158,7 @@ public partial class PresetLibraryViewModel : ObservableObject
         }
 
         _playingItem = item;
+        item.RequestThumbnail();
         item.PlayProgress = 0;
         item.IsPlaying = true;
         _progressTimer.Start();
@@ -290,7 +291,7 @@ public partial class PresetLibraryViewModel : ObservableObject
             return;
         }
 
-        // Thumbnails are built lazily, when a row is shown (see FieldPresetItem.RequestThumbnail).
+        // Waveforms are built only for files that were played (see TogglePreview).
     }
 
     [RelayCommand]

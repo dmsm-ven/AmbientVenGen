@@ -20,6 +20,7 @@ public sealed class Knob : FrameworkElement
     private const double DefaultHeight = 60; // another 15% lower (71); the gauge is a stretched half-ellipse
     private const double ArcThickness = 8;
     private const double CapRadius = 7;
+    private const double MiddleCapRadius = 5;
     private const double CapHitRadius = 11;
 
     /// <summary>Seconds a full sweep (minimum to maximum) takes.</summary>
@@ -207,6 +208,9 @@ public sealed class Knob : FrameworkElement
         DrawCap(dc, OnArc(center, radius, 0), fraction <= 0.002);
         DrawCap(dc, OnArc(center, radius, 1), fraction >= 0.998);
 
+        // The middle anchor (a smaller button at the top of the arc): a click sets exactly half of the range.
+        DrawCap(dc, OnArc(center, radius, 0.5), Math.Abs(fraction - 0.5) <= 0.002, MiddleCapRadius);
+
         // A dot at the end of the filled part.
         Point tip = OnArc(center, radius, fraction);
         dc.DrawEllipse(TextBrush, new Pen(FillBrush, 2), tip, 5, 5);
@@ -253,14 +257,14 @@ public sealed class Knob : FrameworkElement
         _labelRect = labelRect;
     }
 
-    private static void DrawCap(DrawingContext dc, Point at, bool lit)
+    private static void DrawCap(DrawingContext dc, Point at, bool lit, double radius = CapRadius)
     {
         dc.DrawEllipse(
             lit ? FillBrush : CapBrush,
             new Pen(FillBrush, 1.6),
             at,
-            CapRadius,
-            CapRadius);
+            radius,
+            radius);
     }
 
     private string DisplayText()
@@ -311,6 +315,13 @@ public sealed class Knob : FrameworkElement
         if (Distance(point, OnArc(center, radius, 1)) <= CapHitRadius)
         {
             Value = Maximum;
+            e.Handled = true;
+            return;
+        }
+
+        if (Distance(point, OnArc(center, radius, 0.5)) <= MiddleCapRadius + 4)
+        {
+            Value = Minimum + (Maximum - Minimum) / 2.0;
             e.Handled = true;
             return;
         }

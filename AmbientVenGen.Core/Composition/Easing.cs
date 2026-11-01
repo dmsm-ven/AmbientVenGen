@@ -8,7 +8,10 @@ public enum Easing
     EaseIn,
     EaseOut,
     EaseInOut,
-    Exponential
+    Exponential,
+
+    /// <summary>Mirror of <see cref="Exponential"/>: a fast start that settles ever more slowly (appended last: file compatibility).</summary>
+    ExponentialDecay
 }
 
 public static class EasingFunctions
@@ -28,6 +31,7 @@ public static class EasingFunctions
                 ? 2.0 * t * t
                 : 1.0 - Math.Pow(-2.0 * t + 2.0, 2.0) / 2.0,
             Easing.Exponential => t <= 0.0 ? 0.0 : Math.Pow(2.0, 10.0 * t - 10.0),
+            Easing.ExponentialDecay => (1.0 - Math.Pow(2.0, -10.0 * t)) / (1.0 - Math.Pow(2.0, -10.0)),
             _ => t
         };
     }

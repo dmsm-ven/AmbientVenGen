@@ -1,4 +1,4 @@
-﻿using AmbientVenGen.Core.Projects;
+using AmbientVenGen.Core.Projects;
 using AmbientVenGen.Desktop.Audio;
 using AmbientVenGen.Desktop.DataAccess.Repositories;
 using AmbientVenGen.Desktop.Services;
@@ -6,6 +6,7 @@ using AmbientVenGen.Desktop.ViewModels;
 using AmbientVenGen.Desktop.Views;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using System.IO;
 using System.Windows;
 
 namespace AmbientVenGen.Desktop;
@@ -28,6 +29,7 @@ public partial class App : Application
                 services.AddSingleton<AudioPlaybackService>();
                 services.AddSingleton<PresetPreviewService>();
                 services.AddSingleton<AppSettings>();
+                services.AddSingleton<FileAssociationService>();
                 services.AddSingleton<SettingsWindowService>();
                 services.AddTransient<SettingsWindow>();
                 services.AddSingleton<AudioExportService>();
@@ -51,7 +53,13 @@ public partial class App : Application
 
         var mainWindow = _host.Services.GetRequiredService<MainWindow>();
         MainWindow = mainWindow;
+
+        // Double click on a .afproj file starts the program with the path as the first argument.
+        if (e.Args.Length > 0 && File.Exists(e.Args[0]))
+            _host.Services.GetRequiredService<MainViewModel>().OpenProjectFile(e.Args[0]);
+
         mainWindow.Show();
+        _host.Services.GetRequiredService<FileAssociationService>().EnsureRegistered();
     }
 
     protected override async void OnExit(ExitEventArgs e)

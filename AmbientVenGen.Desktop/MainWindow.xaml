@@ -1,4 +1,4 @@
-﻿<ui:FluentWindow
+<ui:FluentWindow
     x:Class="AmbientVenGen.Desktop.MainWindow"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
@@ -378,6 +378,31 @@
                                                 Maximum="{Binding DataContext.Project.DurationSeconds, RelativeSource={RelativeSource AncestorType=Window}}"
                                                 Minimum="2"
                                                 Value="{Binding DurationSeconds, Mode=TwoWay}" />
+                                        </StackPanel>
+
+                                        <!-- Noise colour (Noise layers only) -->
+                                        <StackPanel
+                                            Grid.Row="1"
+                                            Grid.ColumnSpan="5"
+                                            Margin="0,8,0,0"
+                                            Orientation="Horizontal">
+                                            <StackPanel.Style>
+                                                <Style TargetType="StackPanel">
+                                                    <Setter Property="Visibility" Value="Collapsed" />
+                                                    <Style.Triggers>
+                                                        <DataTrigger Binding="{Binding Type}" Value="Noise">
+                                                            <Setter Property="Visibility" Value="Visible" />
+                                                        </DataTrigger>
+                                                    </Style.Triggers>
+                                                </Style>
+                                            </StackPanel.Style>
+                                            <ui:TextBlock
+                                                Margin="0,0,12,0"
+                                                VerticalAlignment="Center"
+                                                FontSize="12"
+                                                Foreground="#C9C8D6"
+                                                Text="Noise type" />
+                                            <controls:NoiseTypeDropdown Value="{Binding NoiseType, Mode=TwoWay}" />
                                         </StackPanel>
 
                                         <!-- Recording file (Field record layers only), one line: caption, file name, button -->

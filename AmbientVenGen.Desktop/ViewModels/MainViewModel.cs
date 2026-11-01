@@ -521,6 +521,20 @@ public partial class MainViewModel : ObservableObject, IDisposable
         };
     }
 
+    /// <summary>Opens a project given by path (started from Explorer by a double click). Errors are shown to the user.</summary>
+    public void OpenProjectFile(string path)
+    {
+        try
+        {
+            LoadSpec(_projectFileService.Load(path), path);
+            StatusMessage = $"Opened {Path.GetFileName(path)}";
+        }
+        catch (Exception ex)
+        {
+            _messageService.ShowError($"Cannot open the project:\n{ex.Message}");
+        }
+    }
+
     // Reopens the project that was used last time; a missing or broken file silently leaves the default composition.
     private void TryOpenLastProject()
     {

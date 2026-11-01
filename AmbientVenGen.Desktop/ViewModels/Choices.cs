@@ -18,7 +18,25 @@ public static class Choices
         new(Easing.EaseInOut, "Ease in-out",
             "Slow start, fast middle, slow end - a sharper S than Sine. 0 to 100 over 10 s: 2 at 2 s, 50 at 5 s, 98 at 8 s."),
         new(Easing.Exponential, "Exponential",
-            "Almost nothing for a long time, then it blooms. The last 10% of the time makes half of the whole change.")
+            "Almost nothing for a long time, then it blooms. The last 10% of the time makes half of the whole change."),
+        new(Easing.ExponentialDecay, "Exponential decay",
+            "The mirror of Exponential: a very fast start that settles ever more slowly. Half of the whole change happens in the first 10% of the time.")
+    ];
+
+    public static IReadOnlyList<NoiseOption> NoiseOptions { get; } =
+    [
+        new(NoiseType.White, "White noise",
+            "Equal energy at every frequency: a bright hiss, like static or rain on a roof."),
+        new(NoiseType.Pink, "Pink noise",
+            "Energy falls 3 dB per octave: balanced and natural, like steady rain or a waterfall."),
+        new(NoiseType.Brown, "Brown (red) noise",
+            "Energy falls 6 dB per octave: a deep rumble, like thunder far away or a strong wind."),
+        new(NoiseType.Blue, "Blue noise",
+            "Energy rises 3 dB per octave: thin and airy, mostly high frequencies."),
+        new(NoiseType.Violet, "Violet noise",
+            "Energy rises 6 dB per octave: very sharp and hissy, almost only the highest frequencies."),
+        new(NoiseType.Grey, "Grey noise",
+            "White noise corrected for the ear: lows and highs are lifted, so every part of the spectrum sounds equally loud.")
     ];
 
     public static IReadOnlyList<Choice<LayerType>> LayerTypes { get; } =
@@ -31,4 +49,7 @@ public static class Choices
 }
 
 /// <summary>One entry of the transition function list: value, title and a short explanation.</summary>
+/// <summary>One entry of the noise type list: value, title and a short explanation.</summary>
+public sealed record NoiseOption(NoiseType Value, string Label, string Description);
+
 public sealed record EasingOption(Easing Value, string Label, string Description);

@@ -10,6 +10,17 @@ public enum LayerType
     FieldRecord
 }
 
+/// <summary>Colour of a Noise layer: how the energy is spread over the frequencies.</summary>
+public enum NoiseType
+{
+    White,
+    Pink,
+    Brown,
+    Blue,
+    Violet,
+    Grey
+}
+
 /// <summary>A parameter that moves from one value to another over the length of a layer.</summary>
 public sealed record CurveSpec(double From, double To, Easing Easing)
 {
@@ -37,7 +48,8 @@ public sealed record LayerSpec(
     bool Muted,
     int Seed,
     string? SourcePath = null,
-    double Speed = 1.0)
+    double Speed = 1.0,
+    NoiseType NoiseType = NoiseType.White)
 {
     public double Progress(double localSeconds) =>
         DurationSeconds > 0 ? Math.Clamp(localSeconds / DurationSeconds, 0.0, 1.0) : 0.0;

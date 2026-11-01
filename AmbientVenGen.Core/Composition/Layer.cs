@@ -79,6 +79,10 @@ public sealed partial class Layer : ObservableObject
     [ObservableProperty]
     private double _speed = 1.0;
 
+    /// <summary>Colour of the noise (Noise layers only).</summary>
+    [ObservableProperty]
+    private NoiseType _noiseType = NoiseType.White;
+
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(SourceName))]
     private string? _sourcePath;
@@ -104,7 +108,8 @@ public sealed partial class Layer : ObservableObject
         Muted,
         Seed,
         SourcePath,
-        Speed);
+        Speed,
+        NoiseType);
 
     /// <summary>Creates a layer from a spec, clamping values read from a file to sane ranges.</summary>
     public static Layer FromSpec(LayerSpec spec)
@@ -134,7 +139,8 @@ public sealed partial class Layer : ObservableObject
             Muted = spec.Muted,
             Seed = spec.Seed,
             SourcePath = spec.SourcePath,
-            Speed = Math.Clamp(spec.Speed <= 0 ? 1.0 : spec.Speed, MinSpeed, MaxSpeed)
+            Speed = Math.Clamp(spec.Speed <= 0 ? 1.0 : spec.Speed, MinSpeed, MaxSpeed),
+            NoiseType = Enum.IsDefined(spec.NoiseType) ? spec.NoiseType : NoiseType.White
         };
     }
 
