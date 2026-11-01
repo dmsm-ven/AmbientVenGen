@@ -42,6 +42,14 @@ public partial class MainViewModel : ObservableObject, IDisposable
     private CancellationTokenSource? _exportCts;
     private int _clipHoldTicks;
     private bool _loading;
+
+    // The project as it was when it was opened or saved: "unsaved changes" means "different from this snapshot",
+    // so a change that was undone by hand (or a load that only normalises values) does not count.
+    private string? _savedSnapshot;
+
+    private string TakeSnapshot() => System.Text.Json.JsonSerializer.Serialize(Project.ToSpec());
+
+    private void RefreshDirty() => IsDirty = _savedSnapshot is null || TakeSnapshot() != _savedSnapshot;
     private bool _disposed;
 
     public ProjectModel Project { get; } = new();
@@ -479,7 +487,7 @@ public partial class MainViewModel : ObservableObject, IDisposable
         }
 
         if (!_loading)
-            IsDirty = true;
+            RefreshDirty();
 
         if (PlayheadSeconds > Project.DurationSeconds)
             PlayheadSeconds = Project.DurationSeconds;
@@ -559,6 +567,7 @@ public partial class MainViewModel : ObservableObject, IDisposable
             _projectFileService.Save(path, Project.ToSpec());
             CurrentFilePath = path;
             Settings.LastProjectPath = path;
+            _savedSnapshot = TakeSnapshot();
             IsDirty = false;
             StatusMessage = $"Saved {Path.GetFileName(path)}";
             return true;
@@ -573,6 +582,7 @@ public partial class MainViewModel : ObservableObject, IDisposable
     /// <summary>Asks to save unsaved changes. Returns false if the user cancels.</summary>
     public bool ConfirmDiscardChanges()
     {
+        RefreshDirty();
         if (!IsDirty)
             return true;
 
@@ -635,6 +645,7 @@ public partial class MainViewModel : ObservableObject, IDisposable
 
         PlayheadSeconds = 0;
         CurrentFilePath = path;
+        _savedSnapshot = TakeSnapshot();
         IsDirty = false;
         if (path is not null)
             Settings.LastProjectPath = path;
