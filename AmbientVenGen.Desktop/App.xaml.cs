@@ -58,7 +58,7 @@ public partial class App : Application
     {
         try
         {
-            await _host?.StopAsync();
+            await _host!.StopAsync();
         }
         finally
         {

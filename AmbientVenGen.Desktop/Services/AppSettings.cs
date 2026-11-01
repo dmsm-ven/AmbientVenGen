@@ -1,4 +1,4 @@
-using CommunityToolkit.Mvvm.ComponentModel;
+﻿using CommunityToolkit.Mvvm.ComponentModel;
 using System.IO;
 using System.Text.Json;
 using System.Text.Json.Serialization;
@@ -76,7 +76,7 @@ public sealed partial class AppSettings : ObservableObject
 
             SettingsFile? file = JsonSerializer.Deserialize<SettingsFile>(File.ReadAllText(_path), Options);
             if (file is not null)
-                _controlStyle = file.ControlStyle;
+                ControlStyle = file.ControlStyle;
         }
         catch (Exception)
         {
