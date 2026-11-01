@@ -293,6 +293,25 @@ public partial class MainViewModel : ObservableObject, IDisposable
 
     public ObservableCollection<IntervalSource> IntervalSources { get; } = [];
 
+    /// <summary>The interval table: every interval with the pitch it would give (follows the chosen source layer).</summary>
+    public ObservableCollection<IntervalRow> IntervalRows { get; } = [];
+
+    partial void OnIntervalSourceChanged(IntervalSource? value)
+    {
+        IntervalRows.Clear();
+        if (value is null)
+            return;
+
+        foreach (PitchInterval interval in Choices.PitchIntervals)
+        {
+            double hz = Math.Round(Math.Clamp(value.Layer.PitchHz * interval.Ratio, Layer.MinPitchHz, Layer.MaxPitchHz), 1);
+            IntervalRows.Add(new IntervalRow(interval, hz));
+        }
+    }
+
+    [RelayCommand]
+    private void CloseIntervalPanel() => IsIntervalPanelOpen = false;
+
     [ObservableProperty]
     private bool _isIntervalPanelOpen;
 
@@ -318,20 +337,18 @@ public partial class MainViewModel : ObservableObject, IDisposable
         IsIntervalPanelOpen = true;
     }
 
-    /// <summary>Sets the pitch of the selected layer to the source pitch times the ratio of the clicked interval.</summary>
+    /// <summary>Sets the pitch of the selected layer to the value of the clicked row. The panel stays open.</summary>
     [RelayCommand(CanExecute = nameof(CanApplyInterval))]
-    private void ApplyInterval(PitchInterval? interval)
+    private void ApplyInterval(IntervalRow? row)
     {
-        if (interval is null || SelectedLayer is not { } target || IntervalSource is not { } source)
+        if (row is null || SelectedLayer is not { } target || IntervalSource is not { } source)
             return;
 
-        double hz = Math.Round(Math.Clamp(source.Layer.PitchHz * interval.Ratio, Layer.MinPitchHz, Layer.MaxPitchHz), 1);
-        target.PitchHz = hz;
-        IsIntervalPanelOpen = false;
-        StatusMessage = $"{target.Name}: {interval.Name} above {source.Layer.Name} = {hz:0.#} Hz";
+        target.PitchHz = row.Hz;
+        StatusMessage = $"{target.Name}: {row.Interval.Name} above {source.Layer.Name} = {row.Hz:0.#} Hz";
     }
 
-    private bool CanApplyInterval(PitchInterval? interval) => IntervalSource is not null && SelectedLayer is not null;
+    private bool CanApplyInterval(IntervalRow? row) => IntervalSource is not null && SelectedLayer is not null;
 
     /// <summary>Copies the selected layer (Ctrl+D); the copy is inserted right below it and selected.</summary>
     [RelayCommand(CanExecute = nameof(HasSelectedLayer))]

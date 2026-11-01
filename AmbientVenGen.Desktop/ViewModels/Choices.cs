@@ -69,6 +69,12 @@ public sealed record PitchInterval(string Name, double Ratio, string Description
     public string Display => $"{Name}  \u00D7{Ratio:0.###}";
 }
 
+/// <summary>One row of the interval table: the interval and the pitch the layer would get from it.</summary>
+public sealed record IntervalRow(PitchInterval Interval, double Hz)
+{
+    public string HzText => $"{Hz:0.#} Hz";
+}
+
 /// <summary>A layer offered as the source of an interval, with its pitch shown in the list.</summary>
 public sealed record IntervalSource(Layer Layer, string Text);
 

@@ -316,43 +316,84 @@
                                 CornerRadius="10">
                                 <StackPanel>
                                     <!-- Header: the layer the pitch is taken from -->
-                                    <StackPanel Margin="14,12,14,12">
-                                        <TextBlock Margin="0,0,0,6" FontSize="12" Foreground="#C9C8D6" Text="Take the pitch from layer" />
+                                    <StackPanel Margin="14,10,14,12">
+                                        <Grid Margin="0,0,0,6">
+                                            <TextBlock
+                                                Margin="0"
+                                                VerticalAlignment="Center"
+                                                FontSize="12"
+                                                Foreground="#C9C8D6"
+                                                Text="Take the pitch from layer" />
+                                            <ui:Button
+                                                Margin="0,-4,-8,0"
+                                                Padding="6,2"
+                                                HorizontalAlignment="Right"
+                                                VerticalAlignment="Top"
+                                                Appearance="Transparent"
+                                                Command="{Binding CloseIntervalPanelCommand}"
+                                                Content="&#10005;"
+                                                ToolTip="Close" />
+                                        </Grid>
                                         <ComboBox
                                             DisplayMemberPath="Text"
                                             ItemsSource="{Binding IntervalSources}"
                                             SelectedItem="{Binding IntervalSource, Mode=TwoWay}" />
                                     </StackPanel>
                                     <Border Height="1" Background="#2EFFFFFF" />
-                                    <!-- Body: all intervals at once; [name] | [multiplier] | [Apply] -->
-                                    <ItemsControl Margin="14,8,14,10" ItemsSource="{x:Static vm:Choices.PitchIntervals}">
+                                    <!-- Body: all intervals at once; [name = link] | [multiplier] | [resulting pitch] -->
+                                    <ItemsControl Margin="14,8,14,10" ItemsSource="{Binding IntervalRows}">
                                         <ItemsControl.ItemTemplate>
                                             <DataTemplate>
-                                                <Grid Margin="0,2" ToolTip="{Binding Description}">
+                                                <Grid Margin="0,1" ToolTip="{Binding Interval.Description}">
                                                     <Grid.ColumnDefinitions>
                                                         <ColumnDefinition Width="*" />
                                                         <ColumnDefinition Width="64" />
-                                                        <ColumnDefinition Width="Auto" />
+                                                        <ColumnDefinition Width="70" />
                                                     </Grid.ColumnDefinitions>
-                                                    <TextBlock
-                                                        Margin="0"
-                                                        VerticalAlignment="Center"
-                                                        FontSize="13"
-                                                        Foreground="#F2F2F8"
-                                                        Text="{Binding Name}" />
+                                                    <!-- The name works like a link: click it to apply the interval -->
+                                                    <Border
+                                                        Padding="0,3"
+                                                        Background="Transparent"
+                                                        Cursor="Hand">
+                                                        <Border.InputBindings>
+                                                            <MouseBinding
+                                                                Command="{Binding DataContext.ApplyIntervalCommand, RelativeSource={RelativeSource AncestorType=Window}}"
+                                                                CommandParameter="{Binding}"
+                                                                MouseAction="LeftClick" />
+                                                        </Border.InputBindings>
+                                                        <TextBlock
+                                                            Margin="0"
+                                                            FontSize="13"
+                                                            Text="{Binding Interval.Name}">
+                                                            <TextBlock.Style>
+                                                                <Style BasedOn="{StaticResource {x:Type TextBlock}}" TargetType="TextBlock">
+                                                                    <Setter Property="Foreground" Value="#B7AFE9" />
+                                                                    <Style.Triggers>
+                                                                        <DataTrigger Binding="{Binding IsMouseOver, RelativeSource={RelativeSource AncestorType=Border}}" Value="True">
+                                                                            <Setter Property="Foreground" Value="#FFFFFF" />
+                                                                            <Setter Property="TextDecorations" Value="Underline" />
+                                                                        </DataTrigger>
+                                                                    </Style.Triggers>
+                                                                </Style>
+                                                            </TextBlock.Style>
+                                                        </TextBlock>
+                                                    </Border>
                                                     <TextBlock
                                                         Grid.Column="1"
                                                         Margin="0"
                                                         VerticalAlignment="Center"
-                                                        FontSize="13"
-                                                        Foreground="#B7AFE9"
-                                                        Text="{Binding Ratio, StringFormat='&#215;{0:0.###}'}" />
-                                                    <ui:Button
+                                                        FontSize="12"
+                                                        Foreground="#8F8DB0"
+                                                        Text="{Binding Interval.Ratio, StringFormat='&#215;{0:0.###}'}" />
+                                                    <TextBlock
                                                         Grid.Column="2"
-                                                        Padding="12,3"
-                                                        Command="{Binding DataContext.ApplyIntervalCommand, RelativeSource={RelativeSource AncestorType=Window}}"
-                                                        CommandParameter="{Binding}"
-                                                        Content="Apply" />
+                                                        Margin="0"
+                                                        HorizontalAlignment="Right"
+                                                        VerticalAlignment="Center"
+                                                        FontSize="13"
+                                                        FontWeight="SemiBold"
+                                                        Foreground="#8FD16A"
+                                                        Text="{Binding HzText}" />
                                                 </Grid>
                                             </DataTemplate>
                                         </ItemsControl.ItemTemplate>
