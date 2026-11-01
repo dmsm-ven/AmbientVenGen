@@ -38,7 +38,8 @@ public partial class PresetLibraryWindow : FluentWindow
 
     private async void OnTagSelected(object sender, SelectionChangedEventArgs e)
     {
-        if (sender is ComboBox box && e.AddedItems.Count > 0 && e.AddedItems[0] is string tag)
+        // Only a pick from the open list counts; typing must never select (and insert) an existing tag by itself.
+        if (sender is ComboBox { IsDropDownOpen: true } box && e.AddedItems.Count > 0 && e.AddedItems[0] is string tag)
             await CommitTagAsync(box, tag);
     }
 

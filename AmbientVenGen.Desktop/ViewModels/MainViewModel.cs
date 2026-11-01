@@ -60,6 +60,7 @@ public partial class MainViewModel : ObservableObject, IDisposable
     [NotifyPropertyChangedFor(nameof(IsLayerSelectionEmpty))]
     [NotifyCanExecuteChangedFor(nameof(DeleteSelectedLayerCommand))]
     [NotifyCanExecuteChangedFor(nameof(RandomizeSelectedLayerCommand))]
+    [NotifyCanExecuteChangedFor(nameof(DuplicateSelectedLayerCommand))]
     private Layer? _selectedLayer;
 
     [ObservableProperty]
@@ -145,6 +146,7 @@ public partial class MainViewModel : ObservableObject, IDisposable
 
         // Start with a ready-made composition so there is something to hear and see right away.
         LoadSpec(templateService.Default.Build(), null);
+        TryOpenLastProject();
 
         _timer = new DispatcherTimer(DispatcherPriority.Render) { Interval = TimeSpan.FromMilliseconds(33) };
         _timer.Tick += OnTimerTick;
@@ -283,6 +285,23 @@ public partial class MainViewModel : ObservableObject, IDisposable
         _deletedLayers.Push(new DeletedLayer(layer, index));
         UndoDeleteCommand.NotifyCanExecuteChanged();
         StatusMessage = $"Removed layer: {layer.Name}";
+    }
+
+    /// <summary>Copies the selected layer (Ctrl+D); the copy is inserted right below it and selected.</summary>
+    [RelayCommand(CanExecute = nameof(HasSelectedLayer))]
+    private void DuplicateSelectedLayer()
+    {
+        if (SelectedLayer is not { } source)
+            return;
+
+        Layer copy = Layer.FromSpec(source.ToSpec());
+        copy.Name = $"{source.Name} copy";
+        copy.Seed = Random.Shared.Next(1, int.MaxValue);
+
+        int index = Project.Layers.IndexOf(source);
+        Project.Layers.Insert(index < 0 ? Project.Layers.Count : index + 1, copy);
+        SelectedLayer = copy;
+        StatusMessage = $"Duplicated layer: {copy.Name}";
     }
 
     private bool CanUndoDelete() => _deletedLayers.Count > 0;
@@ -476,6 +495,7 @@ public partial class MainViewModel : ObservableObject, IDisposable
         {
             _projectFileService.Save(path, Project.ToSpec());
             CurrentFilePath = path;
+            Settings.LastProjectPath = path;
             IsDirty = false;
             StatusMessage = $"Saved {Path.GetFileName(path)}";
             return true;
@@ -501,6 +521,24 @@ public partial class MainViewModel : ObservableObject, IDisposable
         };
     }
 
+    // Reopens the project that was used last time; a missing or broken file silently leaves the default composition.
+    private void TryOpenLastProject()
+    {
+        string? path = Settings.LastProjectPath;
+        if (string.IsNullOrEmpty(path) || !File.Exists(path))
+            return;
+
+        try
+        {
+            LoadSpec(_projectFileService.Load(path), path);
+            StatusMessage = $"Opened {Path.GetFileName(path)}";
+        }
+        catch (Exception)
+        {
+            // Keep the default composition.
+        }
+    }
+
     private void LoadSpec(ProjectSpec spec, string? path)
     {
         StopPlaybackSilently();
@@ -521,6 +559,8 @@ public partial class MainViewModel : ObservableObject, IDisposable
         PlayheadSeconds = 0;
         CurrentFilePath = path;
         IsDirty = false;
+        if (path is not null)
+            Settings.LastProjectPath = path;
         OnPropertyChanged(nameof(TimeText));
     }
 

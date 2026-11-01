@@ -1,0 +1,18 @@
+<Project>
+
+  <!-- Central package management: versions live here only, csproj files list names without Version. -->
+  <PropertyGroup>
+    <ManagePackageVersionsCentrally>true</ManagePackageVersionsCentrally>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageVersion Include="CommunityToolkit.Mvvm" Version="8.4.0" />
+    <PackageVersion Include="Dapper" Version="2.1.89" />
+    <PackageVersion Include="Microsoft.Data.Sqlite" Version="10.0.14" />
+    <PackageVersion Include="Microsoft.Extensions.Hosting" Version="10.0.0" />
+    <PackageVersion Include="Microsoft.Xaml.Behaviors.Wpf" Version="1.1.161" />
+    <PackageVersion Include="NAudio" Version="3.3.0" />
+    <PackageVersion Include="WPF-UI" Version="4.0.3" />
+  </ItemGroup>
+
+</Project>
