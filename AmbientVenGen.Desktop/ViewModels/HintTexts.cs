@@ -36,6 +36,9 @@ public static class HintTexts
     public const string FadeIn =
         "Time the layer takes to rise from silence at its start.";
 
+    public const string FadeInOut =
+        "Fade in: time to rise from silence at the start. Fade out: time to sink into silence at the end. Both follow the curve between the knobs.";
+
     public const string FadeOut =
         "Time the layer takes to sink into silence at its end.";
 
