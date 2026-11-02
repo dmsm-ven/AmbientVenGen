@@ -304,17 +304,24 @@ public partial class MainViewModel : ObservableObject, IDisposable
     /// <summary>The interval table: every interval with the pitch it would give (follows the chosen source layer).</summary>
     public ObservableCollection<IntervalRow> IntervalRows { get; } = [];
 
+    /// <summary>The second group of the table: mathematical ratios (smallest first).</summary>
+    public ObservableCollection<IntervalRow> MathIntervalRows { get; } = [];
+
     partial void OnIntervalSourceChanged(IntervalSource? value)
     {
         IntervalRows.Clear();
+        MathIntervalRows.Clear();
         if (value is null)
             return;
 
+        static double Result(Layer layer, PitchInterval interval) =>
+            Math.Round(Math.Clamp(layer.PitchHz * interval.Ratio, Layer.MinPitchHz, Layer.MaxPitchHz), 1);
+
         foreach (PitchInterval interval in Choices.PitchIntervals)
-        {
-            double hz = Math.Round(Math.Clamp(value.Layer.PitchHz * interval.Ratio, Layer.MinPitchHz, Layer.MaxPitchHz), 1);
-            IntervalRows.Add(new IntervalRow(interval, hz));
-        }
+            IntervalRows.Add(new IntervalRow(interval, Result(value.Layer, interval)));
+
+        foreach (PitchInterval interval in Choices.MathIntervals)
+            MathIntervalRows.Add(new IntervalRow(interval, Result(value.Layer, interval)));
     }
 
     [RelayCommand]
@@ -327,7 +334,10 @@ public partial class MainViewModel : ObservableObject, IDisposable
     [NotifyCanExecuteChangedFor(nameof(ApplyIntervalCommand))]
     private IntervalSource? _intervalSource;
 
-    private bool CanOpenIntervalPanel() => SelectedLayer is { Type: LayerType.Drone or LayerType.Pad };
+    // Needs a Drone / Pad selected and at least one other Drone / Pad to take the pitch from.
+    private bool CanOpenIntervalPanel() =>
+        SelectedLayer is { Type: LayerType.Drone or LayerType.Pad } selected
+        && Project.Layers.Any(l => !ReferenceEquals(l, selected) && l.Type is LayerType.Drone or LayerType.Pad);
 
     /// <summary>Opens the mini panel; the source is the layer below the selected one by default.</summary>
     [RelayCommand(CanExecute = nameof(CanOpenIntervalPanel))]
@@ -489,6 +499,8 @@ public partial class MainViewModel : ObservableObject, IDisposable
 
     private void OnProjectChanged()
     {
+        OpenIntervalPanelCommand.NotifyCanExecuteChanged();
+
         // Start decoding recordings as soon as a layer uses them, so playback does not wait.
         foreach (Layer layer in Project.Layers)
         {

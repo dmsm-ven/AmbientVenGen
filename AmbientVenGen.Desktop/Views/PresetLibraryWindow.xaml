@@ -1,4 +1,4 @@
-﻿<ui:FluentWindow
+<ui:FluentWindow
     x:Class="AmbientVenGen.Desktop.Views.PresetLibraryWindow"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
@@ -105,8 +105,12 @@
         </Grid.RowDefinitions>
 
         <ui:TitleBar
+            Height="33"
             Title="Preset library"
             Grid.Row="0"
+            Background="{StaticResource WindowTitleBackground}"
+            ButtonsBackground="{StaticResource WindowTitleButtonsBackground}"
+            ButtonsForeground="{StaticResource WindowTitleButtonsForeground}"
             Icon="pack://application:,,,/Assets/app-icon.ico"
             ShowClose="False"
             ShowMaximize="False"
