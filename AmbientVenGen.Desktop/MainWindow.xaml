@@ -285,12 +285,80 @@
                     </Grid.RowDefinitions>
 
                     <Grid Grid.Row="0" Margin="0,0,0,8">
-                        <ui:TextBlock
-                            Margin="0"
+                        <!--  Title, layer type and the type-specific field: noise colour or the source file of a recording  -->
+                        <StackPanel
+                            HorizontalAlignment="Left"
                             VerticalAlignment="Center"
-                            FontSize="14"
-                            FontWeight="SemiBold"
-                            Text="Selected layer" />
+                            Orientation="Horizontal">
+                            <ui:TextBlock
+                                Margin="0"
+                                VerticalAlignment="Center"
+                                FontSize="14"
+                                FontWeight="SemiBold"
+                                Text="Selected layer" />
+                            <ui:TextBlock
+                                Margin="10,0,0,0"
+                                VerticalAlignment="Center"
+                                Foreground="#B7AFE9"
+                                Text="{Binding SelectedLayer.TypeLabel}" />
+
+                            <!--  Noise: the colour of the noise  -->
+                            <StackPanel Margin="10,0,0,0" Orientation="Horizontal">
+                                <StackPanel.Style>
+                                <Style TargetType="StackPanel">
+                                    <Setter Property="Visibility" Value="Collapsed" />
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding SelectedLayer.Type}" Value="Noise">
+                                            <Setter Property="Visibility" Value="Visible" />
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </StackPanel.Style>
+                                <controls:NoiseTypeDropdown VerticalAlignment="Center" Value="{Binding SelectedLayer.NoiseType, Mode=TwoWay}" />
+                            </StackPanel>
+
+                            <!--  Field record: the file; a click on its name chooses another one  -->
+                            <StackPanel Margin="10,0,0,0" Orientation="Horizontal">
+                                <StackPanel.Style>
+                                <Style TargetType="StackPanel">
+                                    <Setter Property="Visibility" Value="Collapsed" />
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding SelectedLayer.Type}" Value="FieldRecord">
+                                            <Setter Property="Visibility" Value="Visible" />
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </StackPanel.Style>
+                                <controls:HintIcon
+                                    Margin="0,0,6,0"
+                                    VerticalAlignment="Center"
+                                    Text="{x:Static vm:HintTexts.Source}" />
+                                <ui:TextBlock
+                                    MaxWidth="260"
+                                    Margin="0"
+                                    VerticalAlignment="Center"
+                                    Cursor="Hand"
+                                    Foreground="#7FB2FF"
+                                    Text="{Binding SelectedLayer.SourceName}"
+                                    TextTrimming="CharacterEllipsis"
+                                    ToolTip="Click to choose another file">
+                                    <ui:TextBlock.InputBindings>
+                                        <MouseBinding Command="{Binding DataContext.ChangeSourceCommand, RelativeSource={RelativeSource AncestorType=Window}}" MouseAction="LeftClick" />
+                                    </ui:TextBlock.InputBindings>
+                                    <ui:TextBlock.TextDecorations>
+                                        <TextDecoration Location="Underline">
+                                            <TextDecoration.Pen>
+                                                <Pen Brush="#997FB2FF" Thickness="1">
+                                                    <Pen.DashStyle>
+                                                        <DashStyle Dashes="1 2" />
+                                                    </Pen.DashStyle>
+                                                </Pen>
+                                            </TextDecoration.Pen>
+                                        </TextDecoration>
+                                    </ui:TextBlock.TextDecorations>
+                                </ui:TextBlock>
+                            </StackPanel>
+                        </StackPanel>
                         <!-- Pitch interval: header (source layer) / body (interval) / footer (Apply) -->
                         <ui:Button
                             x:Name="IntervalButton"
@@ -442,11 +510,6 @@
                                         Grid.Row="0"
                                         Grid.ColumnSpan="3"
                                         Margin="0,0,0,8">
-                                        <Grid.RowDefinitions>
-                                            <RowDefinition Height="Auto" />
-                                            <!--  The second line (Noise type / Source file) keeps its height for every layer type, so the panel never jumps.  -->
-                                            <RowDefinition Height="Auto" MinHeight="44" />
-                                        </Grid.RowDefinitions>
                                         <Grid.ColumnDefinitions>
                                             <ColumnDefinition Width="220" />
                                             <ColumnDefinition Width="Auto" />
@@ -458,15 +521,9 @@
                                             VerticalAlignment="Top"
                                             MaxLength="32"
                                             Text="{Binding Name, UpdateSourceTrigger=PropertyChanged}" />
-                                        <ui:TextBlock
-                                            Grid.Column="1"
-                                            Margin="14,6,14,0"
-                                            VerticalAlignment="Top"
-                                            Foreground="#B7AFE9"
-                                            Text="{Binding TypeLabel}" />
                                         <ToggleButton
                                             Grid.Column="2"
-                                            Margin="0,2,22,0"
+                                            Margin="14,2,22,0"
                                             VerticalAlignment="Top"
                                             IsChecked="{Binding Muted, Mode=TwoWay}"
                                             Style="{StaticResource MuteToggleButton}">
@@ -547,71 +604,6 @@
                                                     </TextBlock.Style>
                                                 </TextBlock>
                                             </StackPanel>
-                                        </StackPanel>
-
-                                        <!--  Noise colour (Noise layers only)  -->
-                                        <StackPanel
-                                            Grid.Row="1"
-                                            Grid.ColumnSpan="5"
-                                            Margin="0,8,0,0"
-                                            Orientation="Horizontal">
-                                            <StackPanel.Style>
-                                                <Style TargetType="StackPanel">
-                                                    <Setter Property="Visibility" Value="Collapsed" />
-                                                    <Style.Triggers>
-                                                        <DataTrigger Binding="{Binding Type}" Value="Noise">
-                                                            <Setter Property="Visibility" Value="Visible" />
-                                                        </DataTrigger>
-                                                    </Style.Triggers>
-                                                </Style>
-                                            </StackPanel.Style>
-                                            <ui:TextBlock
-                                                Margin="0,0,12,0"
-                                                VerticalAlignment="Center"
-                                                FontSize="12"
-                                                Foreground="#C9C8D6"
-                                                Text="Noise type" />
-                                            <controls:NoiseTypeDropdown Value="{Binding NoiseType, Mode=TwoWay}" />
-                                        </StackPanel>
-
-                                        <!--  Recording file (Field record layers only), one line: caption, file name, button  -->
-                                        <StackPanel
-                                            Grid.Row="1"
-                                            Grid.ColumnSpan="5"
-                                            Margin="0,8,0,0"
-                                            Orientation="Horizontal">
-                                            <StackPanel.Style>
-                                                <Style TargetType="StackPanel">
-                                                    <Setter Property="Visibility" Value="Collapsed" />
-                                                    <Style.Triggers>
-                                                        <DataTrigger Binding="{Binding Type}" Value="FieldRecord">
-                                                            <Setter Property="Visibility" Value="Visible" />
-                                                        </DataTrigger>
-                                                    </Style.Triggers>
-                                                </Style>
-                                            </StackPanel.Style>
-                                            <ui:TextBlock
-                                                Margin="0"
-                                                VerticalAlignment="Center"
-                                                FontSize="12"
-                                                Foreground="#C9C8D6"
-                                                Text="Source file" />
-                                            <controls:HintIcon
-                                                Margin="5,0,0,0"
-                                                VerticalAlignment="Center"
-                                                Text="{x:Static vm:HintTexts.Source}" />
-                                            <ui:TextBlock
-                                                MaxWidth="320"
-                                                Margin="12,0,12,0"
-                                                VerticalAlignment="Center"
-                                                Foreground="#8FD16A"
-                                                Text="{Binding SourceName}"
-                                                TextTrimming="CharacterEllipsis"
-                                                ToolTip="{Binding SourcePath}" />
-                                            <ui:Button
-                                                VerticalAlignment="Center"
-                                                Command="{Binding DataContext.ChangeSourceCommand, RelativeSource={RelativeSource AncestorType=Window}}"
-                                                Content="Change file..." />
                                         </StackPanel>
                                     </Grid>
 
