@@ -1,11 +1,22 @@
 # Ambient Forge
 
-A Windows desktop generator for **dark / space ambient** music. You build a track from layers on a timeline,
+Desktop generator for **dark / space ambient** music. You build a track from layers on a timeline,
 shape how each layer changes over time, listen to it live and export it to WAV or MP3.
 
-Inspired by the sound of Mount Shrine, Alphaxone, Council of Nine, Sphare Sech and The Void Wanderer.
-
-![Main window](docs/screenshots/main-window.png)
+<table>
+  <tr>
+    <th width="50%">MainWindow</th>
+    <th width="50%">SettingsWindow</th>
+  </tr>
+  <tr>
+    <td align="center">
+      <img src="docs/screenshots/main-window.png" alt="Main window" style="max-height: 600px; width: auto; max-width: 100%; object-fit: contain;">
+    </td>
+    <td align="center">
+      <img src="docs/screenshots/preset-window.png" alt="Preset library" style="max-height: 600px; width: auto; max-width: 100%; object-fit: contain;">
+    </td>
+  </tr>
+</table>
 
 ## What it does
 
@@ -19,11 +30,8 @@ Inspired by the sound of Mount Shrine, Alphaxone, Council of Nine, Sphare Sech a
 - **Master section** - reverb, soft limiter, spectrum and level meters, clip indicator.
 - **Preset library** - a catalogue of your recordings with waveform preview, play/loop, tags and tag filter.
 - **Templates and projects** - ready-made compositions, projects saved as readable `.afproj` (JSON).
-- **Export** - WAV (16/32-bit) or MP3 with optional fade in/out; the same engine renders live and offline,
-  so a seed always gives the same sound.
+- **Export** - WAV (16/32-bit) or MP3
 - **Controls** - sliders (default) or gauge knobs, optional "?" hints (see *Settings*).
-
-![Preset library](docs/screenshots/preset-window.png)
 
 ## Run
 
