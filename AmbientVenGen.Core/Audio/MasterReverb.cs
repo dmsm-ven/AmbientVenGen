@@ -34,8 +34,11 @@ internal sealed class MasterReverb
         }
     }
 
-    /// <summary>Mixes the reverberated signal into the block. mix is 0..1.</summary>
-    public void Process(float[] left, float[] right, int count, float mix)
+    /// <summary>
+    /// Mixes the reverberated signal into the block. mix is 0..1. The reverb input is the sum of the layers'
+    /// reverb sends (a layer with send 1 feeds it in full, with 0 it stays dry).
+    /// </summary>
+    public void Process(float[] left, float[] right, float[] sendLeft, float[] sendRight, int count, float mix)
     {
         if (mix <= 0.0001f)
             return;
@@ -45,7 +48,7 @@ internal sealed class MasterReverb
 
         for (int i = 0; i < count; i++)
         {
-            float input = (left[i] + right[i]) * 0.015f;
+            float input = (sendLeft[i] + sendRight[i]) * 0.015f;
             float outL = 0f;
             float outR = 0f;
 
