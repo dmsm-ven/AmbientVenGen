@@ -21,6 +21,61 @@
 
     <ui:FluentWindow.Resources>
         <BooleanToVisibilityConverter x:Key="BoolToVisibility" />
+
+        <!-- One row of the pitch interval table: [name = link] | [multiplier] | [resulting pitch] -->
+        <DataTemplate x:Key="IntervalRowTemplate">
+                                                <Grid Margin="0" ToolTip="{Binding Interval.Description}">
+                                                    <Grid.ColumnDefinitions>
+                                                        <ColumnDefinition Width="*" />
+                                                        <ColumnDefinition Width="56" />
+                                                        <ColumnDefinition Width="62" />
+                                                    </Grid.ColumnDefinitions>
+                                                    <!-- The name works like a link: click it to apply the interval -->
+                                                    <Border
+                                                        Padding="0,2"
+                                                        Background="Transparent"
+                                                        Cursor="Hand">
+                                                        <Border.InputBindings>
+                                                            <MouseBinding
+                                                                Command="{Binding DataContext.ApplyIntervalCommand, RelativeSource={RelativeSource AncestorType=Window}}"
+                                                                CommandParameter="{Binding}"
+                                                                MouseAction="LeftClick" />
+                                                        </Border.InputBindings>
+                                                        <TextBlock
+                                                            Margin="0"
+                                                            FontSize="12"
+                                                            Text="{Binding Interval.Name}">
+                                                            <TextBlock.Style>
+                                                                <Style BasedOn="{StaticResource {x:Type TextBlock}}" TargetType="TextBlock">
+                                                                    <Setter Property="Foreground" Value="#B7AFE9" />
+                                                                    <Style.Triggers>
+                                                                        <DataTrigger Binding="{Binding IsMouseOver, RelativeSource={RelativeSource AncestorType=Border}}" Value="True">
+                                                                            <Setter Property="Foreground" Value="#FFFFFF" />
+                                                                            <Setter Property="TextDecorations" Value="Underline" />
+                                                                        </DataTrigger>
+                                                                    </Style.Triggers>
+                                                                </Style>
+                                                            </TextBlock.Style>
+                                                        </TextBlock>
+                                                    </Border>
+                                                    <TextBlock
+                                                        Grid.Column="1"
+                                                        Margin="0"
+                                                        VerticalAlignment="Center"
+                                                        FontSize="11"
+                                                        Foreground="#8F8DB0"
+                                                        Text="{Binding Interval.Ratio, StringFormat='&#215;{0:0.###}'}" />
+                                                    <TextBlock
+                                                        Grid.Column="2"
+                                                        Margin="0"
+                                                        HorizontalAlignment="Right"
+                                                        VerticalAlignment="Center"
+                                                        FontSize="12"
+                                                        FontWeight="SemiBold"
+                                                        Foreground="#8FD16A"
+                                                        Text="{Binding HzText}" />
+                                                </Grid>
+                                            </DataTemplate>
         <controls:GreaterThanOneConverter x:Key="GreaterThanOne" />
 
         <!--  Generic styles (TextBlock, Slider, ComboBox, SectionCard, ToolIconButton) are in Resources/Styles.xaml.  -->
@@ -61,11 +116,12 @@
 
         <!--  The header has its own, lighter solid color (the window itself is a darker translucent Mica).  -->
         <ui:TitleBar
+            Height="33"
             Title="{Binding WindowTitle}"
             Grid.Row="0"
-            Background="#FF2A2A38"
-            ButtonsBackground="Transparent"
-            ButtonsForeground="#ECECF2"
+            Background="{StaticResource WindowTitleBackground}"
+            ButtonsBackground="{StaticResource WindowTitleButtonsBackground}"
+            ButtonsForeground="{StaticResource WindowTitleButtonsForeground}"
             Icon="pack://application:,,,/Assets/app-icon.ico"
             ShowClose="False"
             ShowMaximize="False"
@@ -365,10 +421,20 @@
                             Margin="0,0,60,0"
                             HorizontalAlignment="Right"
                             Command="{Binding OpenIntervalPanelCommand}"
-                            Content="&#9834;"
-                            FontSize="16"
                             Style="{StaticResource ToolIconButton}"
-                            ToolTip="Pitch interval: set this layer's pitch relative to another layer (Drone / Pad)" />
+                            ToolTip="Pitch interval: set this layer's pitch relative to another Drone / Pad layer (needs at least two of them)"
+                            ToolTipService.ShowOnDisabled="True">
+                            <!--  A tuning fork  -->
+                            <Path
+                                Width="16"
+                                Height="16"
+                                Data="M5,1 L5,8 A3,3 0 0 0 11,8 L11,1 M8,11 L8,15"
+                                Stretch="Uniform"
+                                Stroke="{Binding Foreground, RelativeSource={RelativeSource AncestorType=ui:Button}}"
+                                StrokeEndLineCap="Round"
+                                StrokeStartLineCap="Round"
+                                StrokeThickness="1.6" />
+                        </ui:Button>
                         <Popup
                             x:Name="IntervalPopup"
                             AllowsTransparency="True"
@@ -377,7 +443,7 @@
                             PlacementTarget="{Binding ElementName=IntervalButton}"
                             StaysOpen="False">
                             <Border
-                                Width="300"
+                                Width="320"
                                 Background="#F2181821"
                                 BorderBrush="#44FFFFFF"
                                 BorderThickness="1"
@@ -409,63 +475,23 @@
                                     </StackPanel>
                                     <Border Height="1" Background="#2EFFFFFF" />
                                     <!-- Body: all intervals at once; [name = link] | [multiplier] | [resulting pitch] -->
-                                    <ItemsControl Margin="14,8,14,10" ItemsSource="{Binding IntervalRows}">
-                                        <ItemsControl.ItemTemplate>
-                                            <DataTemplate>
-                                                <Grid Margin="0,1" ToolTip="{Binding Interval.Description}">
-                                                    <Grid.ColumnDefinitions>
-                                                        <ColumnDefinition Width="*" />
-                                                        <ColumnDefinition Width="64" />
-                                                        <ColumnDefinition Width="70" />
-                                                    </Grid.ColumnDefinitions>
-                                                    <!-- The name works like a link: click it to apply the interval -->
-                                                    <Border
-                                                        Padding="0,3"
-                                                        Background="Transparent"
-                                                        Cursor="Hand">
-                                                        <Border.InputBindings>
-                                                            <MouseBinding
-                                                                Command="{Binding DataContext.ApplyIntervalCommand, RelativeSource={RelativeSource AncestorType=Window}}"
-                                                                CommandParameter="{Binding}"
-                                                                MouseAction="LeftClick" />
-                                                        </Border.InputBindings>
-                                                        <TextBlock
-                                                            Margin="0"
-                                                            FontSize="13"
-                                                            Text="{Binding Interval.Name}">
-                                                            <TextBlock.Style>
-                                                                <Style BasedOn="{StaticResource {x:Type TextBlock}}" TargetType="TextBlock">
-                                                                    <Setter Property="Foreground" Value="#B7AFE9" />
-                                                                    <Style.Triggers>
-                                                                        <DataTrigger Binding="{Binding IsMouseOver, RelativeSource={RelativeSource AncestorType=Border}}" Value="True">
-                                                                            <Setter Property="Foreground" Value="#FFFFFF" />
-                                                                            <Setter Property="TextDecorations" Value="Underline" />
-                                                                        </DataTrigger>
-                                                                    </Style.Triggers>
-                                                                </Style>
-                                                            </TextBlock.Style>
-                                                        </TextBlock>
-                                                    </Border>
-                                                    <TextBlock
-                                                        Grid.Column="1"
-                                                        Margin="0"
-                                                        VerticalAlignment="Center"
-                                                        FontSize="12"
-                                                        Foreground="#8F8DB0"
-                                                        Text="{Binding Interval.Ratio, StringFormat='&#215;{0:0.###}'}" />
-                                                    <TextBlock
-                                                        Grid.Column="2"
-                                                        Margin="0"
-                                                        HorizontalAlignment="Right"
-                                                        VerticalAlignment="Center"
-                                                        FontSize="13"
-                                                        FontWeight="SemiBold"
-                                                        Foreground="#8FD16A"
-                                                        Text="{Binding HzText}" />
-                                                </Grid>
-                                            </DataTemplate>
-                                        </ItemsControl.ItemTemplate>
-                                    </ItemsControl>
+                                    <ItemsControl
+                                        Margin="14,8,14,6"
+                                        ItemTemplate="{StaticResource IntervalRowTemplate}"
+                                        ItemsSource="{Binding IntervalRows}" />
+                                    <Border Height="1" Background="#2EFFFFFF" />
+                                    <!-- Second group: mathematical ratios, smallest first (scrolls when it does not fit) -->
+                                    <TextBlock
+                                        Margin="14,8,14,2"
+                                        FontSize="11"
+                                        Foreground="#8F8DB0"
+                                        Text="Mathematical ratios" />
+                                    <ScrollViewer MaxHeight="230" Margin="14,0,8,10" VerticalScrollBarVisibility="Auto">
+                                        <ItemsControl
+                                            Margin="0,0,6,0"
+                                            ItemTemplate="{StaticResource IntervalRowTemplate}"
+                                            ItemsSource="{Binding MathIntervalRows}" />
+                                    </ScrollViewer>
                                 </StackPanel>
                             </Border>
                         </Popup>
@@ -865,7 +891,7 @@
 
                                     <!--
                                         Everything that is not animated over the layer, a row = a group of related knobs:
-                                          1. Pitch:        Pitch | Pitch drift | Speed (recordings)
+                                          1. Pitch:        Pitch (Speed for a recording) | Pitch drift;  unavailable knobs are hidden
                                           2. Place, space: Pan | Pan drift | Reverb send
                                           3. Filter:       Cutoff | Resonance
                                           4. Echo:         Delay | Feedback
@@ -899,18 +925,12 @@
                                             <controls:LabeledSlider.Style>
                                                 <Style TargetType="controls:LabeledSlider">
                                                     <Style.Triggers>
-                                                        <!--  Noise has no pitch: shown but switched off. A recording has Speed in this very place.  -->
+                                                        <!--  Noise has no pitch and a recording has Speed in this very place: hidden  -->
                                                         <DataTrigger Binding="{Binding Type}" Value="Noise">
-                                                            <Setter Property="IsEnabled" Value="False" />
-                                                            <Setter Property="Opacity" Value="0.35" />
-                                                            <Setter Property="ToolTip" Value="Noise has no pitch: use Brightness or Cutoff to move its colour" />
-                                                            <Setter Property="ToolTipService.ShowOnDisabled" Value="True" />
+                                                            <Setter Property="Visibility" Value="Collapsed" />
                                                         </DataTrigger>
                                                         <DataTrigger Binding="{Binding Type}" Value="FieldRecord">
-                                                            <Setter Property="IsEnabled" Value="False" />
-                                                            <Setter Property="Opacity" Value="0.35" />
-                                                            <Setter Property="ToolTip" Value="A recording has no pitch: use Speed to change it" />
-                                                            <Setter Property="ToolTipService.ShowOnDisabled" Value="True" />
+                                                            <Setter Property="Visibility" Value="Collapsed" />
                                                         </DataTrigger>
                                                     </Style.Triggers>
                                                 </Style>
@@ -931,10 +951,7 @@
                                                 <Style TargetType="controls:LabeledSlider">
                                                     <Style.Triggers>
                                                         <DataTrigger Binding="{Binding Type}" Value="Noise">
-                                                            <Setter Property="IsEnabled" Value="False" />
-                                                            <Setter Property="Opacity" Value="0.35" />
-                                                            <Setter Property="ToolTip" Value="Noise has no pitch to drift" />
-                                                            <Setter Property="ToolTipService.ShowOnDisabled" Value="True" />
+                                                            <Setter Property="Visibility" Value="Collapsed" />
                                                         </DataTrigger>
                                                     </Style.Triggers>
                                                 </Style>
@@ -942,8 +959,8 @@
                                         </controls:LabeledSlider>
                                         <controls:LabeledSlider
                                             Grid.Row="0"
-                                            Grid.Column="2"
-                                            Margin="0,0,0,6"
+                                            Grid.Column="0"
+                                            Margin="0,0,6,6"
                                             Format="{}{0:0.00}x"
                                             Header="Speed"
                                             Hint="{x:Static vm:HintTexts.Speed}"
@@ -955,15 +972,10 @@
                                             Value="{Binding Speed, Mode=TwoWay}">
                                             <controls:LabeledSlider.Style>
                                                 <Style TargetType="controls:LabeledSlider">
-                                                    <Setter Property="IsEnabled" Value="False" />
-                                                    <Setter Property="Opacity" Value="0.35" />
-                                                    <Setter Property="ToolTip" Value="Speed is for Field record layers" />
-                                                    <Setter Property="ToolTipService.ShowOnDisabled" Value="True" />
+                                                    <Setter Property="Visibility" Value="Collapsed" />
                                                     <Style.Triggers>
                                                         <DataTrigger Binding="{Binding Type}" Value="FieldRecord">
-                                                            <Setter Property="IsEnabled" Value="True" />
-                                                            <Setter Property="Opacity" Value="1" />
-                                                            <Setter Property="ToolTip" Value="{x:Null}" />
+                                                            <Setter Property="Visibility" Value="Visible" />
                                                         </DataTrigger>
                                                     </Style.Triggers>
                                                 </Style>
