@@ -411,7 +411,17 @@ public partial class MainViewModel : ObservableObject, IDisposable
 
             if (Project.Layers.Contains(waiting))
             {
+                // A layer that carries the name of its old file (the default for a recording) follows the new file;
+                // a name the user typed himself is kept.
+                string? oldPath = waiting.SourcePath;
+                bool autoNamed = !string.IsNullOrEmpty(oldPath)
+                    && (string.Equals(waiting.Name, Path.GetFileNameWithoutExtension(oldPath), StringComparison.OrdinalIgnoreCase)
+                        || string.Equals(waiting.Name, Path.GetFileName(oldPath), StringComparison.OrdinalIgnoreCase));
+
                 waiting.SourcePath = path;
+                if (autoNamed)
+                    waiting.Name = name;
+
                 SelectedLayer = waiting;
                 StatusMessage = $"{waiting.Name}: {Path.GetFileName(path)}";
                 return;
