@@ -322,6 +322,17 @@ public partial class MainViewModel : ObservableObject, IDisposable
 
         foreach (PitchInterval interval in Choices.MathIntervals)
             MathIntervalRows.Add(new IntervalRow(interval, Result(value.Layer, interval)));
+
+        RefreshCurrentInterval();
+    }
+
+    // Outlines the row whose pitch equals the pitch of the selected layer (none when it matches nothing).
+    private void RefreshCurrentInterval()
+    {
+        double? current = SelectedLayer?.PitchHz;
+
+        foreach (IntervalRow row in IntervalRows.Concat(MathIntervalRows))
+            row.IsCurrent = current is { } hz && Math.Abs(row.Hz - hz) < 0.05;
     }
 
     [RelayCommand]
@@ -500,6 +511,9 @@ public partial class MainViewModel : ObservableObject, IDisposable
     private void OnProjectChanged()
     {
         OpenIntervalPanelCommand.NotifyCanExecuteChanged();
+
+        if (IsIntervalPanelOpen)
+            RefreshCurrentInterval();
 
         // Start decoding recordings as soon as a layer uses them, so playback does not wait.
         foreach (Layer layer in Project.Layers)
