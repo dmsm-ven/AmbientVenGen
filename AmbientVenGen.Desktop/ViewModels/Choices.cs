@@ -24,8 +24,8 @@ public static class Choices
     ];
 
     /// <summary>Musical intervals for "Pitch interval": the new pitch is the source pitch times the ratio.</summary>
-    public static IReadOnlyList<PitchInterval> PitchIntervals { get; } =
-    [
+    public static IReadOnlyList<PitchInterval> PitchIntervals { get; } = new PitchInterval[]
+    {
         new("Unison", 1.0, "Same pitch"),
         new("Octave", 2.0, "Twice as high"),
         new("Fifth", 1.5, "Open and stable"),
@@ -34,7 +34,7 @@ public static class Choices
         new("Minor third", 1.2, "Dark, sad"),
         new("Minor seventh", 1.78, "Soft tension"),
         new("Major seventh", 1.89, "Dreamy, floating")
-    ];
+    }.OrderBy(interval => interval.Ratio).ToArray();
 
     /// <summary>Second group of the interval table: mathematical and "harmonic series" ratios, smallest first.</summary>
     public static IReadOnlyList<PitchInterval> MathIntervals { get; } = new PitchInterval[]
@@ -89,9 +89,21 @@ public sealed record PitchInterval(string Name, double Ratio, string Description
 }
 
 /// <summary>One row of the interval table: the interval and the pitch the layer would get from it.</summary>
-public sealed record IntervalRow(PitchInterval Interval, double Hz)
+public sealed partial class IntervalRow : CommunityToolkit.Mvvm.ComponentModel.ObservableObject
 {
+    public IntervalRow(PitchInterval interval, double hz)
+    {
+        Interval = interval;
+        Hz = hz;
+    }
+
+    public PitchInterval Interval { get; }
+    public double Hz { get; }
     public string HzText => $"{Hz:0.#} Hz";
+
+    /// <summary>True when the selected layer has exactly this pitch now (the row is outlined).</summary>
+    [CommunityToolkit.Mvvm.ComponentModel.ObservableProperty]
+    private bool _isCurrent;
 }
 
 /// <summary>A layer offered as the source of an interval, with its pitch shown in the list.</summary>

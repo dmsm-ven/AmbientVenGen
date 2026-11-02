@@ -1,4 +1,4 @@
-﻿using CommunityToolkit.Mvvm.ComponentModel;
+using CommunityToolkit.Mvvm.ComponentModel;
 using System.IO;
 using System.Text.Json;
 using System.Text.Json.Serialization;
@@ -33,6 +33,23 @@ public sealed partial class AppSettings : ObservableObject
     private ControlStyle _controlStyle = ControlStyle.Slider;
 
     /// <summary>The project file that was opened or saved last; it is reopened at the next start.</summary>
+    /// <summary>Whether the "Mathematical ratios" group of the pitch interval panel is open.</summary>
+    public bool IntervalMathExpanded
+    {
+        get => _intervalMathExpanded;
+        set
+        {
+            if (_intervalMathExpanded == value)
+                return;
+
+            _intervalMathExpanded = value;
+            OnPropertyChanged();
+            Save();
+        }
+    }
+
+    private bool _intervalMathExpanded = true;
+
     public string? LastProjectPath
     {
         get => _lastProjectPath;
@@ -96,6 +113,7 @@ public sealed partial class AppSettings : ObservableObject
             {
                 ControlStyle = file.ControlStyle;
                 _lastProjectPath = file.LastProjectPath;
+                _intervalMathExpanded = file.IntervalMathExpanded;
             }
         }
         catch (Exception)
@@ -109,7 +127,7 @@ public sealed partial class AppSettings : ObservableObject
         try
         {
             Directory.CreateDirectory(Path.GetDirectoryName(_path)!);
-            File.WriteAllText(_path, JsonSerializer.Serialize(new SettingsFile { ControlStyle = ControlStyle, LastProjectPath = LastProjectPath }, Options));
+            File.WriteAllText(_path, JsonSerializer.Serialize(new SettingsFile { ControlStyle = ControlStyle, LastProjectPath = LastProjectPath, IntervalMathExpanded = IntervalMathExpanded }, Options));
         }
         catch (Exception)
         {
@@ -121,5 +139,6 @@ public sealed partial class AppSettings : ObservableObject
     {
         public ControlStyle ControlStyle { get; set; }
         public string? LastProjectPath { get; set; }
+        public bool IntervalMathExpanded { get; set; } = true;
     }
 }

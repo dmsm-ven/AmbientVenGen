@@ -24,6 +24,23 @@
 
         <!-- One row of the pitch interval table: [name = link] | [multiplier] | [resulting pitch] -->
         <DataTemplate x:Key="IntervalRowTemplate">
+                                        <!-- A blue border marks the interval the layer has right now -->
+                                        <Border
+                                            Margin="0,1"
+                                            Padding="4,0"
+                                            BorderThickness="1"
+                                            CornerRadius="4">
+                                            <Border.Style>
+                                                <Style TargetType="Border">
+                                                    <Setter Property="BorderBrush" Value="Transparent" />
+                                                    <Style.Triggers>
+                                                        <DataTrigger Binding="{Binding IsCurrent}" Value="True">
+                                                            <Setter Property="BorderBrush" Value="#FF5B9BFF" />
+                                                            <Setter Property="Background" Value="#1A5B9BFF" />
+                                                        </DataTrigger>
+                                                    </Style.Triggers>
+                                                </Style>
+                                            </Border.Style>
                                                 <Grid Margin="0" ToolTip="{Binding Interval.Description}">
                                                     <Grid.ColumnDefinitions>
                                                         <ColumnDefinition Width="*" />
@@ -75,7 +92,8 @@
                                                         Foreground="#8FD16A"
                                                         Text="{Binding HzText}" />
                                                 </Grid>
-                                            </DataTemplate>
+                                        </Border>
+                                        </DataTemplate>
         <controls:GreaterThanOneConverter x:Key="GreaterThanOne" />
 
         <!--  Generic styles (TextBlock, Slider, ComboBox, SectionCard, ToolIconButton) are in Resources/Styles.xaml.  -->
@@ -480,18 +498,20 @@
                                         ItemTemplate="{StaticResource IntervalRowTemplate}"
                                         ItemsSource="{Binding IntervalRows}" />
                                     <Border Height="1" Background="#2EFFFFFF" />
-                                    <!-- Second group: mathematical ratios, smallest first (scrolls when it does not fit) -->
-                                    <TextBlock
-                                        Margin="14,8,14,2"
+                                    <!-- Second group: mathematical ratios, smallest first; open or closed state is remembered in the settings -->
+                                    <Expander
+                                        Margin="10,4,10,8"
                                         FontSize="11"
-                                        Foreground="#8F8DB0"
-                                        Text="Mathematical ratios" />
-                                    <ScrollViewer MaxHeight="230" Margin="14,0,8,10" VerticalScrollBarVisibility="Auto">
-                                        <ItemsControl
-                                            Margin="0,0,6,0"
-                                            ItemTemplate="{StaticResource IntervalRowTemplate}"
-                                            ItemsSource="{Binding MathIntervalRows}" />
-                                    </ScrollViewer>
+                                        Header="Mathematical ratios"
+                                        IsExpanded="{Binding Settings.IntervalMathExpanded, Mode=TwoWay}">
+                                        <!-- Tall enough for the whole group; a scroll bar appears only on a very low screen and gets its own margin -->
+                                        <ScrollViewer MaxHeight="520" VerticalScrollBarVisibility="Auto">
+                                            <ItemsControl
+                                                Margin="4,2,18,0"
+                                                ItemTemplate="{StaticResource IntervalRowTemplate}"
+                                                ItemsSource="{Binding MathIntervalRows}" />
+                                        </ScrollViewer>
+                                    </Expander>
                                 </StackPanel>
                             </Border>
                         </Popup>
