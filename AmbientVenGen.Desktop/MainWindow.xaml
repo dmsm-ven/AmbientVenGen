@@ -428,9 +428,9 @@
                             <DataTemplate>
                                 <Grid>
                                     <Grid.ColumnDefinitions>
-                                        <ColumnDefinition Width="4*" />
+                                        <ColumnDefinition Width="5*" />
                                         <ColumnDefinition Width="18" />
-                                        <ColumnDefinition Width="5*" MinWidth="560" />
+                                        <ColumnDefinition Width="4*" MinWidth="440" />
                                     </Grid.ColumnDefinitions>
                                     <Grid.RowDefinitions>
                                         <RowDefinition Height="Auto" />
@@ -626,6 +626,7 @@
                                             <RowDefinition Height="Auto" />
                                             <RowDefinition Height="Auto" />
                                             <RowDefinition Height="Auto" />
+                                            <RowDefinition Height="Auto" />
                                         </Grid.RowDefinitions>
 
                                         <controls:LabeledSlider
@@ -751,7 +752,7 @@
                                         <controls:LabeledSlider
                                             Grid.Row="2"
                                             Grid.Column="0"
-                                            Margin="0,0,6,0"
+                                            Margin="0,0,6,6"
                                             Format="{}{0:P0}"
                                             Header="From"
                                             Maximum="1"
@@ -800,24 +801,85 @@
                                         <controls:LabeledSlider
                                             Grid.Row="2"
                                             Grid.Column="2"
-                                            Margin="6,0,0,0"
+                                            Margin="6,0,0,6"
                                             Format="{}{0:P0}"
                                             Header="To"
                                             Maximum="1"
                                             Minimum="0"
                                             Step="0.01"
                                             Value="{Binding ModulationTo, Mode=TwoWay}" />
+
+                                        <!--  Fade in / out: the same pattern, one curve for both  -->
+                                        <controls:LabeledSlider
+                                            Grid.Row="3"
+                                            Grid.Column="0"
+                                            Margin="0,0,6,0"
+                                            Format="{}{0:0} s"
+                                            Header="Fade in"
+                                            Maximum="{Binding DurationSeconds}"
+                                            Minimum="0"
+                                            Step="1"
+                                            Value="{Binding FadeInSeconds, Mode=TwoWay}" />
+
+                                        <!--  Between the two knobs: name, chain (they belong together) and the curve of the change  -->
+                                        <StackPanel
+                                            Grid.Row="3"
+                                            Grid.Column="1"
+                                            Margin="0,0,0,0"
+                                            VerticalAlignment="Center">
+                                            <StackPanel HorizontalAlignment="Center" Orientation="Horizontal">
+                                                <ui:TextBlock
+                                                    Margin="0"
+                                                    FontWeight="SemiBold"
+                                                    Text="Fade" />
+                                                <controls:HintIcon Margin="5,0,0,0" Text="{x:Static vm:HintTexts.FadeInOut}" />
+                                            </StackPanel>
+                                            <Grid Margin="0,3,0,0" HorizontalAlignment="Center">
+                                                <Grid.ColumnDefinitions>
+                                                    <ColumnDefinition Width="Auto" />
+                                                    <ColumnDefinition Width="Auto" />
+                                                    <ColumnDefinition Width="Auto" />
+                                                </Grid.ColumnDefinitions>
+                                                <ui:SymbolIcon
+                                                    Margin="0,0,5,0"
+                                                    VerticalAlignment="Center"
+                                                    FontSize="15"
+                                                    Foreground="#8F8DB0"
+                                                    Symbol="Link24"
+                                                    ToolTip="Linked: fade-in and fade-out share one curve" />
+                                                <controls:TransitionFunctionDropdown Grid.Column="1" Value="{Binding FadeEasing, Mode=TwoWay}" />
+                                                <ui:SymbolIcon
+                                                    Grid.Column="2"
+                                                    Margin="5,0,0,0"
+                                                    VerticalAlignment="Center"
+                                                    FontSize="15"
+                                                    Foreground="#8F8DB0"
+                                                    Symbol="Link24"
+                                                    ToolTip="Linked: fade-in and fade-out share one curve" />
+                                            </Grid>
+                                        </StackPanel>
+
+                                        <controls:LabeledSlider
+                                            Grid.Row="3"
+                                            Grid.Column="2"
+                                            Margin="6,0,0,0"
+                                            Format="{}{0:0} s"
+                                            Header="Fade out"
+                                            Maximum="{Binding DurationSeconds}"
+                                            Minimum="0"
+                                            Step="1"
+                                            Value="{Binding FadeOutSeconds, Mode=TwoWay}" />
                                     </Grid>
 
                                     <!--
-                                        Everything that is not animated over the layer, grouped by meaning (a row = a group):
-                                          1. Pitch and place:   Pitch (Speed for a recording) | Pitch drift | Pan | Pan drift
-                                          2. Filter and echo:   Cutoff | Resonance | Delay | Feedback
-                                          3. Fades and space:   Fade in | curve | Fade out | Reverb send
+                                        Everything that is not animated over the layer, a row = a group of related knobs:
+                                          1. Pitch:        Pitch | Pitch drift | Speed (recordings)
+                                          2. Place, space: Pan | Pan drift | Reverb send
+                                          3. Filter:       Cutoff | Resonance
+                                          4. Echo:         Delay | Feedback
                                     -->
                                     <Grid Grid.Row="1" Grid.Column="2">
                                         <Grid.ColumnDefinitions>
-                                            <ColumnDefinition Width="*" />
                                             <ColumnDefinition Width="*" />
                                             <ColumnDefinition Width="*" />
                                             <ColumnDefinition Width="*" />
@@ -826,9 +888,9 @@
                                             <RowDefinition Height="Auto" />
                                             <RowDefinition Height="Auto" />
                                             <RowDefinition Height="Auto" />
+                                            <RowDefinition Height="Auto" />
                                         </Grid.RowDefinitions>
 
-                                        <!-- Row 1 -->
                                         <controls:LabeledSlider
                                             Grid.Row="0"
                                             Grid.Column="0"
@@ -853,31 +915,10 @@
                                                             <Setter Property="ToolTipService.ShowOnDisabled" Value="True" />
                                                         </DataTrigger>
                                                         <DataTrigger Binding="{Binding Type}" Value="FieldRecord">
-                                                            <Setter Property="Visibility" Value="Collapsed" />
-                                                        </DataTrigger>
-                                                    </Style.Triggers>
-                                                </Style>
-                                            </controls:LabeledSlider.Style>
-                                        </controls:LabeledSlider>
-                                        <controls:LabeledSlider
-                                            Grid.Row="0"
-                                            Grid.Column="0"
-                                            Margin="0,0,6,6"
-                                            Format="{}{0:0.00}x"
-                                            Header="Speed"
-                                            Hint="{x:Static vm:HintTexts.Speed}"
-                                            IsLogarithmic="True"
-                                            IsValueEditable="True"
-                                            Maximum="4"
-                                            Minimum="0.25"
-                                            Step="0.01"
-                                            Value="{Binding Speed, Mode=TwoWay}">
-                                            <controls:LabeledSlider.Style>
-                                                <Style TargetType="controls:LabeledSlider">
-                                                    <Setter Property="Visibility" Value="Collapsed" />
-                                                    <Style.Triggers>
-                                                        <DataTrigger Binding="{Binding Type}" Value="FieldRecord">
-                                                            <Setter Property="Visibility" Value="Visible" />
+                                                            <Setter Property="IsEnabled" Value="False" />
+                                                            <Setter Property="Opacity" Value="0.35" />
+                                                            <Setter Property="ToolTip" Value="A recording has no pitch: use Speed to change it" />
+                                                            <Setter Property="ToolTipService.ShowOnDisabled" Value="True" />
                                                         </DataTrigger>
                                                     </Style.Triggers>
                                                 </Style>
@@ -910,6 +951,35 @@
                                         <controls:LabeledSlider
                                             Grid.Row="0"
                                             Grid.Column="2"
+                                            Margin="0,0,0,6"
+                                            Format="{}{0:0.00}x"
+                                            Header="Speed"
+                                            Hint="{x:Static vm:HintTexts.Speed}"
+                                            IsLogarithmic="True"
+                                            IsValueEditable="True"
+                                            Maximum="4"
+                                            Minimum="0.25"
+                                            Step="0.01"
+                                            Value="{Binding Speed, Mode=TwoWay}">
+                                            <controls:LabeledSlider.Style>
+                                                <Style TargetType="controls:LabeledSlider">
+                                                    <Setter Property="IsEnabled" Value="False" />
+                                                    <Setter Property="Opacity" Value="0.35" />
+                                                    <Setter Property="ToolTip" Value="Speed is for Field record layers" />
+                                                    <Setter Property="ToolTipService.ShowOnDisabled" Value="True" />
+                                                    <Style.Triggers>
+                                                        <DataTrigger Binding="{Binding Type}" Value="FieldRecord">
+                                                            <Setter Property="IsEnabled" Value="True" />
+                                                            <Setter Property="Opacity" Value="1" />
+                                                            <Setter Property="ToolTip" Value="{x:Null}" />
+                                                        </DataTrigger>
+                                                    </Style.Triggers>
+                                                </Style>
+                                            </controls:LabeledSlider.Style>
+                                        </controls:LabeledSlider>
+                                        <controls:LabeledSlider
+                                            Grid.Row="1"
+                                            Grid.Column="0"
                                             Margin="0,0,6,6"
                                             Format="{}{0:+0.00;-0.00;0.00}"
                                             Header="Pan"
@@ -919,9 +989,9 @@
                                             Step="0.05"
                                             Value="{Binding Pan, Mode=TwoWay}" />
                                         <controls:LabeledSlider
-                                            Grid.Row="0"
-                                            Grid.Column="3"
-                                            Margin="0,0,0,6"
+                                            Grid.Row="1"
+                                            Grid.Column="1"
+                                            Margin="0,0,6,6"
                                             Format="{}{0:P0}"
                                             Header="Pan drift"
                                             Hint="{x:Static vm:HintTexts.PanDrift}"
@@ -930,9 +1000,19 @@
                                             Step="0.01"
                                             Value="{Binding PanDrift, Mode=TwoWay}" />
 
-                                        <!-- Row 2 -->
                                         <controls:LabeledSlider
                                             Grid.Row="1"
+                                            Grid.Column="2"
+                                            Margin="0,0,0,6"
+                                            Format="{}{0:P0}"
+                                            Header="Reverb send"
+                                            Hint="{x:Static vm:HintTexts.ReverbSend}"
+                                            Maximum="1"
+                                            Minimum="0"
+                                            Step="0.01"
+                                            Value="{Binding ReverbSend, Mode=TwoWay}" />
+                                        <controls:LabeledSlider
+                                            Grid.Row="2"
                                             Grid.Column="0"
                                             Margin="0,0,6,6"
                                             Format="{}{0:0} Hz"
@@ -945,7 +1025,7 @@
                                             Step="1"
                                             Value="{Binding FilterCutoffHz, Mode=TwoWay}" />
                                         <controls:LabeledSlider
-                                            Grid.Row="1"
+                                            Grid.Row="2"
                                             Grid.Column="1"
                                             Margin="0,0,6,6"
                                             Format="{}{0:P0}"
@@ -956,9 +1036,9 @@
                                             Step="0.01"
                                             Value="{Binding FilterResonance, Mode=TwoWay}" />
                                         <controls:LabeledSlider
-                                            Grid.Row="1"
-                                            Grid.Column="2"
-                                            Margin="0,0,6,6"
+                                            Grid.Row="3"
+                                            Grid.Column="0"
+                                            Margin="0,0,6,0"
                                             Format="{}{0:0.00} s"
                                             Header="Delay"
                                             Hint="{x:Static vm:HintTexts.Delay}"
@@ -968,9 +1048,9 @@
                                             Step="0.01"
                                             Value="{Binding DelaySeconds, Mode=TwoWay}" />
                                         <controls:LabeledSlider
-                                            Grid.Row="1"
-                                            Grid.Column="3"
-                                            Margin="0,0,0,6"
+                                            Grid.Row="3"
+                                            Grid.Column="1"
+                                            Margin="0,0,6,0"
                                             Format="{}{0:P0}"
                                             Header="Feedback"
                                             Hint="{x:Static vm:HintTexts.Feedback}"
@@ -979,57 +1059,6 @@
                                             Step="0.01"
                                             Value="{Binding DelayFeedback, Mode=TwoWay}" />
 
-                                        <!-- Row 3 -->
-                                        <controls:LabeledSlider
-                                            Grid.Row="2"
-                                            Grid.Column="0"
-                                            Margin="0,0,6,0"
-                                            Format="{}{0:0} s"
-                                            Header="Fade in"
-                                            Hint="{x:Static vm:HintTexts.FadeIn}"
-                                            Maximum="{Binding DurationSeconds}"
-                                            Minimum="0"
-                                            Step="1"
-                                            Value="{Binding FadeInSeconds, Mode=TwoWay}" />
-                                        <!--  The curve of Fade in / Fade out, between the two  -->
-                                        <StackPanel
-                                            Grid.Row="2"
-                                            Grid.Column="1"
-                                            Margin="0,0,6,0"
-                                            HorizontalAlignment="Center"
-                                            VerticalAlignment="Center">
-                                            <StackPanel Margin="0,0,0,3" Orientation="Horizontal">
-                                                <ui:TextBlock
-                                                    Margin="0"
-                                                    FontSize="12"
-                                                    Foreground="#C9C8D6"
-                                                    Text="Fade curve" />
-                                                <controls:HintIcon Margin="5,0,0,0" Text="{x:Static vm:HintTexts.TransitionCurve}" />
-                                            </StackPanel>
-                                            <controls:TransitionFunctionDropdown HorizontalAlignment="Center" Value="{Binding FadeEasing, Mode=TwoWay}" />
-                                        </StackPanel>
-                                        <controls:LabeledSlider
-                                            Grid.Row="2"
-                                            Grid.Column="2"
-                                            Margin="0,0,6,0"
-                                            Format="{}{0:0} s"
-                                            Header="Fade out"
-                                            Hint="{x:Static vm:HintTexts.FadeOut}"
-                                            Maximum="{Binding DurationSeconds}"
-                                            Minimum="0"
-                                            Step="1"
-                                            Value="{Binding FadeOutSeconds, Mode=TwoWay}" />
-                                        <controls:LabeledSlider
-                                            Grid.Row="2"
-                                            Grid.Column="3"
-                                            Margin="0,0,0,0"
-                                            Format="{}{0:P0}"
-                                            Header="Reverb send"
-                                            Hint="{x:Static vm:HintTexts.ReverbSend}"
-                                            Maximum="1"
-                                            Minimum="0"
-                                            Step="0.01"
-                                            Value="{Binding ReverbSend, Mode=TwoWay}" />
                                     </Grid>
                                 </Grid>
                             </DataTemplate>
