@@ -51,6 +51,27 @@ public static class HintTexts
     public const string TrackLength =
         "Total length of the track. Layers can be placed anywhere inside it.";
 
+    public const string Cutoff =
+        "Low-pass filter: frequencies above this are cut. Lower makes the layer dull, muffled and distant; fully right (20 kHz) the filter is off. Works on every layer type.";
+
+    public const string Resonance =
+        "Emphasis of the sound right at the cutoff. A little adds character, a lot gives a whistling, vowel-like peak.";
+
+    public const string Delay =
+        "Echo time of this layer, in seconds (0 = no echo). Long times make distant, spacious repeats.";
+
+    public const string Feedback =
+        "How much of the echo is fed back into the delay: more gives more repeats that fade away slower.";
+
+    public const string ReverbSend =
+        "How much of this layer goes into the project reverb (the Space slider on the timeline). 100% = as before, 0% = this layer stays dry.";
+
+    public const string PitchDrift =
+        "Slow random wandering of the pitch (a recording: of its speed), up to about half a semitone. Makes tones breathe and feel alive.";
+
+    public const string PanDrift =
+        "Slow random wandering of the layer across the stereo field around the Pan position.";
+
     public const string Speed =
         "Playback speed of the recording, like a tape: below 1 it is slower and lower, above 1 faster and higher. Click the value to type it.";
 

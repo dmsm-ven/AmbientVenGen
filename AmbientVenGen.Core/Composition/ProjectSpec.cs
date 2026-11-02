@@ -51,7 +51,14 @@ public sealed record LayerSpec(
     double Speed = 1.0,
     NoiseType NoiseType = NoiseType.White,
     int Repeats = 1,
-    double RepeatGapSeconds = 0)
+    double RepeatGapSeconds = 0,
+    double FilterCutoffHz = 20000,
+    double FilterResonance = 0,
+    double DelaySeconds = 0,
+    double DelayFeedback = 0.4,
+    double ReverbSend = 1.0,
+    double PitchDrift = 0,
+    double PanDrift = 0)
 {
     /// <summary>Number of plays (never less than 1).</summary>
     public int PlayCount => Math.Max(1, Repeats);

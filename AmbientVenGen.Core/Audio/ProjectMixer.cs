@@ -24,6 +24,8 @@ public sealed class ProjectMixer : ISampleProvider
 
     private float[] _mixLeft = new float[4096];
     private float[] _mixRight = new float[4096];
+    private float[] _sendLeft = new float[4096];   // what the layers send to the reverb
+    private float[] _sendRight = new float[4096];
     private ProjectSpec _spec;
     private long _positionFrames;
 
@@ -59,6 +61,8 @@ public sealed class ProjectMixer : ISampleProvider
         EnsureCapacity(frames);
         Array.Clear(_mixLeft, 0, frames);
         Array.Clear(_mixRight, 0, frames);
+        Array.Clear(_sendLeft, 0, frames);
+        Array.Clear(_sendRight, 0, frames);
 
         LayerSpec[] layers = spec.Layers;
 
@@ -71,7 +75,7 @@ public sealed class ProjectMixer : ISampleProvider
                 MixLayer(layers[i], spec.Seed, blockTime, count, done);
         }
 
-        _reverb.Process(_mixLeft, _mixRight, frames, (float)spec.ReverbMix);
+        _reverb.Process(_mixLeft, _mixRight, _sendLeft, _sendRight, frames, (float)spec.ReverbMix);
 
         float peakLeft = 0f;
         float peakRight = 0f;
@@ -113,7 +117,8 @@ public sealed class ProjectMixer : ISampleProvider
                 layer.Type,
                 layer.SourcePath,
                 LayerGenerator.Create(layer.Type, MixSeed(projectSeed, layer.Seed), layer.SourcePath, layer.NoiseType),
-                layer.NoiseType);
+                layer.NoiseType,
+                MixSeed(projectSeed, layer.Seed));
             _runtimes[layer.Id] = runtime;
         }
 
@@ -124,41 +129,76 @@ public sealed class ProjectMixer : ISampleProvider
         bool active = !layer.Muted && inPlay;
         float target = active ? (float)layer.GainAt(within) : 0f;
 
-        if (target <= 0f && runtime.Gain < 1e-5f)
+        bool silent = target <= 0f && runtime.Gain < 1e-5f;
+
+        if (silent)
         {
             runtime.Gain = 0f;
-            return;
+
+            // Nothing to play, but an echo of the layer may still be ringing out.
+            if (!runtime.Effects.HasTail)
+                return;
+
+            Array.Clear(_scratchLeft, 0, count);
+            Array.Clear(_scratchRight, 0, count);
+        }
+        else
+        {
+            double curveTime = Math.Clamp(inPlay ? within : local, 0, layer.DurationSeconds);
+
+            // Pitch drift: a slow wandering of the pitch (of the speed, for a recording); Noise has no pitch.
+            double drift = layer.Type == LayerType.Noise ? 0.0 : layer.PitchDrift * 0.5 * runtime.PitchWander.At(blockTime);
+            float pitchFactor = (float)Math.Pow(2.0, drift / 12.0);
+
+            var block = new BlockParams(
+                (float)layer.BrightnessAt(curveTime),
+                (float)layer.ModulationAt(curveTime),
+                (float)layer.PitchHz * pitchFactor,
+                Math.Max(0.0, (inPlay ? within : local) - count * 0.5 / SampleRate),
+                (float)layer.Speed * pitchFactor);
+
+            runtime.Generator.Render(in block, _scratchLeft.AsSpan(0, count), _scratchRight.AsSpan(0, count));
+
+            float level = runtime.Gain;
+
+            for (int i = 0; i < count; i++)
+            {
+                level += (target - level) * GainSmoothing;
+                float scaled = level * LayerScale;
+                _scratchLeft[i] *= scaled;
+                _scratchRight[i] *= scaled;
+            }
+
+            runtime.Gain = level;
         }
 
-        double curveTime = Math.Clamp(inPlay ? within : local, 0, layer.DurationSeconds);
-        var block = new BlockParams(
-            (float)layer.BrightnessAt(curveTime),
-            (float)layer.ModulationAt(curveTime),
-            (float)layer.PitchHz,
-            Math.Max(0.0, (inPlay ? within : local) - count * 0.5 / SampleRate),
-            (float)layer.Speed);
+        // Filter and echo come after the level, so the echo outlives the layer.
+        runtime.Effects.Process(
+            _scratchLeft,
+            _scratchRight,
+            count,
+            layer.FilterCutoffHz,
+            layer.FilterResonance,
+            layer.DelaySeconds,
+            layer.DelayFeedback);
 
-        var scratchLeft = _scratchLeft.AsSpan(0, count);
-        var scratchRight = _scratchRight.AsSpan(0, count);
-        runtime.Generator.Render(in block, scratchLeft, scratchRight);
-
-        // Constant-power pan; the centre position keeps unity gain.
-        float angle = (float)((Math.Clamp(layer.Pan, -1.0, 1.0) + 1.0) * Math.PI / 4.0);
+        // Constant-power pan (with a slow random wandering); the centre position keeps unity gain.
+        double pan = Math.Clamp(layer.Pan + layer.PanDrift * 0.6 * runtime.PanWander.At(blockTime), -1.0, 1.0);
+        float angle = (float)((pan + 1.0) * Math.PI / 4.0);
         float panLeft = MathF.Cos(angle) * 1.4142f;
         float panRight = MathF.Sin(angle) * 1.4142f;
-
-        float gain = runtime.Gain;
+        float send = (float)Math.Clamp(layer.ReverbSend, 0.0, 1.0);
 
         for (int i = 0; i < count; i++)
         {
-            gain += (target - gain) * GainSmoothing;
-            float scaled = gain * LayerScale;
+            float outLeft = _scratchLeft[i] * panLeft;
+            float outRight = _scratchRight[i] * panRight;
 
-            _mixLeft[offset + i] += scratchLeft[i] * scaled * panLeft;
-            _mixRight[offset + i] += scratchRight[i] * scaled * panRight;
+            _mixLeft[offset + i] += outLeft;
+            _mixRight[offset + i] += outRight;
+            _sendLeft[offset + i] += outLeft * send;
+            _sendRight[offset + i] += outRight * send;
         }
-
-        runtime.Gain = gain;
     }
 
     private void EnsureCapacity(int frames)
@@ -168,11 +208,30 @@ public sealed class ProjectMixer : ISampleProvider
 
         _mixLeft = new float[frames];
         _mixRight = new float[frames];
+        _sendLeft = new float[frames];
+        _sendRight = new float[frames];
     }
 
     // Deterministic (string/Hash randomization would break "same seed, same sound").
     private static int MixSeed(int projectSeed, int layerSeed) =>
         unchecked(projectSeed * 397 ^ layerSeed * 16777619);
+
+    /// <summary>A slow, smooth, random-looking value in -1..1 (two sines with unrelated slow rates), a function of time only.</summary>
+    private sealed class Wander
+    {
+        private readonly double _phase1, _phase2, _rate1, _rate2;
+
+        public Wander(Random random)
+        {
+            _phase1 = random.NextDouble() * Math.PI * 2;
+            _phase2 = random.NextDouble() * Math.PI * 2;
+            _rate1 = 0.02 + random.NextDouble() * 0.03;
+            _rate2 = 0.05 + random.NextDouble() * 0.06;
+        }
+
+        public double At(double seconds) =>
+            0.6 * Math.Sin(Math.PI * 2 * _rate1 * seconds + _phase1) + 0.4 * Math.Sin(Math.PI * 2 * _rate2 * seconds + _phase2);
+    }
 
     private sealed class LayerRuntime
     {
@@ -182,9 +241,15 @@ public sealed class ProjectMixer : ISampleProvider
         public float Gain { get; set; }
 
         public NoiseType NoiseType { get; }
+        public LayerEffects Effects { get; } = new();
+        public Wander PitchWander { get; }
+        public Wander PanWander { get; }
 
-        public LayerRuntime(LayerType type, string? sourcePath, LayerGenerator generator, NoiseType noiseType)
+        public LayerRuntime(LayerType type, string? sourcePath, LayerGenerator generator, NoiseType noiseType, int seed)
         {
+            var random = new Random(seed ^ 0x5bd1e995);
+            PitchWander = new Wander(random);
+            PanWander = new Wander(random);
             NoiseType = noiseType;
             Type = type;
             SourcePath = sourcePath;

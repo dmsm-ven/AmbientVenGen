@@ -10,6 +10,10 @@ public sealed partial class Layer : ObservableObject
     public const double MaxPitchHz = 1000;
     public const double MinSpeed = 0.25;
     public const double MaxSpeed = 4.0;
+    public const double MinCutoffHz = 20;
+    public const double MaxCutoffHz = 20000;
+    public const double MaxDelaySeconds = 2;
+    public const double MaxFeedback = 0.92;
     public const int MaxRepeats = 99;
     public const double MaxGapSeconds = 3600;
 
@@ -114,6 +118,34 @@ public sealed partial class Layer : ObservableObject
     [ObservableProperty]
     private double _speed = 1.0;
 
+    /// <summary>Low-pass filter cutoff; 20 kHz = open (filter off).</summary>
+    [ObservableProperty]
+    private double _filterCutoffHz = MaxCutoffHz;
+
+    /// <summary>Filter resonance 0..1 (a peak at the cutoff).</summary>
+    [ObservableProperty]
+    private double _filterResonance;
+
+    /// <summary>Echo time in seconds; 0 = no echo.</summary>
+    [ObservableProperty]
+    private double _delaySeconds;
+
+    /// <summary>How much of the echo is fed back (0..0.92): more repeats.</summary>
+    [ObservableProperty]
+    private double _delayFeedback = 0.4;
+
+    /// <summary>How much of the layer goes to the project reverb (1 = as before, 0 = dry).</summary>
+    [ObservableProperty]
+    private double _reverbSend = 1.0;
+
+    /// <summary>Slow random wandering of the pitch (Drone, Pad) or the speed (recording), 0..1.</summary>
+    [ObservableProperty]
+    private double _pitchDrift;
+
+    /// <summary>Slow random wandering of the pan position, 0..1.</summary>
+    [ObservableProperty]
+    private double _panDrift;
+
     /// <summary>Colour of the noise (Noise layers only).</summary>
     [ObservableProperty]
     private NoiseType _noiseType = NoiseType.White;
@@ -146,7 +178,14 @@ public sealed partial class Layer : ObservableObject
         Speed,
         NoiseType,
         Repeats,
-        RepeatGapSeconds);
+        RepeatGapSeconds,
+        FilterCutoffHz,
+        FilterResonance,
+        DelaySeconds,
+        DelayFeedback,
+        ReverbSend,
+        PitchDrift,
+        PanDrift);
 
     /// <summary>Creates a layer from a spec, clamping values read from a file to sane ranges.</summary>
     public static Layer FromSpec(LayerSpec spec)
@@ -179,7 +218,14 @@ public sealed partial class Layer : ObservableObject
             Speed = Math.Clamp(spec.Speed <= 0 ? 1.0 : spec.Speed, MinSpeed, MaxSpeed),
             NoiseType = Enum.IsDefined(spec.NoiseType) ? spec.NoiseType : NoiseType.White,
             Repeats = Math.Clamp(spec.Repeats, 1, MaxRepeats),
-            RepeatGapSeconds = Math.Clamp(spec.RepeatGapSeconds, 0, MaxGapSeconds)
+            RepeatGapSeconds = Math.Clamp(spec.RepeatGapSeconds, 0, MaxGapSeconds),
+            FilterCutoffHz = Math.Clamp(spec.FilterCutoffHz <= 0 ? MaxCutoffHz : spec.FilterCutoffHz, MinCutoffHz, MaxCutoffHz),
+            FilterResonance = Unit(spec.FilterResonance),
+            DelaySeconds = Math.Clamp(spec.DelaySeconds, 0, MaxDelaySeconds),
+            DelayFeedback = Math.Clamp(spec.DelayFeedback, 0, MaxFeedback),
+            ReverbSend = Unit(spec.ReverbSend),
+            PitchDrift = Unit(spec.PitchDrift),
+            PanDrift = Unit(spec.PanDrift)
         };
     }
 
