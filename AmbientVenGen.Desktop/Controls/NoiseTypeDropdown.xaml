@@ -132,13 +132,19 @@
                                         FontWeight="SemiBold"
                                         Foreground="#F2F2F8"
                                         Text="{Binding Label}" />
+                                    <!--  What it sounds like first, then the technical description; both always shown  -->
                                     <TextBlock
                                         Margin="0,2,0,0"
                                         FontSize="11"
+                                        Foreground="#C9C4F2"
+                                        Text="{Binding Likeness}"
+                                        TextWrapping="Wrap" />
+                                    <TextBlock
+                                        Margin="0,3,0,0"
+                                        FontSize="11"
                                         Foreground="#A9A7C2"
                                         Text="{Binding Description}"
-                                        TextWrapping="Wrap"
-                                        Visibility="{Binding Path=(local:Hints.IsShown), ElementName=Root, Converter={StaticResource BoolToVisibility}}" />
+                                        TextWrapping="Wrap" />
                                 </StackPanel>
                             </StackPanel>
                         </DataTemplate>

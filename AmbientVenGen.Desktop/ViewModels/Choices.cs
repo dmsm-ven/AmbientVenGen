@@ -59,17 +59,23 @@ public static class Choices
     public static IReadOnlyList<NoiseOption> NoiseOptions { get; } =
     [
         new(NoiseType.White, "White noise",
-            "Equal energy at every frequency: a bright hiss, like static or rain on a roof."),
+            "Equal energy at every frequency: a bright hiss, like static or rain on a roof.",
+            "Sounds like: static on an untuned radio or TV, a hissing steam pipe, heavy rain on a metal roof."),
         new(NoiseType.Pink, "Pink noise",
-            "Energy falls 3 dB per octave: balanced and natural, like steady rain or a waterfall."),
+            "Energy falls 3 dB per octave: balanced and natural, like steady rain or a waterfall.",
+            "Sounds like: steady rain on leaves, a distant waterfall, a soft rushing of the sea."),
         new(NoiseType.Brown, "Brown (red) noise",
-            "Energy falls 6 dB per octave: a deep rumble, like thunder far away or a strong wind."),
+            "Energy falls 6 dB per octave: a deep rumble, like thunder far away or a strong wind.",
+            "Sounds like: far-away thunder, a low wind in a chimney, the rumble inside an airplane cabin."),
         new(NoiseType.Blue, "Blue noise",
-            "Energy rises 3 dB per octave: thin and airy, mostly high frequencies."),
+            "Energy rises 3 dB per octave: thin and airy, mostly high frequencies.",
+            "Sounds like: a thin hiss of air from a spray can, a light breeze in thin grass, sparkling steam."),
         new(NoiseType.Violet, "Violet noise",
-            "Energy rises 6 dB per octave: very sharp and hissy, almost only the highest frequencies."),
+            "Energy rises 6 dB per octave: very sharp and hissy, almost only the highest frequencies.",
+            "Sounds like: a piercing sharp hiss, like a mosquito-thin whistle of escaping air or a sizzling frying pan."),
         new(NoiseType.Grey, "Grey noise",
-            "White noise corrected for the ear: lows and highs are lifted, so every part of the spectrum sounds equally loud.")
+            "White noise corrected for the ear: lows and highs are lifted, so every part of the spectrum sounds equally loud.",
+            "Sounds like: a balanced, even wash of air, like a quiet fan or an air conditioner in a calm room.")
     ];
 
     public static IReadOnlyList<Choice<LayerType>> LayerTypes { get; } =
@@ -110,6 +116,6 @@ public sealed partial class IntervalRow : CommunityToolkit.Mvvm.ComponentModel.O
 public sealed record IntervalSource(Layer Layer, string Text);
 
 /// <summary>One entry of the noise type list: value, title and a short explanation.</summary>
-public sealed record NoiseOption(NoiseType Value, string Label, string Description);
+public sealed record NoiseOption(NoiseType Value, string Label, string Description, string Likeness);
 
 public sealed record EasingOption(Easing Value, string Label, string Description);
