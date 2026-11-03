@@ -19,6 +19,12 @@ public sealed partial class Layer : ObservableObject
 
     public Guid Id { get; } = Guid.NewGuid();
 
+    // UI only (not saved): which hidden second knobs are expanded for this layer.
+    [ObservableProperty] private bool _pitchPairOpen;
+    [ObservableProperty] private bool _panPairOpen;
+    [ObservableProperty] private bool _filterPairOpen;
+    [ObservableProperty] private bool _delayPairOpen;
+
     [ObservableProperty]
     private string _name = "Layer";
 
@@ -71,8 +77,13 @@ public sealed partial class Layer : ObservableObject
     [ObservableProperty]
     private double _fadeOutSeconds = 20;
 
+    /// <summary>Curve of the fade-in.</summary>
     [ObservableProperty]
     private Easing _fadeEasing = Easing.Sine;
+
+    /// <summary>Curve of the fade-out (separate from the fade-in).</summary>
+    [ObservableProperty]
+    private Easing _fadeOutEasing = Easing.Sine;
 
     [ObservableProperty]
     private double _levelFrom = 0.7;
@@ -185,14 +196,15 @@ public sealed partial class Layer : ObservableObject
         DelayFeedback,
         ReverbSend,
         PitchDrift,
-        PanDrift);
+        PanDrift,
+        FadeOutEasing);
 
     /// <summary>Creates a layer from a spec, clamping values read from a file to sane ranges.</summary>
     public static Layer FromSpec(LayerSpec spec)
     {
         double duration = Math.Max(1, spec.DurationSeconds);
 
-        return new Layer
+        var layer = new Layer
         {
             Name = string.IsNullOrWhiteSpace(spec.Name) ? "Layer" : spec.Name,
             Type = spec.Type,
@@ -201,6 +213,7 @@ public sealed partial class Layer : ObservableObject
             FadeInSeconds = Math.Clamp(spec.FadeInSeconds, 0, duration),
             FadeOutSeconds = Math.Clamp(spec.FadeOutSeconds, 0, duration),
             FadeEasing = spec.FadeEasing,
+            FadeOutEasing = spec.FadeOutCurve,
             LevelFrom = Unit(spec.Level.From),
             LevelTo = Unit(spec.Level.To),
             LevelEasing = spec.Level.Easing,
@@ -227,6 +240,11 @@ public sealed partial class Layer : ObservableObject
             PitchDrift = Unit(spec.PitchDrift),
             PanDrift = Unit(spec.PanDrift)
         };
+        layer.PitchPairOpen = layer.PitchDrift > 0;
+        layer.PanPairOpen = layer.PanDrift > 0;
+        layer.FilterPairOpen = layer.FilterResonance > 0;
+        layer.DelayPairOpen = layer.DelayFeedback > 0 && layer.DelaySeconds > 0;
+        return layer;
     }
 
     private static double Unit(double value) => Math.Clamp(value, 0, 1);

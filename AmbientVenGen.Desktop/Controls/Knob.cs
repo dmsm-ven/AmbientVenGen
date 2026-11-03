@@ -32,6 +32,7 @@ public sealed class Knob : FrameworkElement
     private static readonly Brush CaptionBrush = Frozen(new SolidColorBrush(Color.FromRgb(0xA9, 0xA7, 0xC2)));
     private static readonly Brush TextBrush = Frozen(new SolidColorBrush(Color.FromRgb(0xEC, 0xEC, 0xF2)));
     private static readonly Brush HitBrush = Brushes.Transparent;
+    private static readonly Brush ArrowBrush = Frozen(new SolidColorBrush(Color.FromArgb(0xB4, 0xFF, 0xFF, 0xFF)));
 
     public static readonly DependencyProperty ValueProperty = DependencyProperty.Register(
         nameof(Value), typeof(double), typeof(Knob),
@@ -68,9 +69,22 @@ public sealed class Knob : FrameworkElement
         nameof(Caption), typeof(string), typeof(Knob),
         new FrameworkPropertyMetadata(string.Empty, FrameworkPropertyMetadataOptions.AffectsRender));
 
-    /// <summary>When true a click on the written value raises <see cref="LabelClicked"/> (to type an exact number).</summary>
-    public static readonly DependencyProperty IsLabelClickableProperty = DependencyProperty.Register(
-        nameof(IsLabelClickable), typeof(bool), typeof(Knob), new PropertyMetadata(false));
+    /// <summary>
+    /// The second value (E, "end"). With <see cref="AllowRange"/> and ValueEnd different from Value the knob is a range:
+    /// only the part of the arc between S (Value) and E (ValueEnd) is filled, in either direction.
+    /// </summary>
+    public static readonly DependencyProperty ValueEndProperty = DependencyProperty.Register(
+        nameof(ValueEnd), typeof(double), typeof(Knob),
+        new FrameworkPropertyMetadata(0.0, FrameworkPropertyMetadataOptions.BindsTwoWayByDefault, OnValueEndChanged, CoerceValue));
+
+    /// <summary>A double click on the arc may add the second value.</summary>
+    public static readonly DependencyProperty AllowRangeProperty = DependencyProperty.Register(
+        nameof(AllowRange), typeof(bool), typeof(Knob),
+        new FrameworkPropertyMetadata(false, FrameworkPropertyMetadataOptions.AffectsRender));
+
+    public static readonly DependencyProperty DisplayedEndFractionProperty = DependencyProperty.Register(
+        nameof(DisplayedEndFraction), typeof(double), typeof(Knob),
+        new FrameworkPropertyMetadata(0.0, FrameworkPropertyMetadataOptions.AffectsRender));
 
     /// <summary>Where the arc is drawn now (0..1); it moves towards the value with an animation.</summary>
     public static readonly DependencyProperty DisplayedFractionProperty = DependencyProperty.Register(
@@ -78,13 +92,19 @@ public sealed class Knob : FrameworkElement
         new FrameworkPropertyMetadata(0.0, FrameworkPropertyMetadataOptions.AffectsRender));
 
     private bool _isDragging;
+    private int _dragHandle;           // 0 = S (Value), 1 = E (ValueEnd)
+    private double _valueBeforeClick;  // restored when a click turns out to be the first half of a double click
+    private double _endBeforeClick;
     private Rect _labelRect;
 
     /// <summary>Raised when the value changed (by the user or from code).</summary>
     public event Action<double>? ValueChanged;
 
-    /// <summary>Raised when the written value (inside the arc) was clicked and <see cref="IsLabelClickable"/> is on.</summary>
-    public event Action? LabelClicked;
+    /// <summary>Raised when the second value changed.</summary>
+    public event Action<double>? ValueEndChanged;
+
+    /// <summary>Right click on a handle: the owner shows an input for that value (0 = S / the only value, 1 = E).</summary>
+    public event Action<int>? ExactValueRequested;
 
     public double Value
     {
@@ -122,10 +142,25 @@ public sealed class Knob : FrameworkElement
         set => SetValue(CaptionProperty, value);
     }
 
-    public bool IsLabelClickable
+    public double ValueEnd
     {
-        get => (bool)GetValue(IsLabelClickableProperty);
-        set => SetValue(IsLabelClickableProperty, value);
+        get => (double)GetValue(ValueEndProperty);
+        set => SetValue(ValueEndProperty, value);
+    }
+
+    public bool AllowRange
+    {
+        get => (bool)GetValue(AllowRangeProperty);
+        set => SetValue(AllowRangeProperty, value);
+    }
+
+    /// <summary>True when two different values are set (S and E).</summary>
+    public bool IsRange => AllowRange && Math.Abs(ValueEnd - Value) > 1e-9;
+
+    public double DisplayedEndFraction
+    {
+        get => (double)GetValue(DisplayedEndFractionProperty);
+        set => SetValue(DisplayedEndFractionProperty, value);
     }
 
     public string ValueText
@@ -195,25 +230,41 @@ public sealed class Knob : FrameworkElement
         dc.DrawRectangle(HitBrush, null, new Rect(0, 0, ActualWidth, ActualHeight));
 
         double fraction = Math.Clamp(DisplayedFraction, 0.0, 1.0);
+        double endFraction = Math.Clamp(DisplayedEndFraction, 0.0, 1.0);
+        bool range = IsRange;
 
         var trackPen = new Pen(TrackBrush, ArcThickness) { StartLineCap = PenLineCap.Round, EndLineCap = PenLineCap.Round };
         var fillPen = new Pen(FillBrush, ArcThickness) { StartLineCap = PenLineCap.Round, EndLineCap = PenLineCap.Round };
 
         dc.DrawGeometry(null, trackPen, Arc(center, radius, 0, 1));
 
-        if (fraction > 0.002)
-            dc.DrawGeometry(null, fillPen, Arc(center, radius, 0, fraction));
+        // One value: filled from the start up to it. Two values: only the part between S and E (either way round).
+        double low = range ? Math.Min(fraction, endFraction) : 0.0;
+        double high = range ? Math.Max(fraction, endFraction) : fraction;
 
-        // Minimum / maximum buttons at the ends of the arc: lit when the value is at that end.
-        DrawCap(dc, OnArc(center, radius, 0), fraction <= 0.002);
-        DrawCap(dc, OnArc(center, radius, 1), fraction >= 0.998);
+        if (high - low > 0.002)
+            dc.DrawGeometry(null, fillPen, Arc(center, radius, low, high));
+
+        if (range && high - low > 0.06)
+            DrawDirectionArrow(dc, center, radius, (low + high) / 2.0, endFraction >= fraction ? 1 : -1);
+
+        // Minimum / maximum buttons at the ends of the arc: lit when a value is at that end.
+        DrawCap(dc, OnArc(center, radius, 0), fraction <= 0.002 || (range && endFraction <= 0.002));
+        DrawCap(dc, OnArc(center, radius, 1), fraction >= 0.998 || (range && endFraction >= 0.998));
 
         // The middle anchor (a smaller button at the top of the arc): a click sets exactly half of the range.
-        DrawCap(dc, OnArc(center, radius, 0.5), Math.Abs(fraction - 0.5) <= 0.002, MiddleCapRadius);
+        DrawCap(dc, OnArc(center, radius, 0.5), Math.Abs(fraction - 0.5) <= 0.002 || (range && Math.Abs(endFraction - 0.5) <= 0.002), MiddleCapRadius);
 
-        // A dot at the end of the filled part.
+        // The handles: one dot for a single value, S and E for a range (E is the filled one).
         Point tip = OnArc(center, radius, fraction);
         dc.DrawEllipse(TextBrush, new Pen(FillBrush, 2), tip, 5, 5);
+
+        if (range)
+        {
+            dc.DrawEllipse(FillBrush, new Pen(TextBrush, 1.6), OnArc(center, radius, endFraction), 5, 5);
+            DrawHandleLetter(dc, center, radius, fraction, "S");
+            DrawHandleLetter(dc, center, radius, endFraction, "E");
+        }
 
         // The value, in the middle of the arc (inside the half circle, above its base line).
         double dpi = VisualTreeHelper.GetDpi(this).PixelsPerDip;
@@ -257,6 +308,54 @@ public sealed class Knob : FrameworkElement
         _labelRect = labelRect;
     }
 
+    // A very small, quiet arrowhead in the middle of the filled part: the direction from S to E.
+    private static void DrawDirectionArrow(DrawingContext dc, Point center, Size radius, double fraction, int sign)
+    {
+        double angle = Math.PI * (1.0 - fraction);
+        double dx = Math.PI * radius.Width * Math.Sin(angle);   // derivative of the arc by the fraction
+        double dy = Math.PI * radius.Height * Math.Cos(angle);
+        double length = Math.Sqrt(dx * dx + dy * dy);
+        if (length < 1e-6)
+            return;
+
+        dx = dx / length * sign;
+        dy = dy / length * sign;
+
+        Point at = OnArc(center, radius, fraction);
+        var tip = new Point(at.X + dx * 3.5, at.Y + dy * 3.5);
+        var left = new Point(at.X - dx * 2.5 - dy * 3.0, at.Y - dy * 2.5 + dx * 3.0);
+        var right = new Point(at.X - dx * 2.5 + dy * 3.0, at.Y - dy * 2.5 - dx * 3.0);
+
+        var geometry = new StreamGeometry();
+        using (StreamGeometryContext ctx = geometry.Open())
+        {
+            ctx.BeginFigure(tip, true, true);
+            ctx.LineTo(left, true, false);
+            ctx.LineTo(right, true, false);
+        }
+        geometry.Freeze();
+
+        dc.DrawGeometry(ArrowBrush, null, geometry);
+    }
+
+    // "S" / "E" next to a handle, just inside the arc.
+    private void DrawHandleLetter(DrawingContext dc, Point center, Size radius, double fraction, string letter)
+    {
+        Point on = OnArc(center, radius, fraction);
+        var at = new Point(center.X + (on.X - center.X) * 0.78, center.Y + (on.Y - center.Y) * 0.78);
+
+        var text = new FormattedText(
+            letter,
+            CultureInfo.CurrentCulture,
+            FlowDirection.LeftToRight,
+            new Typeface("Segoe UI Semibold"),
+            8,
+            CaptionBrush,
+            VisualTreeHelper.GetDpi(this).PixelsPerDip);
+
+        dc.DrawText(text, new Point(at.X - text.Width / 2.0, at.Y - text.Height / 2.0));
+    }
+
     private static void DrawCap(DrawingContext dc, Point at, bool lit, double radius = CapRadius)
     {
         dc.DrawEllipse(
@@ -294,34 +393,33 @@ public sealed class Knob : FrameworkElement
         Point point = e.GetPosition(this);
         (Point center, Size radius) = Layout();
 
-        // The written value: it types an exact number when that is allowed, and never moves the knob.
+        // The written value: a plain click on it does nothing (an exact number is typed from the right-click menu).
         if (_labelRect.Contains(point))
         {
-            if (IsLabelClickable)
-                LabelClicked?.Invoke();
-
             e.Handled = true;
             return;
         }
 
-        // The round buttons at the ends set the exact minimum / maximum.
+        // Remember the values before this click: if it is the first half of a double click they are put back.
+        if (e.ClickCount == 1)
+        {
+            _valueBeforeClick = Value;
+            _endBeforeClick = ValueEnd;
+        }
+
+        double? anchor = null;
+
+        // The round buttons at the ends and in the middle set the exact minimum / maximum / half.
         if (Distance(point, OnArc(center, radius, 0)) <= CapHitRadius)
-        {
-            Value = Minimum;
-            e.Handled = true;
-            return;
-        }
+            anchor = 0.0;
+        else if (Distance(point, OnArc(center, radius, 1)) <= CapHitRadius)
+            anchor = 1.0;
+        else if (Distance(point, OnArc(center, radius, 0.5)) <= MiddleCapRadius + 4)
+            anchor = 0.5;
 
-        if (Distance(point, OnArc(center, radius, 1)) <= CapHitRadius)
+        if (anchor is { } fixedFraction)
         {
-            Value = Maximum;
-            e.Handled = true;
-            return;
-        }
-
-        if (Distance(point, OnArc(center, radius, 0.5)) <= MiddleCapRadius + 4)
-        {
-            Value = Minimum + (Maximum - Minimum) / 2.0;
+            SetHandle(NearestHandle(fixedFraction), Minimum + fixedFraction * (Maximum - Minimum));
             e.Handled = true;
             return;
         }
@@ -330,10 +428,88 @@ public sealed class Knob : FrameworkElement
         if (point.Y > center.Y + CapRadius + 2 || Distance(point, center) < 8)
             return;
 
+        double clicked = FractionAt(point);
+
+        if (e.ClickCount == 2 && AllowRange)
+        {
+            ToggleRange(clicked);
+            e.Handled = true;
+            return;
+        }
+
+        _dragHandle = NearestHandle(clicked);
         _isDragging = true;
         CaptureMouse();
-        SetFromPoint(point);
+        SetHandle(_dragHandle, Minimum + clicked * (Maximum - Minimum));
         e.Handled = true;
+    }
+
+    protected override void OnMouseRightButtonDown(MouseButtonEventArgs e)
+    {
+        base.OnMouseRightButtonDown(e);
+
+        // Right click on the knob: type an exact value for the nearest handle.
+        ExactValueRequested?.Invoke(NearestHandle(FractionAt(e.GetPosition(this))));
+        e.Handled = true;
+    }
+
+    protected override void OnMouseRightButtonUp(MouseButtonEventArgs e)
+    {
+        // Handled, so that no context menu opens over the exact-value input of a right click.
+        base.OnMouseRightButtonUp(e);
+        e.Handled = true;
+    }
+
+    // Double click: the first value becomes a range (E appears under the pointer), or - on E - the range goes away.
+    private void ToggleRange(double clicked)
+    {
+        // The first click of the double click already moved something: put it back.
+        Value = _valueBeforeClick;
+        ValueEnd = _endBeforeClick;
+
+        double Fraction(double value) => Maximum > Minimum ? (value - Minimum) / (Maximum - Minimum) : 0.0;
+
+        if (!IsRange)
+        {
+            double target = Minimum + clicked * (Maximum - Minimum);
+
+            if (Math.Abs(target - Value) < 1e-9)
+            {
+                // Same place as S: step aside so that the range exists.
+                double nudge = Step > 0 ? Step : (Maximum - Minimum) * 0.02;
+                target = Value + nudge <= Maximum ? Value + nudge : Value - nudge;
+            }
+
+            ValueEnd = target;
+            return;
+        }
+
+        // A range: a double click close to E removes it (E = S, the single value stays where S is).
+        if (Math.Abs(clicked - Fraction(ValueEnd)) <= 0.06)
+            ValueEnd = Value;
+    }
+
+    // Which handle a position is closer to: 0 = S (the only value), 1 = E.
+    private int NearestHandle(double fraction)
+    {
+        if (!IsRange)
+            return 0;
+
+        double range = Maximum - Minimum;
+        if (range <= 0)
+            return 0;
+
+        double s = (Value - Minimum) / range;
+        double end = (ValueEnd - Minimum) / range;
+        return Math.Abs(fraction - end) < Math.Abs(fraction - s) ? 1 : 0;
+    }
+
+    private void SetHandle(int handle, double value)
+    {
+        if (handle == 1)
+            ValueEnd = value;
+        else
+            Value = value;
     }
 
     protected override void OnMouseMove(MouseEventArgs e)
@@ -347,7 +523,7 @@ public sealed class Knob : FrameworkElement
             return;
         }
 
-        Cursor = IsLabelClickable && _labelRect.Contains(e.GetPosition(this)) ? Cursors.IBeam : Cursors.Hand;
+        Cursor = Cursors.Hand;
     }
 
     protected override void OnMouseLeftButtonUp(MouseButtonEventArgs e)
@@ -380,7 +556,7 @@ public sealed class Knob : FrameworkElement
     }
 
     // Angle of the point as seen from the centre of the arc: left = minimum, up = middle, right = maximum.
-    private void SetFromPoint(Point point)
+    private double FractionAt(Point point)
     {
         (Point center, Size radius) = Layout();
 
@@ -399,9 +575,12 @@ public sealed class Knob : FrameworkElement
             fraction = 1.0 - Math.Atan2(dy, dx) / Math.PI;
         }
 
-        // CoerceValue clamps the result and applies the step.
-        Value = Minimum + Math.Clamp(fraction, 0.0, 1.0) * (Maximum - Minimum);
+        return Math.Clamp(fraction, 0.0, 1.0);
     }
+
+    // CoerceValue clamps the result and applies the step.
+    private void SetFromPoint(Point point) =>
+        SetHandle(_dragHandle, Minimum + FractionAt(point) * (Maximum - Minimum));
 
     private static double Distance(Point a, Point b) => Math.Sqrt((a.X - b.X) * (a.X - b.X) + (a.Y - b.Y) * (a.Y - b.Y));
 
@@ -427,44 +606,51 @@ public sealed class Knob : FrameworkElement
         var knob = (Knob)d;
         knob.MoveArc();
         knob.ValueChanged?.Invoke((double)e.NewValue);
+        knob.InvalidateVisual(); // IsRange may have changed
+    }
+
+    private static void OnValueEndChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
+    {
+        var knob = (Knob)d;
+        knob.MoveArc();
+        knob.ValueEndChanged?.Invoke((double)e.NewValue);
+        knob.InvalidateVisual();
     }
 
     private static void OnLimitsChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
     {
         d.CoerceValue(ValueProperty);
+        d.CoerceValue(ValueEndProperty);
         ((Knob)d).MoveArc();
     }
 
-    private double TargetFraction()
+    private double FractionOf(double value)
     {
         double range = Maximum - Minimum;
-        return range > 0 ? Math.Clamp((Value - Minimum) / range, 0.0, 1.0) : 0.0;
+        return range > 0 ? Math.Clamp((value - Minimum) / range, 0.0, 1.0) : 0.0;
     }
 
     // The arc glides to the new value: a full sweep takes FullSweepSeconds, a shorter move proportionally less.
     private void MoveArc()
     {
-        double target = TargetFraction();
+        Glide(DisplayedFractionProperty, FractionOf(Value));
+        Glide(DisplayedEndFractionProperty, FractionOf(ValueEnd));
+    }
 
-        if (!IsLoaded)
-        {
-            BeginAnimation(DisplayedFractionProperty, null);
-            SetValue(DisplayedFractionProperty, target);
-            return;
-        }
-
-        double from = DisplayedFraction;
+    private void Glide(DependencyProperty property, double target)
+    {
+        double from = (double)GetValue(property);
         double seconds = FullSweepSeconds * Math.Abs(target - from);
 
-        if (seconds < 0.004)
+        if (!IsLoaded || seconds < 0.004)
         {
-            BeginAnimation(DisplayedFractionProperty, null);
-            SetValue(DisplayedFractionProperty, target);
+            BeginAnimation(property, null);
+            SetValue(property, target);
             return;
         }
 
         BeginAnimation(
-            DisplayedFractionProperty,
+            property,
             new DoubleAnimation(from, target, TimeSpan.FromSeconds(seconds)) { FillBehavior = FillBehavior.HoldEnd });
     }
 

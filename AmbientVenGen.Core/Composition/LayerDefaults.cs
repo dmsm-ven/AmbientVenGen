@@ -77,6 +77,7 @@ public static class LayerDefaults
         layer.FadeInSeconds = Math.Min(fade, layer.DurationSeconds);
         layer.FadeOutSeconds = Math.Min(Math.Max(1, Math.Round(layer.DurationSeconds * Range(0.08, 0.30))), layer.DurationSeconds);
         layer.FadeEasing = AnyEasing();
+        layer.FadeOutEasing = AnyEasing();
 
         layer.Seed = random.Next(1, int.MaxValue);
     }
