@@ -284,7 +284,7 @@ public sealed class Knob : FrameworkElement
             dpi);
 
         // The caption (parameter name) takes the place of the old value line; the value sits just above it.
-        double bottom = center.Y + 5;
+        double bottom = center.Y + 7;
         Rect labelRect = Rect.Empty;
 
         if (!string.IsNullOrEmpty(Caption))
@@ -347,7 +347,12 @@ public sealed class Knob : FrameworkElement
     private void DrawHandleLetter(DrawingContext dc, Point center, Size radius, double fraction, string letter)
     {
         Point on = OnArc(center, radius, fraction);
-        var at = new Point(center.X + (on.X - center.X) * 0.78, center.Y + (on.Y - center.Y) * 0.78);
+        // On the outer side of the arc, so the letter does not merge with the value text inside.
+        double nx = (on.X - center.X) / (radius.Width * radius.Width);
+        double ny = (on.Y - center.Y) / (radius.Height * radius.Height);
+        double nl = Math.Sqrt(nx * nx + ny * ny);
+        if (nl < 1e-9) { nx = 0; ny = -1; nl = 1; }
+        var at = new Point(on.X + nx / nl * 9.0, on.Y + ny / nl * 9.0);
 
         var text = new FormattedText(
             letter,
