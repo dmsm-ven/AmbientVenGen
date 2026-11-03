@@ -58,12 +58,17 @@ internal sealed class LayerEffects
         {
             _delaySamples += (target - _delaySamples) * 0.0004;
 
+            // Read position in the ring. A read position a hair below zero (for example 0.55 s = 24255.000000000004
+            // samples at the moment _write is 24255) turned into exactly "size" after adding the ring length, which
+            // is out of range: the audio thread threw and playback jumped to the end. Wrap and clamp explicitly.
             double readAt = _write - _delaySamples;
             if (readAt < 0)
                 readAt += size;
+            if (readAt >= size)
+                readAt -= size;
 
-            int index = (int)readAt;
-            float frac = (float)(readAt - index);
+            int index = Math.Clamp((int)readAt, 0, size - 1);
+            float frac = (float)Math.Clamp(readAt - index, 0.0, 1.0);
             int next = index + 1 >= size ? 0 : index + 1;
 
             float echoL = _delayL[index] + (_delayL[next] - _delayL[index]) * frac;
