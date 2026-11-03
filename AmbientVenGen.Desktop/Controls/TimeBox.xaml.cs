@@ -36,6 +36,17 @@ public partial class TimeBox : UserControl
         nameof(IsInline), typeof(bool), typeof(TimeBox),
         new PropertyMetadata(false, OnPropertyChanged));
 
+    /// <summary>A whole number (for example the number of repeats) instead of hh:mm:ss.</summary>
+    public static readonly DependencyProperty IsIntegerProperty = DependencyProperty.Register(
+        nameof(IsInteger), typeof(bool), typeof(TimeBox),
+        new PropertyMetadata(false, OnPropertyChanged));
+
+    public bool IsInteger
+    {
+        get => (bool)GetValue(IsIntegerProperty);
+        set => SetValue(IsIntegerProperty, value);
+    }
+
     public bool IsInline
     {
         get => (bool)GetValue(IsInlineProperty);
@@ -90,8 +101,8 @@ public partial class TimeBox : UserControl
 
         HeaderText.Text = Header;
         HeaderHint.Text = Hint;
-        Input.Text = Format(Value);
-        DisplayText.Text = Format(Value);
+        Input.Text = Text(Value);
+        DisplayText.Text = Text(Value);
     }
 
     // Inline: "Start [00:00:00]" on one line. The label and the editor have the same width, so nothing moves when editing starts.
@@ -107,8 +118,10 @@ public partial class TimeBox : UserControl
         DisplayBox.Margin = boxMargin;
         EditGrid.Margin = boxMargin;
 
-        DisplayBox.Width = inline ? 104 : double.NaN;
-        EditGrid.Width = inline ? 104 : double.NaN;
+        double width = IsInteger ? 68 : 104;
+        DisplayBox.Width = inline ? width : double.NaN;
+        EditGrid.Width = inline ? width : double.NaN;
+        Input.MaxLength = IsInteger ? 3 : 9;
     }
 
     private void OnDisplayClick(object sender, MouseButtonEventArgs e)
@@ -127,6 +140,23 @@ public partial class TimeBox : UserControl
         DisplayBox.Visibility = Visibility.Visible;
     }
 
+    private string Text(double value) => IsInteger
+        ? ((long)Math.Round(value)).ToString(CultureInfo.InvariantCulture)
+        : Format(value);
+
+    private bool TryRead(string? text, out double value)
+    {
+        if (!IsInteger)
+            return TryParse(text, out value);
+
+        value = 0;
+        if (!int.TryParse(text?.Trim(), NumberStyles.None, CultureInfo.InvariantCulture, out int number))
+            return false;
+
+        value = number;
+        return true;
+    }
+
     private double Clamp(double seconds) => Math.Clamp(seconds, Minimum, Math.Max(Maximum, Minimum));
 
     private void SetSeconds(double seconds)
@@ -139,7 +169,7 @@ public partial class TimeBox : UserControl
     /// <summary>Reads the text; when it is not a time the last good value comes back.</summary>
     private void Commit()
     {
-        if (TryParse(Input.Text, out double seconds))
+        if (TryRead(Input.Text, out double seconds))
             SetSeconds(seconds);
         else
             Sync();
@@ -147,12 +177,13 @@ public partial class TimeBox : UserControl
 
     private void Adjust(double deltaSeconds)
     {
-        double current = TryParse(Input.Text, out double typed) ? typed : Value;
+        double current = TryRead(Input.Text, out double typed) ? typed : Value;
         SetSeconds(current + deltaSeconds);
     }
 
-    private static double StepFor(ModifierKeys modifiers) =>
-        modifiers.HasFlag(ModifierKeys.Control) ? 60 : modifiers.HasFlag(ModifierKeys.Shift) ? 10 : 1;
+    private double StepFor(ModifierKeys modifiers) => IsInteger
+        ? (modifiers.HasFlag(ModifierKeys.Shift) ? 5 : 1)
+        : modifiers.HasFlag(ModifierKeys.Control) ? 60 : modifiers.HasFlag(ModifierKeys.Shift) ? 10 : 1;
 
     private void OnUpClick(object sender, RoutedEventArgs e) => Adjust(StepFor(Keyboard.Modifiers));
 

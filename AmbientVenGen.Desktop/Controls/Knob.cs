@@ -377,7 +377,7 @@ public sealed class Knob : FrameworkElement
         double ny = (on.Y - center.Y) / (radius.Height * radius.Height);
         double nl = Math.Sqrt(nx * nx + ny * ny);
         if (nl < 1e-9) { nx = 0; ny = -1; nl = 1; }
-        var at = new Point(on.X + nx / nl * 9.0, on.Y + ny / nl * 9.0);
+        var at = new Point(on.X + nx / nl * 11.5, on.Y + ny / nl * 11.5);
 
         var text = new FormattedText(
             letter,
