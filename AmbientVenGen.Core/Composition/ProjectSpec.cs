@@ -58,8 +58,12 @@ public sealed record LayerSpec(
     double DelayFeedback = 0.4,
     double ReverbSend = 1.0,
     double PitchDrift = 0,
-    double PanDrift = 0)
+    double PanDrift = 0,
+    Easing? FadeOutEasing = null)
 {
+    /// <summary>Curve of the fade-out; projects saved before it was separate use the fade-in curve for both.</summary>
+    public Easing FadeOutCurve => FadeOutEasing ?? FadeEasing;
+
     /// <summary>Number of plays (never less than 1).</summary>
     public int PlayCount => Math.Max(1, Repeats);
 
@@ -105,7 +109,7 @@ public sealed record LayerSpec(
             gain *= EasingFunctions.Apply(FadeEasing, localSeconds / fadeIn);
 
         if (fadeOut > 0 && localSeconds > duration - fadeOut)
-            gain *= EasingFunctions.Apply(FadeEasing, (duration - localSeconds) / fadeOut);
+            gain *= EasingFunctions.Apply(FadeOutCurve, (duration - localSeconds) / fadeOut);
 
         return gain;
     }

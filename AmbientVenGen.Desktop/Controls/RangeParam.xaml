@@ -1,0 +1,78 @@
+<UserControl
+    x:Class="AmbientVenGen.Desktop.Controls.RangeParam"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:local="clr-namespace:AmbientVenGen.Desktop.Controls"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    HorizontalAlignment="Left">
+    <Grid>
+        <StackPanel Orientation="Horizontal">
+
+            <!--  Knob mode: a knob (one value, or S and E) and, next to it, the curve of the change  -->
+            <local:Knob
+                x:Name="RangeKnob"
+                Margin="0,2,0,0"
+                VerticalAlignment="Center" />
+            <local:TransitionFunctionDropdown
+                x:Name="KnobCurve"
+                Width="48"
+                Height="27"
+                Margin="6,0,0,0"
+                VerticalAlignment="Center"
+                Value="{Binding Easing, RelativeSource={RelativeSource AncestorType=local:RangeParam}, Mode=TwoWay}" />
+
+            <!--  Slider mode: the start slider, a switch for the second value, the end slider and the curve  -->
+            <StackPanel
+                x:Name="SliderPanel"
+                Width="134"
+                Visibility="Collapsed">
+                <local:LabeledSlider
+                    x:Name="StartSlider"
+                    Format="{Binding Format, RelativeSource={RelativeSource AncestorType=local:RangeParam}}"
+                    Header="{Binding Header, RelativeSource={RelativeSource AncestorType=local:RangeParam}}"
+                    Hint="{Binding Hint, RelativeSource={RelativeSource AncestorType=local:RangeParam}}"
+                    Maximum="{Binding Maximum, RelativeSource={RelativeSource AncestorType=local:RangeParam}}"
+                    Minimum="{Binding Minimum, RelativeSource={RelativeSource AncestorType=local:RangeParam}}"
+                    Step="{Binding Step, RelativeSource={RelativeSource AncestorType=local:RangeParam}}"
+                    Value="{Binding Start, RelativeSource={RelativeSource AncestorType=local:RangeParam}, Mode=TwoWay}" />
+                <CheckBox
+                    x:Name="RangeCheck"
+                    Margin="0,2,0,0"
+                    Checked="OnRangeChecked"
+                    Content="S / E"
+                    FontSize="11"
+                    ToolTip="Two values: it changes from S to E over the layer"
+                    Unchecked="OnRangeUnchecked" />
+                <local:LabeledSlider
+                    x:Name="EndSlider"
+                    Margin="0,2,0,0"
+                    Format="{Binding Format, RelativeSource={RelativeSource AncestorType=local:RangeParam}}"
+                    Header="End"
+                    Maximum="{Binding Maximum, RelativeSource={RelativeSource AncestorType=local:RangeParam}}"
+                    Minimum="{Binding Minimum, RelativeSource={RelativeSource AncestorType=local:RangeParam}}"
+                    Step="{Binding Step, RelativeSource={RelativeSource AncestorType=local:RangeParam}}"
+                    Value="{Binding End, RelativeSource={RelativeSource AncestorType=local:RangeParam}, Mode=TwoWay}" />
+                <local:TransitionFunctionDropdown
+                    x:Name="SliderCurve"
+                    Margin="0,4,0,0"
+                    Value="{Binding Easing, RelativeSource={RelativeSource AncestorType=local:RangeParam}, Mode=TwoWay}" />
+            </StackPanel>
+        </StackPanel>
+
+        <!--  Exact value of a handle (right click on the knob); floats over the knob, so the layout does not move  -->
+        <TextBox
+            x:Name="Editor"
+            Width="76"
+            Height="22"
+            MinHeight="0"
+            Margin="0,18,0,0"
+            Padding="4,0"
+            HorizontalAlignment="Left"
+            VerticalAlignment="Top"
+            VerticalContentAlignment="Center"
+            FontSize="12"
+            KeyDown="OnEditorKeyDown"
+            LostKeyboardFocus="OnEditorLostFocus"
+            TextAlignment="Center"
+            Visibility="Collapsed" />
+    </Grid>
+</UserControl>

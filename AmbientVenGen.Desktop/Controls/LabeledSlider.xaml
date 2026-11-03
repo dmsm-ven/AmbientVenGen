@@ -26,8 +26,7 @@
                 Grid.Column="1"
                 Margin="0"
                 FontSize="12"
-                Foreground="#B7AFE9"
-                MouseLeftButtonUp="OnValueTextClick" />
+                Foreground="#B7AFE9" />
 
         </Grid>
         <Slider x:Name="InnerSlider" ValueChanged="OnInnerValueChanged" />

@@ -139,7 +139,14 @@ public partial class LabeledSlider : UserControl
     {
         InitializeComponent();
         InnerKnob.ValueChanged += OnInnerKnobValueChanged;
-        InnerKnob.LabelClicked += BeginEdit;
+        // An exact value is typed from the right-click menu (a slider) or by a right click on the knob.
+        InnerKnob.ExactValueRequested += _ => BeginEdit();
+
+        var menu = new ContextMenu();
+        var exact = new MenuItem { Header = "Set exact value..." };
+        exact.Click += (_, _) => BeginEdit();
+        menu.Items.Add(exact);
+        ContextMenu = menu;
         Sync();
     }
 
@@ -218,7 +225,6 @@ public partial class LabeledSlider : UserControl
             // A knob carries the caption and the value inside its arc, so the header row is not needed
             // (it appears only while an exact value is being typed).
             InnerKnob.Caption = KnobHeaderVisible ? Header : string.Empty;
-            InnerKnob.IsLabelClickable = IsValueEditable;
             InnerKnob.ToolTip = string.IsNullOrEmpty(Hint) ? null : $"{Header}: {Hint}";
 
             HeaderGrid.Visibility = knob ? Visibility.Collapsed : Visibility.Visible;
@@ -230,8 +236,6 @@ public partial class LabeledSlider : UserControl
             ValueEditor.HorizontalAlignment = knob ? HorizontalAlignment.Center : HorizontalAlignment.Right;
             ValueEditor.Margin = knob ? new Thickness(0, 16, 0, 0) : new Thickness(0, -3, 0, 0);
 
-            ValueText.Cursor = IsValueEditable ? Cursors.IBeam : Cursors.Arrow;
-            ValueText.ToolTip = IsValueEditable ? "Click to type an exact value" : null;
 
             HeaderText.Text = Header;
             HeaderHint.Text = Hint;
@@ -243,16 +247,10 @@ public partial class LabeledSlider : UserControl
         }
     }
 
-    private void OnValueTextClick(object sender, MouseButtonEventArgs e)
-    {
-        BeginEdit();
-        e.Handled = true;
-    }
-
-    // Typing an exact value: from a click on the value text (slider) or on the number inside the knob.
+    // Typing an exact value: from the right-click menu (or a right click on the knob).
     private void BeginEdit()
     {
-        if (!IsValueEditable || _editing)
+        if (_editing)
             return;
 
         _editing = true;
