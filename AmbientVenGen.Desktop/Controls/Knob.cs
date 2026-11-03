@@ -32,7 +32,7 @@ public sealed class Knob : FrameworkElement
     private static readonly Brush CaptionBrush = Frozen(new SolidColorBrush(Color.FromRgb(0xA9, 0xA7, 0xC2)));
     private static readonly Brush TextBrush = Frozen(new SolidColorBrush(Color.FromRgb(0xEC, 0xEC, 0xF2)));
     private static readonly Brush HitBrush = Brushes.Transparent;
-    private static readonly Brush ArrowBrush = Frozen(new SolidColorBrush(Color.FromArgb(0xB4, 0xFF, 0xFF, 0xFF)));
+    private static readonly Brush ArrowBrush = Frozen(new SolidColorBrush(Color.FromArgb(0x40, 0xFF, 0xFF, 0xFF)));
 
     public static readonly DependencyProperty ValueProperty = DependencyProperty.Register(
         nameof(Value), typeof(double), typeof(Knob),
@@ -246,7 +246,12 @@ public sealed class Knob : FrameworkElement
             dc.DrawGeometry(null, fillPen, Arc(center, radius, low, high));
 
         if (range && high - low > 0.06)
-            DrawDirectionArrow(dc, center, radius, (low + high) / 2.0, endFraction >= fraction ? 1 : -1);
+        {
+            // Up to three faint arrows, as many as fit into the filled sector.
+            int arrows = Math.Clamp((int)((high - low) / 0.14), 1, 3);
+            for (int i = 0; i < arrows; i++)
+                DrawDirectionArrow(dc, center, radius, low + (high - low) * (i + 0.5) / arrows, endFraction >= fraction ? 1 : -1);
+        }
 
         // Minimum / maximum buttons at the ends of the arc: lit when a value is at that end.
         DrawCap(dc, OnArc(center, radius, 0), fraction <= 0.002 || (range && endFraction <= 0.002));
@@ -279,7 +284,7 @@ public sealed class Knob : FrameworkElement
             dpi);
 
         // The caption (parameter name) takes the place of the old value line; the value sits just above it.
-        double bottom = center.Y - 3;
+        double bottom = center.Y + 5;
         Rect labelRect = Rect.Empty;
 
         if (!string.IsNullOrEmpty(Caption))

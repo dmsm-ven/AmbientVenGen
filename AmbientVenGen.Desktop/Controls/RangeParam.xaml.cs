@@ -160,8 +160,9 @@ public partial class RangeParam : UserControl
             RangeKnob.ValueText = range ? $"{FormatValue(Start)} → {FormatValue(End)}" : FormatValue(Start);
             RangeKnob.ToolTip = string.IsNullOrEmpty(Hint) ? null : $"{Header}: {Hint}";
 
-            RangeKnob.Visibility = knob ? Visibility.Visible : Visibility.Collapsed;
-            KnobCurve.Visibility = knob && (range || !AllowRange) ? Visibility.Visible : Visibility.Collapsed;
+            // The curve's place above the knob is always reserved, so that nothing jumps when the second value appears.
+            KnobArea.Visibility = knob ? Visibility.Visible : Visibility.Collapsed;
+            KnobCurve.Visibility = range || !AllowRange ? Visibility.Visible : Visibility.Hidden;
 
             SliderPanel.Visibility = knob ? Visibility.Collapsed : Visibility.Visible;
             RangeCheck.Visibility = AllowRange ? Visibility.Visible : Visibility.Collapsed;
@@ -187,7 +188,7 @@ public partial class RangeParam : UserControl
 
         // Centred over the knob (the value is written there).
         Editor.HorizontalAlignment = HorizontalAlignment.Left;
-        Editor.Margin = new Thickness(Math.Max(0, (RangeKnob.ActualWidth - Editor.Width) / 2.0), 18, 0, 0);
+        Editor.Margin = new Thickness(Math.Max(0, (KnobArea.ActualWidth - Editor.Width) / 2.0), 18, 0, 0);
         Editor.Visibility = Visibility.Visible;
         Editor.Focus();
         Editor.SelectAll();
