@@ -167,6 +167,68 @@ public sealed partial class Layer : ObservableObject
 
     public string TypeLabel => Type == LayerType.FieldRecord ? "Field record" : Type.ToString();
 
+    /// <summary>Length of the original audio file (0 = unknown / not a recording). UI only, read in the background.</summary>
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(SourceTimeText))]
+    private double _sourceSeconds;
+
+    public string SourceTimeText => SourceSeconds > 0 ? FormatClock(SourceSeconds) : string.Empty;
+
+    /// <summary>The whole length with repeats and gaps, as hh:mm:ss.</summary>
+    public string TotalTimeText => FormatClock(TotalSeconds);
+
+    private static string FormatClock(double seconds)
+    {
+        long total = (long)Math.Max(0, Math.Round(seconds));
+        return $"{total / 3600:00}:{total / 60 % 60:00}:{total % 60:00}";
+    }
+
+    private static readonly Dictionary<string, double> SourceLengths = new(StringComparer.OrdinalIgnoreCase);
+
+    partial void OnSourcePathChanged(string? value)
+    {
+        SourceSeconds = 0;
+
+        if (Type != LayerType.FieldRecord || string.IsNullOrEmpty(value))
+            return;
+
+        lock (SourceLengths)
+        {
+            if (SourceLengths.TryGetValue(value, out double known))
+            {
+                SourceSeconds = known;
+                return;
+            }
+        }
+
+        // Only the file header is read; done off the UI thread.
+        Task.Run(() =>
+        {
+            try
+            {
+                using var reader = new NAudio.Wave.AudioFileReader(value);
+                double length = reader.TotalTime.TotalSeconds;
+                lock (SourceLengths)
+                    SourceLengths[value] = length;
+
+                if (SourcePath == value)
+                    SourceSeconds = length;
+            }
+            catch
+            {
+                // an unreadable file simply has no length shown
+            }
+        });
+    }
+
+    protected override void OnPropertyChanged(System.ComponentModel.PropertyChangedEventArgs e)
+    {
+        base.OnPropertyChanged(e);
+
+        if (e.PropertyName == nameof(TotalSeconds))
+            OnPropertyChanged(nameof(TotalTimeText));
+    }
+
     public string SourceName => string.IsNullOrEmpty(SourcePath) ? "(no file)" : Path.GetFileName(SourcePath);
 
     public LayerSpec ToSpec() => new(

@@ -434,6 +434,41 @@
                                         </TextDecoration>
                                     </ui:TextBlock.TextDecorations>
                                 </ui:TextBlock>
+                                <!--  Length of the original file; after "|" the whole length with repeats (only when Repeats > 1). Not clickable.  -->
+                                <TextBlock
+                                    Margin="10,0,0,0"
+                                    VerticalAlignment="Center"
+                                    FontFamily="Consolas"
+                                    FontSize="13"
+                                    Foreground="#A9A7C2"
+                                    Text="{Binding SelectedLayer.SourceTimeText}"
+                                    ToolTip="Length of the original file" />
+                                <StackPanel Orientation="Horizontal">
+                                    <StackPanel.Style>
+                                        <Style TargetType="StackPanel">
+                                            <Setter Property="Visibility" Value="Collapsed" />
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding SelectedLayer.Repeats, Converter={StaticResource GreaterThanOne}}" Value="True">
+                                                    <Setter Property="Visibility" Value="Visible" />
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </StackPanel.Style>
+                                    <TextBlock
+                                        Margin="8,0,0,0"
+                                        VerticalAlignment="Center"
+                                        FontSize="13"
+                                        Foreground="#6E6C8A"
+                                        Text="|" />
+                                    <TextBlock
+                                        Margin="8,0,0,0"
+                                        VerticalAlignment="Center"
+                                        FontFamily="Consolas"
+                                        FontSize="13"
+                                        Foreground="#A9A7C2"
+                                        Text="{Binding SelectedLayer.TotalTimeText}"
+                                        ToolTip="Whole length of the layer with repeats and gaps" />
+                                </StackPanel>
                             </StackPanel>
                         </StackPanel>
                         <!-- Pitch interval: header (source layer) / body (interval) / footer (Apply) -->
@@ -613,21 +648,15 @@
                                                 Value="{Binding DurationSeconds, Mode=TwoWay}" />
                                             <!-- Repeats: how many plays, the pause between them and the resulting length -->
                                             <StackPanel Margin="18,0,0,0" Orientation="Horizontal">
-                                                <TextBlock
-                                                    Margin="0"
-                                                    VerticalAlignment="Center"
-                                                    FontSize="12"
-                                                    Foreground="#C9C8D6"
-                                                    Text="Repeats" />
-                                                <controls:HintIcon Margin="5,0,0,0" VerticalAlignment="Center" Text="{x:Static vm:HintTexts.Repeats}" />
-                                                <TextBox
-                                                    Width="48"
-                                                    Margin="8,0,18,0"
-                                                    VerticalAlignment="Center"
-                                                    HorizontalContentAlignment="Center"
-                                                    MaxLength="2"
-                                                    Text="{Binding Repeats, Mode=TwoWay, UpdateSourceTrigger=LostFocus}"
-                                                    ToolTip="1 - 99" />
+                                                <controls:TimeBox
+                                                    Margin="0,0,18,0"
+                                                    Header="Repeats"
+                                                    Hint="{x:Static vm:HintTexts.Repeats}"
+                                                    IsInline="True"
+                                                    IsInteger="True"
+                                                    Maximum="99"
+                                                    Minimum="1"
+                                                    Value="{Binding Repeats, Mode=TwoWay}" />
                                                 <controls:TimeBox
                                                     Margin="0,0,14,0"
                                                     Header="Gap"
@@ -636,22 +665,7 @@
                                                     Maximum="3600"
                                                     Minimum="0"
                                                     Value="{Binding RepeatGapSeconds, Mode=TwoWay}" />
-                                                <TextBlock
-                                                    VerticalAlignment="Center"
-                                                    Foreground="#8FD16A"
-                                                    Text="{Binding TotalSeconds, StringFormat='= {0:0.#} s'}"
-                                                    ToolTip="Whole length of the layer with repeats">
-                                                    <TextBlock.Style>
-                                                        <Style BasedOn="{StaticResource {x:Type TextBlock}}" TargetType="TextBlock">
-                                                            <Setter Property="Visibility" Value="Collapsed" />
-                                                            <Style.Triggers>
-                                                                <DataTrigger Binding="{Binding Repeats, Converter={StaticResource GreaterThanOne}}" Value="True">
-                                                                    <Setter Property="Visibility" Value="Visible" />
-                                                                </DataTrigger>
-                                                            </Style.Triggers>
-                                                        </Style>
-                                                    </TextBlock.Style>
-                                                </TextBlock>
+                                                
                                             </StackPanel>
                                         </StackPanel>
                                     </Grid>
@@ -752,7 +766,7 @@
                                                 Value="{Binding PitchHz, Mode=TwoWay}" />
                                             </controls:KnobPair.Primary>
                                             <controls:KnobPair.Secondary>
-                                                <Border Margin="6,0,0,0">
+                                                <Border Margin="25,0,0,0">
                                                 <controls:LabeledSlider
                                                 Format="{}{0:P0}"
                                                 Header="Pitch drift"
@@ -790,7 +804,7 @@
                                                 Value="{Binding Speed, Mode=TwoWay}" />
                                             </controls:KnobPair.Primary>
                                             <controls:KnobPair.Secondary>
-                                                <Border Margin="6,0,0,0">
+                                                <Border Margin="25,0,0,0">
                                                 <controls:LabeledSlider
                                                 Format="{}{0:P0}"
                                                 Header="Pitch drift"
@@ -823,7 +837,7 @@
                                                 Value="{Binding Pan, Mode=TwoWay}" />
                                             </controls:KnobPair.Primary>
                                             <controls:KnobPair.Secondary>
-                                                <Border Margin="6,0,0,0">
+                                                <Border Margin="25,0,0,0">
                                                 <controls:LabeledSlider
                                                 Format="{}{0:P0}"
                                                 Header="Pan drift"
@@ -857,7 +871,7 @@
                                                 Value="{Binding FilterCutoffHz, Mode=TwoWay}" />
                                             </controls:KnobPair.Primary>
                                             <controls:KnobPair.Secondary>
-                                                <Border Margin="6,0,0,0">
+                                                <Border Margin="25,0,0,0">
                                                 <controls:LabeledSlider
                                                 Format="{}{0:P0}"
                                                 Header="Resonance"
@@ -890,7 +904,7 @@
                                                 Value="{Binding DelaySeconds, Mode=TwoWay}" />
                                             </controls:KnobPair.Primary>
                                             <controls:KnobPair.Secondary>
-                                                <Border Margin="6,0,0,0">
+                                                <Border Margin="25,0,0,0">
                                                 <controls:LabeledSlider
                                                 Format="{}{0:P0}"
                                                 Header="Feedback"

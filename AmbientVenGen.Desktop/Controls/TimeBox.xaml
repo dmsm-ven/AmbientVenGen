@@ -53,13 +53,24 @@
             x:Name="DisplayBox"
             Height="32"
             Margin="0,3,0,0"
-            Background="#14FFFFFF"
-            BorderBrush="#26FFFFFF"
-            BorderThickness="1"
             CornerRadius="5"
             Cursor="IBeam"
             MouseLeftButtonUp="OnDisplayClick"
-            ToolTip="Click to edit (hh:mm:ss)">
+            ToolTip="Click to edit">
+            <Border.Style>
+                <Style TargetType="Border">
+                    <!--  Quiet at rest (blends into the background), full brightness under the mouse  -->
+                    <Setter Property="Background" Value="#08FFFFFF" />
+                    <Setter Property="BorderBrush" Value="#12FFFFFF" />
+                    <Setter Property="BorderThickness" Value="1" />
+                    <Style.Triggers>
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter Property="Background" Value="#22FFFFFF" />
+                            <Setter Property="BorderBrush" Value="#B7AFE9" />
+                        </Trigger>
+                    </Style.Triggers>
+                </Style>
+            </Border.Style>
             <TextBlock
                 x:Name="DisplayText"
                 Margin="0"
@@ -80,6 +91,7 @@
                 x:Name="Input"
                 Height="32"
                 MaxLength="9"
+                BorderBrush="#B7AFE9"
                 Padding="4,0"
                 FontFamily="Consolas"
                 FontSize="14"
