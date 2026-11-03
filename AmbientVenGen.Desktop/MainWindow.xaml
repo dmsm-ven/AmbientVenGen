@@ -666,7 +666,7 @@
                                     <StackPanel Grid.Row="1" Grid.ColumnSpan="3" HorizontalAlignment="Center">
                                     <WrapPanel HorizontalAlignment="Center" Orientation="Horizontal">
                                         <controls:RangeParam
-                                            Margin="7,0,7,8"
+                                            Margin="12.5,0,12.5,8"
                                             Easing="{Binding LevelEasing, Mode=TwoWay}"
                                             End="{Binding LevelTo, Mode=TwoWay}"
                                             Format="{}{0:P0}"
@@ -677,7 +677,7 @@
                                             Start="{Binding LevelFrom, Mode=TwoWay}"
                                             Step="0.01" />
                                         <controls:RangeParam
-                                            Margin="7,0,7,8"
+                                            Margin="12.5,0,12.5,8"
                                             Easing="{Binding BrightnessEasing, Mode=TwoWay}"
                                             End="{Binding BrightnessTo, Mode=TwoWay}"
                                             Format="{}{0:P0}"
@@ -688,7 +688,7 @@
                                             Start="{Binding BrightnessFrom, Mode=TwoWay}"
                                             Step="0.01" />
                                         <controls:RangeParam
-                                            Margin="7,0,7,8"
+                                            Margin="12.5,0,12.5,8"
                                             Easing="{Binding ModulationEasing, Mode=TwoWay}"
                                             End="{Binding ModulationTo, Mode=TwoWay}"
                                             Format="{}{0:P0}"
@@ -700,7 +700,7 @@
                                             Step="0.01" />
                                         <StackPanel Orientation="Horizontal">
 <controls:RangeParam
-                                            Margin="7,0,7,8"
+                                            Margin="12.5,0,12.5,8"
                                             AllowRange="False"
                                             Easing="{Binding FadeEasing, Mode=TwoWay}"
                                             Format="{}{0:0} s"
@@ -711,7 +711,7 @@
                                             Start="{Binding FadeInSeconds, Mode=TwoWay}"
                                             Step="1" />
                                         <controls:RangeParam
-                                            Margin="7,0,7,8"
+                                            Margin="12.5,0,12.5,8"
                                             AllowRange="False"
                                             Easing="{Binding FadeOutEasing, Mode=TwoWay}"
                                             Format="{}{0:0} s"
@@ -725,7 +725,7 @@
                                         </WrapPanel>
 <WrapPanel HorizontalAlignment="Center" Orientation="Horizontal">
 <controls:KnobPair
-                                            Margin="7,0,7,8"
+                                            Margin="12.5,0,12.5,8"
                                             IsOpen="{Binding PitchPairOpen, Mode=TwoWay}"
                                             MarkerToolTip="Pitch drift">
                                             <controls:KnobPair.Style>
@@ -765,7 +765,7 @@
                                             </controls:KnobPair.Secondary>
                                         </controls:KnobPair>
                                         <controls:KnobPair
-                                            Margin="7,0,7,8"
+                                            Margin="12.5,0,12.5,8"
                                             IsOpen="{Binding PitchPairOpen, Mode=TwoWay}"
                                             MarkerToolTip="Pitch drift">
                                             <controls:KnobPair.Style>
@@ -803,7 +803,7 @@
                                             </controls:KnobPair.Secondary>
                                         </controls:KnobPair>
                                         <controls:KnobPair
-                                            Margin="7,0,7,8"
+                                            Margin="12.5,0,12.5,8"
                                             IsOpen="{Binding PanPairOpen, Mode=TwoWay}"
                                             MarkerToolTip="Pan drift">
                                             <controls:KnobPair.Style>
@@ -836,7 +836,7 @@
                                             </controls:KnobPair.Secondary>
                                         </controls:KnobPair>
                                         <controls:KnobPair
-                                            Margin="7,0,7,8"
+                                            Margin="12.5,0,12.5,8"
                                             IsOpen="{Binding FilterPairOpen, Mode=TwoWay}"
                                             MarkerToolTip="Resonance">
                                             <controls:KnobPair.Style>
@@ -870,7 +870,7 @@
                                             </controls:KnobPair.Secondary>
                                         </controls:KnobPair>
                                         <controls:KnobPair
-                                            Margin="7,0,7,8"
+                                            Margin="12.5,0,12.5,8"
                                             IsOpen="{Binding DelayPairOpen, Mode=TwoWay}"
                                             MarkerToolTip="Feedback">
                                             <controls:KnobPair.Style>
@@ -903,7 +903,7 @@
                                             </controls:KnobPair.Secondary>
                                         </controls:KnobPair>
                                         <controls:LabeledSlider
-                                            Margin="7,0,7,8"
+                                            Margin="12.5,0,12.5,8"
                                             Format="{}{0:P0}"
                                             Header="Reverb send"
                                             Hint="{x:Static vm:HintTexts.ReverbSend}"
