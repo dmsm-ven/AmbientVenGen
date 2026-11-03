@@ -16,8 +16,8 @@ namespace AmbientVenGen.Desktop.Controls;
 /// </summary>
 public sealed class Knob : FrameworkElement
 {
-    private const double DefaultWidth = 134;
-    private const double DefaultHeight = 60; // another 15% lower (71); the gauge is a stretched half-ellipse
+    private const double DefaultWidth = 161; // 134 + 20%
+    private const double DefaultHeight = 72; // 60 + 20%
     private const double ArcThickness = 8;
     private const double CapRadius = 7;
     private const double MiddleCapRadius = 5;
@@ -279,7 +279,7 @@ public sealed class Knob : FrameworkElement
             CultureInfo.CurrentCulture,
             FlowDirection.LeftToRight,
             new Typeface("Segoe UI Semibold"),
-            13,
+            15,
             TextBrush,
             dpi);
 
@@ -294,7 +294,7 @@ public sealed class Knob : FrameworkElement
                 CultureInfo.CurrentCulture,
                 FlowDirection.LeftToRight,
                 new Typeface("Segoe UI"),
-                10.5,
+                12,
                 CaptionBrush,
                 dpi);
 
@@ -359,7 +359,7 @@ public sealed class Knob : FrameworkElement
             CultureInfo.CurrentCulture,
             FlowDirection.LeftToRight,
             new Typeface("Segoe UI Semibold"),
-            8,
+            9.5,
             CaptionBrush,
             VisualTreeHelper.GetDpi(this).PixelsPerDip);
 
