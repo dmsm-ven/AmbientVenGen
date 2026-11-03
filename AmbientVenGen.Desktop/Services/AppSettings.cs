@@ -1,4 +1,4 @@
-using CommunityToolkit.Mvvm.ComponentModel;
+﻿using CommunityToolkit.Mvvm.ComponentModel;
 using System.IO;
 using System.Text.Json;
 using System.Text.Json.Serialization;
@@ -48,7 +48,7 @@ public sealed partial class AppSettings : ObservableObject
         }
     }
 
-    private bool _intervalMathExpanded = true;
+    private bool _intervalMathExpanded = false;
 
     public string? LastProjectPath
     {

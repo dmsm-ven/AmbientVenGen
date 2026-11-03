@@ -1,4 +1,4 @@
-using AmbientVenGen.Core.Composition;
+﻿using AmbientVenGen.Core.Composition;
 
 namespace AmbientVenGen.Desktop.ViewModels;
 
@@ -29,6 +29,7 @@ public static class Choices
         new("Unison", 1.0, "Same pitch"),
         new("Octave", 2.0, "Twice as high"),
         new("Fifth", 1.5, "Open and stable"),
+        new("Tritone (√2)", Math.Sqrt(2.0), "Tense, unresolved"),
         new("Fourth", 4.0 / 3.0, "Suspended, calm"),
         new("Major third", 1.25, "Bright, warm"),
         new("Minor third", 1.2, "Dark, sad"),
@@ -39,21 +40,20 @@ public static class Choices
     /// <summary>Second group of the interval table: mathematical and "harmonic series" ratios, smallest first.</summary>
     public static IReadOnlyList<PitchInterval> MathIntervals { get; } = new PitchInterval[]
     {
-        new("\u03C0\u00B2 / 8", Math.PI * Math.PI / 8.0, "Almost a major third, slightly flat and strange"),
-        new("2\u03C0 / 5", 2.0 * Math.PI / 5.0, "Between the minor and major third"),
-        new("2^(1/3)", Math.Pow(2.0, 1.0 / 3.0), "Soft, slightly \"wrong\" major colour; the octave split in 3"),
-        new("4 / \u03C0", 4.0 / Math.PI, "A narrow, uneasy third"),
-        new("e / 2", Math.E / 2.0, "Warm, a little alive"),
-        new("11/8 (undecimal)", 11.0 / 8.0, "An unusual fourth / third"),
-        new("Tritone (\u221A2)", Math.Sqrt(2.0), "Tense, unresolved"),
-        new("\u03C0 / 2", Math.PI / 2.0, "Strange, \"mathematical\""),
-        new("2^(2/3)", Math.Pow(2.0, 2.0 / 3.0), "Between a fifth and a minor sixth"),
-        new("Golden ratio (\u03C6)", (1.0 + Math.Sqrt(5.0)) / 2.0, "Organic, \"natural\", slightly dissonant"),
-        new("13/8 (tridecimal)", 13.0 / 8.0, "Very close to the golden ratio"),
-        new("\u221A3", Math.Sqrt(3.0), "More open and bright than the tritone"),
+        new("π²⁄₈", Math.PI * Math.PI / 8.0, "Almost a major third, slightly flat and strange"),
+        new("2π⁄₅", 2.0 * Math.PI / 5.0, "Between the minor and major third"),
+        new("2¹⁄³", Math.Pow(2.0, 1.0 / 3.0), "Soft, slightly \"wrong\" major colour; the octave split in 3"),
+        new("4⁄π", 4.0 / Math.PI, "A narrow, uneasy third"),
+        new("e⁄₂", Math.E / 2.0, "Warm, a little alive"),
+        new("¹¹⁄₈ (undecimal)", 11.0 / 8.0, "An unusual fourth / third"),
+        new("π⁄₂", Math.PI / 2.0, "Strange, \"mathematical\""),
+        new("2²⁄³", Math.Pow(2.0, 2.0 / 3.0), "Between a fifth and a minor sixth"),
+        new("Golden ratio (φ)", (1.0 + Math.Sqrt(5.0)) / 2.0, "Organic, \"natural\", slightly dissonant"),
+        new("¹³⁄₈ (tridecimal)", 13.0 / 8.0, "Very close to the golden ratio"),
+        new("√3", Math.Sqrt(3.0), "More open and bright than the tritone"),
         new("7/4 (septimal)", 7.0 / 4.0, "A soft, \"natural\" minor seventh"),
-        new("\u221A\u03C0", Math.Sqrt(Math.PI), "Bright, a little restless"),
-        new("\u221A5", Math.Sqrt(5.0), "Wide and spacious (an octave lower it is 1.118)")
+        new("√π", Math.Sqrt(Math.PI), "Bright, a little restless"),
+        new("√5", Math.Sqrt(5.0), "Wide and spacious (an octave lower it is 1.118)")
     }.OrderBy(interval => interval.Ratio).ToArray();
 
     public static IReadOnlyList<NoiseOption> NoiseOptions { get; } =
