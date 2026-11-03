@@ -351,7 +351,10 @@
             </Grid>
 
             <!--  Selected layer inspector  -->
-            <Border Grid.Column="2" Style="{StaticResource SectionCard}">
+            <Border
+                Grid.Column="2"
+                IsEnabled="{Binding HasSelectedLayer}"
+                Style="{StaticResource SectionCard}">
                 <Grid>
                     <Grid.RowDefinitions>
                         <RowDefinition Height="Auto" />
@@ -660,7 +663,8 @@
                                           - Fade in / Fade out: one value each with its own curve
                                           - Speed (recording), Reverb send: one value
                                     -->
-                                    <WrapPanel Grid.Row="1" Grid.ColumnSpan="3" Orientation="Horizontal">
+                                    <StackPanel Grid.Row="1" Grid.ColumnSpan="3">
+                                    <WrapPanel Orientation="Horizontal">
                                         <controls:RangeParam
                                             Margin="0,0,14,8"
                                             Easing="{Binding LevelEasing, Mode=TwoWay}"
@@ -694,7 +698,8 @@
                                             Minimum="0"
                                             Start="{Binding ModulationFrom, Mode=TwoWay}"
                                             Step="0.01" />
-                                        <controls:RangeParam
+                                        <StackPanel Orientation="Horizontal">
+<controls:RangeParam
                                             Margin="0,0,14,8"
                                             AllowRange="False"
                                             Easing="{Binding FadeEasing, Mode=TwoWay}"
@@ -716,7 +721,10 @@
                                             Minimum="0"
                                             Start="{Binding FadeOutSeconds, Mode=TwoWay}"
                                             Step="1" />
-                                        <controls:KnobPair
+</StackPanel>
+                                        </WrapPanel>
+<WrapPanel Orientation="Horizontal">
+<controls:KnobPair
                                             Margin="0,0,14,8"
                                             IsOpen="{Binding PitchPairOpen, Mode=TwoWay}"
                                             MarkerToolTip="Pitch drift">
@@ -904,6 +912,7 @@
                                             Step="0.01"
                                             Value="{Binding ReverbSend, Mode=TwoWay}" />
                                     </WrapPanel>
+</StackPanel>
                                 </Grid>
                             </DataTemplate>
                         </ContentControl.ContentTemplate>
