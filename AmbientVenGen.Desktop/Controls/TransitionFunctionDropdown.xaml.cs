@@ -46,4 +46,11 @@ public partial class TransitionFunctionDropdown : UserControl
         if (e.AddedItems.Count > 0)
             Pop.IsOpen = false;
     }
+
+    // A double click on a curve always closes the list, even on the already selected one (no selection change then).
+    private void OnItemDoubleClick(object sender, System.Windows.Input.MouseButtonEventArgs e)
+    {
+        Pop.IsOpen = false;
+        e.Handled = true;
+    }
 }

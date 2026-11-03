@@ -60,6 +60,11 @@ public sealed class Knob : FrameworkElement
         new FrameworkPropertyMetadata("{0:F0}", FrameworkPropertyMetadataOptions.AffectsRender));
 
     /// <summary>When not empty, shown instead of the formatted value (e.g. when the scale is logarithmic).</summary>
+    /// <summary>The window-wide "Show hints" switch (inherited); with it on a knob that has a hint shows a "?" mark.</summary>
+    public static readonly DependencyProperty HintsShownProperty = Hints.IsShownProperty.AddOwner(
+        typeof(Knob),
+        new FrameworkPropertyMetadata(false, FrameworkPropertyMetadataOptions.Inherits | FrameworkPropertyMetadataOptions.AffectsRender));
+
     public static readonly DependencyProperty ValueTextProperty = DependencyProperty.Register(
         nameof(ValueText), typeof(string), typeof(Knob),
         new FrameworkPropertyMetadata(string.Empty, FrameworkPropertyMetadataOptions.AffectsRender));
@@ -253,6 +258,9 @@ public sealed class Knob : FrameworkElement
                 DrawDirectionArrow(dc, center, radius, low + (high - low) * (i + 0.5) / arrows, endFraction >= fraction ? 1 : -1);
         }
 
+        if ((bool)GetValue(HintsShownProperty) && ToolTip is not null)
+            DrawHintMark(dc);
+
         // Minimum / maximum buttons at the ends of the arc: lit when a value is at that end.
         DrawCap(dc, OnArc(center, radius, 0), fraction <= 0.002 || (range && endFraction <= 0.002));
         DrawCap(dc, OnArc(center, radius, 1), fraction >= 0.998 || (range && endFraction >= 0.998));
@@ -344,6 +352,23 @@ public sealed class Knob : FrameworkElement
     }
 
     // "S" / "E" next to a handle, just inside the arc.
+    // The same "?" in a circle as the hint icons next to the captions of the sliders (top-left corner).
+    private void DrawHintMark(DrawingContext dc)
+    {
+        var at = new Point(9, 9);
+        dc.DrawEllipse(null, new Pen(CaptionBrush, 1.2), at, 6, 6);
+
+        var mark = new FormattedText(
+            "?",
+            CultureInfo.CurrentCulture,
+            FlowDirection.LeftToRight,
+            new Typeface("Segoe UI Semibold"),
+            9.5,
+            CaptionBrush,
+            VisualTreeHelper.GetDpi(this).PixelsPerDip);
+        dc.DrawText(mark, new Point(at.X - mark.Width / 2.0, at.Y - mark.Height / 2.0));
+    }
+
     private void DrawHandleLetter(DrawingContext dc, Point center, Size radius, double fraction, string letter)
     {
         Point on = OnArc(center, radius, fraction);

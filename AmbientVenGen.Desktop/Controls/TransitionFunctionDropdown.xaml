@@ -60,6 +60,7 @@
             <Setter Property="Padding" Value="6" />
             <Setter Property="Margin" Value="0,1" />
             <Setter Property="Cursor" Value="Hand" />
+            <EventSetter Event="MouseDoubleClick" Handler="OnItemDoubleClick" />
             <Setter Property="Template">
                 <Setter.Value>
                     <ControlTemplate TargetType="ListBoxItem">
@@ -154,8 +155,7 @@
                                         FontSize="11"
                                         Foreground="#A9A7C2"
                                         Text="{Binding Description}"
-                                        TextWrapping="Wrap"
-                                        Visibility="{Binding Path=(local:Hints.IsShown), ElementName=Root, Converter={StaticResource BoolToVisibility}}" />
+                                        TextWrapping="Wrap" />
                                 </StackPanel>
                             </StackPanel>
                         </DataTemplate>
