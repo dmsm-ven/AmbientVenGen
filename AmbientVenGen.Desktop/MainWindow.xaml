@@ -152,12 +152,12 @@
                                 Text="{Binding Preset.RatioText}" />
                         </StackPanel>
                     </Border>
-                    <!-- All three pitches, lowest first; the root (it keeps its pitch) is in gold, the other two in green -->
+                    <!-- All three pitches, lowest first, in three right-aligned columns; the root (it keeps its pitch) is blue, the other two green -->
                     <StackPanel
                         Grid.Column="1"
                         VerticalAlignment="Center"
                         Orientation="Horizontal"
-                        ToolTip="Pitches of the three layers, lowest first. Gold: the root, it keeps its pitch.">
+                        ToolTip="Pitches of the three layers, lowest first. Blue: the root, it keeps its pitch.">
                         <ItemsControl ItemsSource="{Binding Voices}">
                             <ItemsControl.ItemsPanel>
                                 <ItemsPanelTemplate>
@@ -167,16 +167,18 @@
                             <ItemsControl.ItemTemplate>
                                 <DataTemplate>
                                     <TextBlock
-                                        Margin="6,0,0,0"
+                                        Width="44"
+                                        Margin="0"
                                         FontSize="12"
                                         FontWeight="SemiBold"
-                                        Text="{Binding Text}">
+                                        Text="{Binding Text}"
+                                        TextAlignment="Right">
                                         <TextBlock.Style>
                                             <Style BasedOn="{StaticResource {x:Type TextBlock}}" TargetType="TextBlock">
                                                 <Setter Property="Foreground" Value="#8FD16A" />
                                                 <Style.Triggers>
                                                     <DataTrigger Binding="{Binding IsRoot}" Value="True">
-                                                        <Setter Property="Foreground" Value="#FFD27F" />
+                                                        <Setter Property="Foreground" Value="#4FC3FF" />
                                                     </DataTrigger>
                                                 </Style.Triggers>
                                             </Style>
@@ -186,11 +188,12 @@
                             </ItemsControl.ItemTemplate>
                         </ItemsControl>
                         <TextBlock
-                            Margin="4,0,0,0"
+                            Width="22"
+                            Margin="0"
                             VerticalAlignment="Center"
                             FontSize="11"
                             Foreground="#8F8DB0"
-                            Text="Hz" />
+                            Text="  Hz" />
                     </StackPanel>
                 </Grid>
             </Border>
