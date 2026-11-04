@@ -1,4 +1,4 @@
-<ui:FluentWindow
+﻿<ui:FluentWindow
     x:Class="AmbientVenGen.Desktop.MainWindow"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
@@ -656,7 +656,7 @@
                                                 VerticalAlignment="Center"
                                                 FontSize="12"
                                                 Foreground="#C9C8D6"
-                                                Text="Tick a layer to take the pitch from (two: a chord of three)"
+                                                Text="Tick a layer to take the pitch from"
                                                 ToolTip="One ticked layer: this layer gets an interval above it. Two ticked layers make three together with this one: choose the Root, the other two are set relative to it." />
                                             <ui:Button
                                                 Margin="0,-4,-8,0"
