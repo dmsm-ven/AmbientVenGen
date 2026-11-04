@@ -138,21 +138,30 @@ public sealed record ChordPreset(string Name, double RatioA, double RatioB, stri
 /// <summary>One row of the three-layer table: the relation and the pitches the lower and the higher non-root layer would get.</summary>
 public sealed partial class ChordRow : CommunityToolkit.Mvvm.ComponentModel.ObservableObject
 {
-    public ChordRow(ChordPreset preset, double lowHz, double highHz)
+    public ChordRow(ChordPreset preset, double lowHz, double highHz, double rootHz)
     {
         Preset = preset;
         LowHz = lowHz;
         HighHz = highHz;
+
+        // All three pitches, lowest first; the root is marked so that it can be shown in another colour.
+        Voices = new[] { (Hz: rootHz, IsRoot: true), (Hz: lowHz, IsRoot: false), (Hz: highHz, IsRoot: false) }
+            .OrderBy(v => v.Hz)
+            .Select(v => new ChordVoice($"{v.Hz:0.#}", v.IsRoot))
+            .ToArray();
     }
 
     public ChordPreset Preset { get; }
     public double LowHz { get; }
     public double HighHz { get; }
-    public string HzText => $"{LowHz:0.#} \u00B7 {HighHz:0.#} Hz";
+    public IReadOnlyList<ChordVoice> Voices { get; }
 
     [CommunityToolkit.Mvvm.ComponentModel.ObservableProperty]
     private bool _isCurrent;
 }
+
+/// <summary>One pitch in a three-layer row; the root one is drawn in another colour.</summary>
+public sealed record ChordVoice(string Text, bool IsRoot);
 
 /// <summary>A Drone / Pad layer in the interval panel: a checkbox (up to two), the Root mark and its pitch.</summary>
 public sealed partial class IntervalLayerItem : CommunityToolkit.Mvvm.ComponentModel.ObservableObject

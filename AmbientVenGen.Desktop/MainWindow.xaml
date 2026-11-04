@@ -152,18 +152,88 @@
                                 Text="{Binding Preset.RatioText}" />
                         </StackPanel>
                     </Border>
-                    <TextBlock
+                    <!-- All three pitches, lowest first; the root (it keeps its pitch) is in gold, the other two in green -->
+                    <StackPanel
                         Grid.Column="1"
-                        Margin="0"
                         VerticalAlignment="Center"
-                        FontSize="12"
-                        FontWeight="SemiBold"
-                        Foreground="#8FD16A"
-                        Text="{Binding HzText}"
-                        ToolTip="Pitch of the lower and of the higher of the two other layers" />
+                        Orientation="Horizontal"
+                        ToolTip="Pitches of the three layers, lowest first. Gold: the root, it keeps its pitch.">
+                        <ItemsControl ItemsSource="{Binding Voices}">
+                            <ItemsControl.ItemsPanel>
+                                <ItemsPanelTemplate>
+                                    <StackPanel Orientation="Horizontal" />
+                                </ItemsPanelTemplate>
+                            </ItemsControl.ItemsPanel>
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate>
+                                    <TextBlock
+                                        Margin="6,0,0,0"
+                                        FontSize="12"
+                                        FontWeight="SemiBold"
+                                        Text="{Binding Text}">
+                                        <TextBlock.Style>
+                                            <Style BasedOn="{StaticResource {x:Type TextBlock}}" TargetType="TextBlock">
+                                                <Setter Property="Foreground" Value="#8FD16A" />
+                                                <Style.Triggers>
+                                                    <DataTrigger Binding="{Binding IsRoot}" Value="True">
+                                                        <Setter Property="Foreground" Value="#FFD27F" />
+                                                    </DataTrigger>
+                                                </Style.Triggers>
+                                            </Style>
+                                        </TextBlock.Style>
+                                    </TextBlock>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                        <TextBlock
+                            Margin="4,0,0,0"
+                            VerticalAlignment="Center"
+                            FontSize="11"
+                            Foreground="#8F8DB0"
+                            Text="Hz" />
+                    </StackPanel>
                 </Grid>
             </Border>
         </DataTemplate>
+        <!-- A plain tick box (the theme one is clipped in the narrow column) -->
+        <ControlTemplate x:Key="TickBoxTemplate" TargetType="CheckBox">
+            <Border
+                x:Name="Box"
+                Width="16"
+                Height="16"
+                HorizontalAlignment="Center"
+                VerticalAlignment="Center"
+                Background="#14FFFFFF"
+                BorderBrush="#99B7AFE9"
+                BorderThickness="1.5"
+                CornerRadius="3"
+                SnapsToDevicePixels="True">
+                <Path
+                    x:Name="Mark"
+                    Margin="2"
+                    Data="M0,5 L3.5,8.5 L10,0.5"
+                    Stretch="Uniform"
+                    Stroke="#FFFFFF"
+                    StrokeEndLineCap="Round"
+                    StrokeLineJoin="Round"
+                    StrokeStartLineCap="Round"
+                    StrokeThickness="1.8"
+                    Visibility="Collapsed" />
+            </Border>
+            <ControlTemplate.Triggers>
+                <Trigger Property="IsChecked" Value="True">
+                    <Setter TargetName="Box" Property="Background" Value="#FF5B9BFF" />
+                    <Setter TargetName="Box" Property="BorderBrush" Value="#FF5B9BFF" />
+                    <Setter TargetName="Mark" Property="Visibility" Value="Visible" />
+                </Trigger>
+                <Trigger Property="IsMouseOver" Value="True">
+                    <Setter TargetName="Box" Property="BorderBrush" Value="#FFFFFFFF" />
+                </Trigger>
+                <Trigger Property="IsEnabled" Value="False">
+                    <Setter Property="Opacity" Value="0.35" />
+                </Trigger>
+            </ControlTemplate.Triggers>
+        </ControlTemplate>
         <controls:GreaterThanOneConverter x:Key="GreaterThanOne" />
 
         <!--  Generic styles (TextBlock, Slider, ComboBox, SectionCard, ToolIconButton) are in Resources/Styles.xaml.  -->
@@ -605,7 +675,10 @@
                                                             <ColumnDefinition Width="Auto" />
                                                         </Grid.ColumnDefinitions>
                                                         <CheckBox
+                                                            Width="22"
                                                             MinWidth="0"
+                                                            HorizontalAlignment="Left"
+                                                            Template="{StaticResource TickBoxTemplate}"
                                                             IsChecked="{Binding IsChecked, Mode=TwoWay}"
                                                             IsEnabled="{Binding CanCheck}"
                                                             Visibility="{Binding ShowCheck, Converter={StaticResource BoolToVisibility}}" />
