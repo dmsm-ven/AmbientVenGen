@@ -1,3 +1,4 @@
+using AmbientVenGen.Core.Audio;
 using CommunityToolkit.Mvvm.ComponentModel;
 using System.IO;
 
@@ -19,11 +20,8 @@ public sealed partial class Layer : ObservableObject
 
     public Guid Id { get; } = Guid.NewGuid();
 
-    // UI only (not saved): which hidden second knobs are expanded for this layer.
-    [ObservableProperty] private bool _pitchPairOpen;
-    [ObservableProperty] private bool _panPairOpen;
-    [ObservableProperty] private bool _filterPairOpen;
-    [ObservableProperty] private bool _delayPairOpen;
+    /// <summary>UI-only state (expanded second knobs); never saved and never heard.</summary>
+    public LayerViewState View { get; private set; } = new();
 
     [ObservableProperty]
     private string _name = "Layer";
@@ -183,8 +181,6 @@ public sealed partial class Layer : ObservableObject
         return $"{total / 3600:00}:{total / 60 % 60:00}:{total % 60:00}";
     }
 
-    private static readonly Dictionary<string, double> SourceLengths = new(StringComparer.OrdinalIgnoreCase);
-
     partial void OnSourcePathChanged(string? value)
     {
         SourceSeconds = 0;
@@ -192,33 +188,22 @@ public sealed partial class Layer : ObservableObject
         if (Type != LayerType.FieldRecord || string.IsNullOrEmpty(value))
             return;
 
-        lock (SourceLengths)
+        if (SourceLengthCache.TryGet(value, out double known))
         {
-            if (SourceLengths.TryGetValue(value, out double known))
-            {
-                SourceSeconds = known;
-                return;
-            }
+            SourceSeconds = known;
+            return;
         }
 
-        // Only the file header is read; done off the UI thread.
-        Task.Run(() =>
-        {
-            try
-            {
-                using var reader = new NAudio.Wave.AudioFileReader(value);
-                double length = reader.TotalTime.TotalSeconds;
-                lock (SourceLengths)
-                    SourceLengths[value] = length;
+        _ = ReadSourceLengthAsync(value);
+    }
 
-                if (SourcePath == value)
-                    SourceSeconds = length;
-            }
-            catch
-            {
-                // an unreadable file simply has no length shown
-            }
-        });
+    private async Task ReadSourceLengthAsync(string path)
+    {
+        double seconds = await SourceLengthCache.ReadAsync(path).ConfigureAwait(false);
+
+        // The file may have been changed while it was being read.
+        if (SourcePath == path)
+            SourceSeconds = seconds;
     }
 
     protected override void OnPropertyChanged(System.ComponentModel.PropertyChangedEventArgs e)
@@ -302,10 +287,7 @@ public sealed partial class Layer : ObservableObject
             PitchDrift = Unit(spec.PitchDrift),
             PanDrift = Unit(spec.PanDrift)
         };
-        layer.PitchPairOpen = layer.PitchDrift > 0;
-        layer.PanPairOpen = layer.PanDrift > 0;
-        layer.FilterPairOpen = layer.FilterResonance > 0;
-        layer.DelayPairOpen = layer.DelayFeedback > 0 && layer.DelaySeconds > 0;
+        layer.View = LayerViewState.For(layer);
         return layer;
     }
 

@@ -3,6 +3,9 @@
     <File Path="Directory.Build.props" />
     <File Path="Directory.Packages.props" />
   </Folder>
+  <Folder Name="/tests/">
+    <Project Path="AmbientVenGen.Core.Tests/AmbientVenGen.Core.Tests.csproj" />
+  </Folder>
   <Folder Name="/src/">
     <Project Path="AmbientVenGen.Core/AmbientVenGen.Core.csproj" />
     <Project Path="AmbientVenGen.Desktop/AmbientVenGen.Desktop.csproj" />

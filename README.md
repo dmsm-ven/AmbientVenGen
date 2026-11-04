@@ -50,5 +50,6 @@ Keys: `Space` play/stop, `Ctrl+N/O/S` new/open/save, `Ctrl+E` export, `Del` remo
 | --- | --- |
 | `AmbientVenGen.Core` | Layers, project model, audio engine (generators, mixer, reverb), export, project files. No UI. |
 | `AmbientVenGen.Desktop` | WPF app (WPF-UI, MVVM): timeline, inspector, preset library (SQLite), settings. |
+| `AmbientVenGen.Core.Tests` | xUnit tests of the engine and the model (curves, fades, repeats, project files, mixer, pitch relations). Run: `dotnet test`. |
 
 Built with .NET 10, WPF-UI, NAudio and CommunityToolkit.Mvvm.

@@ -125,19 +125,7 @@ public partial class RangeParam : UserControl
 
     // ------------------------------------------------------------------ view
 
-    private bool PercentFormat => Format.Contains(":P", StringComparison.OrdinalIgnoreCase);
-
-    private string FormatValue(double value)
-    {
-        try
-        {
-            return string.Format(CultureInfo.CurrentCulture, Format, value);
-        }
-        catch (FormatException)
-        {
-            return value.ToString(CultureInfo.CurrentCulture);
-        }
-    }
+    private string FormatValue(double value) => NumberText.Format(Format, value);
 
     private void Sync()
     {
@@ -183,7 +171,7 @@ public partial class RangeParam : UserControl
         _editHandle = AllowRange && IsRange ? handle : 0;
 
         double value = _editHandle == 1 ? End : Start;
-        Editor.Text = (PercentFormat ? value * 100.0 : value).ToString("0.##", CultureInfo.CurrentCulture);
+        Editor.Text = NumberText.EditText(Format, value);
         Editor.ToolTip = IsRange ? (_editHandle == 1 ? "E (end)" : "S (start)") : null;
 
         // Centred over the knob (the value is written there).
@@ -220,20 +208,10 @@ public partial class RangeParam : UserControl
         if (!commit)
             return;
 
-        string text = Editor.Text.Trim().TrimEnd('%').Trim();
-        if (!double.TryParse(text, NumberStyles.Float, CultureInfo.CurrentCulture, out double typed)
-            && !double.TryParse(text.Replace(',', '.'), NumberStyles.Float, CultureInfo.InvariantCulture, out typed))
-        {
+        if (!NumberText.TryParse(Editor.Text, Format, out double typed))
             return;
-        }
 
-        if (PercentFormat)
-            typed /= 100.0;
-
-        if (Step > 0)
-            typed = Math.Round(typed / Step) * Step;
-
-        typed = Math.Clamp(Math.Round(typed, 4), Minimum, Math.Max(Maximum, Minimum));
+        typed = NumberText.Snap(typed, Step, Minimum, Maximum);
 
         bool wasRange = IsRange;
 

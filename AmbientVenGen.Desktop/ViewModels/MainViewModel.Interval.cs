@@ -193,18 +193,6 @@ public partial class MainViewModel
         return (root, others[0], others[1]);
     }
 
-    // A pitch outside the allowed range is folded by octaves instead of being cut.
-    private static double FoldPitch(double hz)
-    {
-        while (hz > Layer.MaxPitchHz)
-            hz /= 2.0;
-
-        while (hz < Layer.MinPitchHz)
-            hz *= 2.0;
-
-        return Math.Round(hz, 1);
-    }
-
     private void RebuildChordRows()
     {
         ChordRows.Clear();
@@ -218,8 +206,7 @@ public partial class MainViewModel
 
         foreach (ChordPreset preset in Choices.ChordPresets)
         {
-            double low = FoldPitch(root * Math.Min(preset.RatioA, preset.RatioB));
-            double high = FoldPitch(root * Math.Max(preset.RatioA, preset.RatioB));
+            (double low, double high) = PitchRelations.ChordPitches(root, preset);
 
             var row = new ChordRow(preset, low, high, root);
             double[] now = [lowNow, highNow];

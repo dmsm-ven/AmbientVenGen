@@ -50,11 +50,6 @@ public partial class LabeledSlider : UserControl
         nameof(IsLogarithmic), typeof(bool), typeof(LabeledSlider),
         new PropertyMetadata(false, OnPropertyChanged));
 
-    /// <summary>Click on the value to type an exact number instead of dragging.</summary>
-    public static readonly DependencyProperty IsValueEditableProperty = DependencyProperty.Register(
-        nameof(IsValueEditable), typeof(bool), typeof(LabeledSlider),
-        new PropertyMetadata(false, OnPropertyChanged));
-
     /// <summary>Follows the window-wide "Slider / Knob" setting (inherited attached property).</summary>
     public static readonly DependencyProperty UseKnobsProperty = InputStyle.UseKnobsProperty.AddOwner(
         typeof(LabeledSlider),
@@ -79,12 +74,6 @@ public partial class LabeledSlider : UserControl
     {
         get => (bool)GetValue(UseKnobsProperty);
         set => SetValue(UseKnobsProperty, value);
-    }
-
-    public bool IsValueEditable
-    {
-        get => (bool)GetValue(IsValueEditableProperty);
-        set => SetValue(IsValueEditableProperty, value);
     }
 
     public bool IsLogarithmic
@@ -256,7 +245,7 @@ public partial class LabeledSlider : UserControl
         _editing = true;
         Sync();
 
-        ValueEditor.Text = Value.ToString("0.##", CultureInfo.CurrentCulture);
+        ValueEditor.Text = NumberText.EditText(Format, Value);
         ValueText.Visibility = Visibility.Hidden; // hidden, not collapsed: the layout stays as it is
         ValueEditor.Visibility = Visibility.Visible;
         ValueEditor.Focus();
@@ -286,48 +275,13 @@ public partial class LabeledSlider : UserControl
 
         _editing = false;
 
-        if (commit && TryParseNumber(ValueEditor.Text, out double typed))
-        {
-            double step = Step;
-            if (step > 0)
-                typed = Math.Round(typed / step) * step;
-
-            typed = Math.Round(typed, 4);
-            SetCurrentValue(ValueProperty, Math.Clamp(typed, Minimum, Math.Max(Maximum, Minimum)));
-        }
+        if (commit && NumberText.TryParse(ValueEditor.Text, Format, out double typed))
+            SetCurrentValue(ValueProperty, NumberText.Snap(typed, Step, Minimum, Maximum));
 
         ValueEditor.Visibility = Visibility.Collapsed;
         ValueText.Visibility = Visibility.Visible;
         Sync();
     }
 
-    // Accepts "82,4", "82.4" and a trailing "Hz".
-    private static bool TryParseNumber(string? text, out double number)
-    {
-        number = 0;
-
-        if (string.IsNullOrWhiteSpace(text))
-            return false;
-
-        string cleaned = text.Trim();
-        if (cleaned.EndsWith("Hz", StringComparison.OrdinalIgnoreCase))
-            cleaned = cleaned[..^2].Trim();
-        else if (cleaned.EndsWith('x') || cleaned.EndsWith('X') || cleaned.EndsWith('\u00D7'))
-            cleaned = cleaned[..^1].Trim();
-
-        return double.TryParse(cleaned, NumberStyles.Float, CultureInfo.CurrentCulture, out number)
-            || double.TryParse(cleaned.Replace(',', '.'), NumberStyles.Float, CultureInfo.InvariantCulture, out number);
-    }
-
-    private string FormatValue(double value)
-    {
-        try
-        {
-            return string.Format(CultureInfo.CurrentCulture, Format, value);
-        }
-        catch (FormatException)
-        {
-            return value.ToString("0.##", CultureInfo.CurrentCulture);
-        }
-    }
+    private string FormatValue(double value) => NumberText.Format(Format, value);
 }

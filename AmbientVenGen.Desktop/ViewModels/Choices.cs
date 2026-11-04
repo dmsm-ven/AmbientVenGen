@@ -78,17 +78,8 @@ public static class Choices
             "Sounds like: a balanced, even wash of air, like a quiet fan or an air conditioner in a calm room.")
     ];
 
-    /// <summary>Three-layer relations: the two other voices as ratios of the root (the root itself is x1).</summary>
-    public static IReadOnlyList<ChordPreset> ChordPresets { get; } =
-    [
-        new("Open fifth", 1.5, 2.0, "1 : 3/2 : 2", "Root, fifth and octave: empty, wide, \"cosmic\""),
-        new("Sus4", 4.0 / 3.0, 1.5, "1 : 4/3 : 3/2", "Suspended: neither major nor minor, a classic for ambient"),
-        new("Major triad", 1.25, 1.5, "1 : 5/4 : 3/2", "Bright and warm"),
-        new("Minor triad", 1.2, 1.5, "1 : 6/5 : 3/2", "Dark and soft"),
-        new("Diminished", 1.2, 64.0 / 45.0, "1 : 6/5 : 64/45", "Tense, unstable, mysterious"),
-        new("Octave spread", 0.5, 2.0, "1/2 : 1 : 2", "Sub, middle and top of one note: density without harmony (the root is the middle voice)"),
-        new("Beating cluster", 0.9955, 1.0045, "1 : 0.9955 : 1.0045", "Almost unison (about 8 cents apart): slow beating, a chorus effect")
-    ];
+    /// <summary>Three-layer relations (the arithmetic lives in Core: <see cref="PitchRelations"/>).</summary>
+    public static IReadOnlyList<ChordPreset> ChordPresets => PitchRelations.Chords;
 
     public static IReadOnlyList<Choice<LayerType>> LayerTypes { get; } =
     [
@@ -131,9 +122,6 @@ public sealed record IntervalSource(Layer Layer, string Text);
 public sealed record NoiseOption(NoiseType Value, string Label, string Description, string Likeness);
 
 public sealed record EasingOption(Easing Value, string Label, string Description);
-
-/// <summary>A chord-like relation of three layers: the ratios of the two other voices to the root.</summary>
-public sealed record ChordPreset(string Name, double RatioA, double RatioB, string RatioText, string Description);
 
 /// <summary>One row of the three-layer table: the relation and the pitches the lower and the higher non-root layer would get.</summary>
 public sealed partial class ChordRow : CommunityToolkit.Mvvm.ComponentModel.ObservableObject

@@ -986,7 +986,7 @@
 <WrapPanel HorizontalAlignment="Center" Orientation="Horizontal">
 <controls:KnobPair
                                             Margin="12.5,0,12.5,8"
-                                            IsOpen="{Binding PitchPairOpen, Mode=TwoWay}"
+                                            IsOpen="{Binding View.PitchPairOpen, Mode=TwoWay}"
                                             MarkerToolTip="Pitch drift">
                                             <controls:KnobPair.Style>
                                             <Style TargetType="controls:KnobPair">
@@ -1026,7 +1026,7 @@
                                         </controls:KnobPair>
                                         <controls:KnobPair
                                             Margin="12.5,0,12.5,8"
-                                            IsOpen="{Binding PitchPairOpen, Mode=TwoWay}"
+                                            IsOpen="{Binding View.PitchPairOpen, Mode=TwoWay}"
                                             MarkerToolTip="Pitch drift">
                                             <controls:KnobPair.Style>
                                             <Style TargetType="controls:KnobPair">
@@ -1064,7 +1064,7 @@
                                         </controls:KnobPair>
                                         <controls:KnobPair
                                             Margin="12.5,0,12.5,8"
-                                            IsOpen="{Binding PanPairOpen, Mode=TwoWay}"
+                                            IsOpen="{Binding View.PanPairOpen, Mode=TwoWay}"
                                             MarkerToolTip="Pan drift">
                                             <controls:KnobPair.Style>
                                             <Style TargetType="controls:KnobPair">
@@ -1097,7 +1097,7 @@
                                         </controls:KnobPair>
                                         <controls:KnobPair
                                             Margin="12.5,0,12.5,8"
-                                            IsOpen="{Binding FilterPairOpen, Mode=TwoWay}"
+                                            IsOpen="{Binding View.FilterPairOpen, Mode=TwoWay}"
                                             MarkerToolTip="Resonance">
                                             <controls:KnobPair.Style>
                                             <Style TargetType="controls:KnobPair">
@@ -1131,7 +1131,7 @@
                                         </controls:KnobPair>
                                         <controls:KnobPair
                                             Margin="12.5,0,12.5,8"
-                                            IsOpen="{Binding DelayPairOpen, Mode=TwoWay}"
+                                            IsOpen="{Binding View.DelayPairOpen, Mode=TwoWay}"
                                             MarkerToolTip="Feedback">
                                             <controls:KnobPair.Style>
                                             <Style TargetType="controls:KnobPair">
