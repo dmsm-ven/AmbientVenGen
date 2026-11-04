@@ -1,4 +1,5 @@
-using AmbientVenGen.Core.Audio;
+﻿using AmbientVenGen.Core.Audio;
+using Xunit;
 
 namespace AmbientVenGen.Core.Tests;
 

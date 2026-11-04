@@ -1,4 +1,5 @@
-using AmbientVenGen.Core.Composition;
+﻿using AmbientVenGen.Core.Composition;
+using Xunit;
 
 namespace AmbientVenGen.Core.Tests;
 
