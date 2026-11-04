@@ -221,7 +221,7 @@ public partial class MainViewModel
             double low = FoldPitch(root * Math.Min(preset.RatioA, preset.RatioB));
             double high = FoldPitch(root * Math.Max(preset.RatioA, preset.RatioB));
 
-            var row = new ChordRow(preset, low, high);
+            var row = new ChordRow(preset, low, high, root);
             double[] now = [lowNow, highNow];
             Array.Sort(now);
             double[] mine = [low, high];
