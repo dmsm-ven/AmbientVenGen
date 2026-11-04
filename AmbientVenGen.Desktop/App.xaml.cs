@@ -6,6 +6,7 @@ using AmbientVenGen.Desktop.ViewModels;
 using AmbientVenGen.Desktop.Views;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using System.Globalization;
 using System.IO;
 using System.Windows;
 
@@ -14,6 +15,23 @@ namespace AmbientVenGen.Desktop;
 public partial class App : Application
 {
     private IHost? _host;
+
+    // Numbers are always written with a dot (40.5 Hz, 0.00 s), whatever the system language is.
+    // The rest of the culture (dates, language) stays the user's own.
+    private static void UseDotAsDecimalSeparator()
+    {
+        var culture = (CultureInfo)CultureInfo.CurrentCulture.Clone();
+        culture.NumberFormat = (NumberFormatInfo)CultureInfo.InvariantCulture.NumberFormat.Clone();
+
+        CultureInfo.DefaultThreadCurrentCulture = culture;
+        CultureInfo.DefaultThreadCurrentUICulture = CultureInfo.CurrentUICulture;
+        CultureInfo.CurrentCulture = culture;
+    }
+
+    public App()
+    {
+        UseDotAsDecimalSeparator();
+    }
 
     protected override async void OnStartup(StartupEventArgs e)
     {
