@@ -78,6 +78,15 @@ public sealed partial class TimelineControl
         dc.DrawRoundedRectangle(fill, border, rect, 8, 8);
 
         dc.PushClip(new RectangleGeometry(rect, 8, 8));
+
+        // The spectrogram of one play, under the envelope; repeats show the same picture.
+        if (ShowSpectrogram && Spectrograms?.GetBitmap(layer) is { } spectrogram)
+        {
+            dc.PushOpacity(0.75);
+            dc.DrawImage(spectrogram, rect);
+            dc.Pop();
+        }
+
         DrawEnvelope(dc, layer, rect, accent, play * layer.PeriodSeconds);
 
         double textX = Math.Max(rect.Left, HeaderWidth) + 10;

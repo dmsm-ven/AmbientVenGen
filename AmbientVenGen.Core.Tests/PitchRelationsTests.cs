@@ -7,21 +7,15 @@ public class PitchRelationsTests
 {
     private static ChordPreset Chord(string name) => PitchRelations.Chords.Single(c => c.Name == name);
 
-    //TODO: FIX TEST
-    /*
-     * AmbientVenGen.Core.Tests.PitchRelationsTests.FoldKeepsThePitchInRangeByOctaves(input: 2000, expected: 500) (1ms): Error Message: Assert.Equal() Failure: Values are not within 6 decimal places
-      Expected: 500 (rounded from 500)
-      Actual:   1000 (rounded from 1000)
-     
     [Theory]
     [InlineData(1200, 600)]
-    [InlineData(2000, 500)]
+    [InlineData(2000, 1000)] // 1000 Hz is the top of the range, so it stays
+    [InlineData(3000, 750)]
     [InlineData(10, 20)]
     [InlineData(5, 20)]
     [InlineData(440, 440)]
     public void FoldKeepsThePitchInRangeByOctaves(double input, double expected) =>
         Assert.Equal(expected, PitchRelations.Fold(input), 6);
-    */
 
     [Theory]
     [InlineData(double.NaN)]

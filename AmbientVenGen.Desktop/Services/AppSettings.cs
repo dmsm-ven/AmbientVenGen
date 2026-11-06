@@ -50,6 +50,23 @@ public sealed partial class AppSettings : ObservableObject
 
     private bool _intervalMathExpanded = false;
 
+    /// <summary>Whether the spectrograms of the layers are drawn on the timeline.</summary>
+    public bool ShowSpectrogram
+    {
+        get => _showSpectrogram;
+        set
+        {
+            if (_showSpectrogram == value)
+                return;
+
+            _showSpectrogram = value;
+            OnPropertyChanged();
+            Save();
+        }
+    }
+
+    private bool _showSpectrogram = false;
+
     public string? LastProjectPath
     {
         get => _lastProjectPath;
@@ -114,6 +131,7 @@ public sealed partial class AppSettings : ObservableObject
                 ControlStyle = file.ControlStyle;
                 _lastProjectPath = file.LastProjectPath;
                 _intervalMathExpanded = file.IntervalMathExpanded;
+                _showSpectrogram = file.ShowSpectrogram;
             }
         }
         catch (Exception)
@@ -127,7 +145,7 @@ public sealed partial class AppSettings : ObservableObject
         try
         {
             Directory.CreateDirectory(Path.GetDirectoryName(_path)!);
-            File.WriteAllText(_path, JsonSerializer.Serialize(new SettingsFile { ControlStyle = ControlStyle, LastProjectPath = LastProjectPath, IntervalMathExpanded = IntervalMathExpanded }, Options));
+            File.WriteAllText(_path, JsonSerializer.Serialize(new SettingsFile { ControlStyle = ControlStyle, LastProjectPath = LastProjectPath, IntervalMathExpanded = IntervalMathExpanded, ShowSpectrogram = ShowSpectrogram }, Options));
         }
         catch (Exception)
         {
@@ -140,5 +158,6 @@ public sealed partial class AppSettings : ObservableObject
         public ControlStyle ControlStyle { get; set; }
         public string? LastProjectPath { get; set; }
         public bool IntervalMathExpanded { get; set; } = true;
+        public bool ShowSpectrogram { get; set; }
     }
 }

@@ -202,6 +202,10 @@ public partial class MainViewModel
                 SampleLibrary.Request(layer.SourcePath);
         }
 
+        // Spectrograms: only layers whose sound changed are analysed again, 1.5 s after the last change.
+        if (ShowSpectrogram)
+            Spectrograms.Update(Project.Layers, Project.Seed);
+
         if (!_loading)
             RefreshDirty();
 

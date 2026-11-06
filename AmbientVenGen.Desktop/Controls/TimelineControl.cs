@@ -1,4 +1,5 @@
 using AmbientVenGen.Core.Composition;
+using AmbientVenGen.Desktop.Services;
 using System.Globalization;
 using System.Windows;
 using System.Windows.Input;
@@ -59,6 +60,16 @@ public sealed partial class TimelineControl : FrameworkElement
     public static readonly DependencyProperty DeleteCommandProperty = DependencyProperty.Register(
         nameof(DeleteCommand), typeof(ICommand), typeof(TimelineControl), new PropertyMetadata(null));
 
+    /// <summary>Source of the spectrogram pictures of the layers.</summary>
+    public static readonly DependencyProperty SpectrogramsProperty = DependencyProperty.Register(
+        nameof(Spectrograms), typeof(SpectrogramService), typeof(TimelineControl),
+        new PropertyMetadata(null, OnSpectrogramsChanged));
+
+    /// <summary>Draws the spectrogram of every layer inside its clip.</summary>
+    public static readonly DependencyProperty ShowSpectrogramProperty = DependencyProperty.Register(
+        nameof(ShowSpectrogram), typeof(bool), typeof(TimelineControl),
+        new PropertyMetadata(false, (d, _) => ((TimelineControl)d).InvalidateContent()));
+
     private enum DragMode { None, Move, ResizeLeft, ResizeRight, FadeIn, FadeOut, Scrub }
 
     private enum HitZone { None, Body, LeftEdge, RightEdge, FadeInHandle, FadeOutHandle }
@@ -112,6 +123,18 @@ public sealed partial class TimelineControl : FrameworkElement
         set => SetValue(DeleteCommandProperty, value);
     }
 
+    public SpectrogramService? Spectrograms
+    {
+        get => (SpectrogramService?)GetValue(SpectrogramsProperty);
+        set => SetValue(SpectrogramsProperty, value);
+    }
+
+    public bool ShowSpectrogram
+    {
+        get => (bool)GetValue(ShowSpectrogramProperty);
+        set => SetValue(ShowSpectrogramProperty, value);
+    }
+
     public TimelineControl()
     {
         AddVisualChild(_contentVisual);
@@ -129,7 +152,6 @@ public sealed partial class TimelineControl : FrameworkElement
 
     protected override Visual GetVisualChild(int index) => index == 0 ? _contentVisual : _playheadVisual;
 
-
     // ---------------------------------------------------------------- dependency property callbacks
 
     private static void OnProjectChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
@@ -144,6 +166,19 @@ public sealed partial class TimelineControl : FrameworkElement
 
         control._fit = true;
         control.ClampView();
+        control.InvalidateContent();
+    }
+
+    private static void OnSpectrogramsChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
+    {
+        var control = (TimelineControl)d;
+
+        if (e.OldValue is SpectrogramService oldService)
+            oldService.Changed -= control.InvalidateContent;
+
+        if (e.NewValue is SpectrogramService newService)
+            newService.Changed += control.InvalidateContent;
+
         control.InvalidateContent();
     }
 

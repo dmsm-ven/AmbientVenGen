@@ -15,4 +15,8 @@
     <PackageReference Include="CommunityToolkit.Mvvm" />
   </ItemGroup>
 
+  <ItemGroup>
+    <InternalsVisibleTo Include="AmbientVenGen.Core.Tests" />
+  </ItemGroup>
+
 </Project>

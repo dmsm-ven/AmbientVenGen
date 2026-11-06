@@ -264,6 +264,30 @@
                 </DataTrigger>
             </Style.Triggers>
         </Style>
+
+        <!--  Spectrogram on / off: highlighted while the spectrograms are shown on the timeline.  -->
+        <Style
+            x:Key="SpectrogramButton"
+            BasedOn="{StaticResource TimelineIconButton}"
+            TargetType="ui:Button">
+            <Setter Property="ToolTip" Value="Show spectrograms on the timeline" />
+            <Setter Property="Icon">
+                <Setter.Value>
+                    <ui:SymbolIcon Symbol="EyeOff24" />
+                </Setter.Value>
+            </Setter>
+            <Style.Triggers>
+                <DataTrigger Binding="{Binding ShowSpectrogram}" Value="True">
+                    <Setter Property="Appearance" Value="Primary" />
+                    <Setter Property="ToolTip" Value="Hide spectrograms (they are analysed in the background, 1.5 s after the last change)" />
+                    <Setter Property="Icon">
+                        <Setter.Value>
+                            <ui:SymbolIcon Symbol="Eye24" />
+                        </Setter.Value>
+                    </Setter>
+                </DataTrigger>
+            </Style.Triggers>
+        </Style>
     </ui:FluentWindow.Resources>
 
     <Grid>
@@ -1218,6 +1242,7 @@
                                     <ui:SymbolIcon Symbol="ArrowSync24" />
                                 </ui:Button.Icon>
                             </ui:Button>
+                            <ui:Button Command="{Binding ToggleSpectrogramCommand}" Style="{StaticResource SpectrogramButton}" />
                         </StackPanel>
                     </StackPanel>
 
@@ -1263,7 +1288,9 @@
                         PlayheadSeconds="{Binding PlayheadSeconds}"
                         Project="{Binding Project}"
                         SeekCommand="{Binding SeekCommand}"
-                        SelectedLayer="{Binding SelectedLayer, Mode=TwoWay}" />
+                        SelectedLayer="{Binding SelectedLayer, Mode=TwoWay}"
+                        ShowSpectrogram="{Binding ShowSpectrogram}"
+                        Spectrograms="{Binding Spectrograms}" />
                 </ScrollViewer>
             </Grid>
         </Border>

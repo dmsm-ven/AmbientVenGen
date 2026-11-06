@@ -54,6 +54,26 @@ public partial class MainViewModel : ObservableObject, IDisposable
 
     public ProjectModel Project { get; } = new();
 
+    /// <summary>Spectrogram pictures of the layers for the timeline (analysed in the background).</summary>
+    public SpectrogramService Spectrograms { get; }
+
+    /// <summary>Draw the spectrograms inside the clips (the button next to Play); remembered in the settings.</summary>
+    [ObservableProperty]
+    private bool _showSpectrogram;
+
+    partial void OnShowSpectrogramChanged(bool value)
+    {
+        Settings.ShowSpectrogram = value;
+
+        if (value)
+            Spectrograms.Update(Project.Layers, Project.Seed);
+        else
+            Spectrograms.CancelPending();
+    }
+
+    [RelayCommand]
+    private void ToggleSpectrogram() => ShowSpectrogram = !ShowSpectrogram;
+
     /// <summary>User settings (slider or knob controls).</summary>
     public AppSettings Settings { get; }
     public NewLayerFormViewModel NewLayer { get; } = new();
@@ -127,8 +147,11 @@ public partial class MainViewModel : ObservableObject, IDisposable
         TemplateService templateService,
         PresetLibraryWindowService presetLibraryWindowService,
         AppSettings settings,
-        SettingsWindowService settingsWindowService)
+        SettingsWindowService settingsWindowService,
+        SpectrogramService spectrograms)
     {
+        Spectrograms = spectrograms ?? throw new ArgumentNullException(nameof(spectrograms));
+        _showSpectrogram = settings.ShowSpectrogram;
         Settings = settings ?? throw new ArgumentNullException(nameof(settings));
         _settingsWindowService = settingsWindowService ?? throw new ArgumentNullException(nameof(settingsWindowService));
         _playbackService = playbackService ?? throw new ArgumentNullException(nameof(playbackService));

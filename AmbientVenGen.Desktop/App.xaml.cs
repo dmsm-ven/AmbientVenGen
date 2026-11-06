@@ -47,6 +47,7 @@ public partial class App : Application
                 services.AddSingleton<AudioPlaybackService>();
                 services.AddSingleton<PresetPreviewService>();
                 services.AddSingleton<AppSettings>();
+                services.AddSingleton<SpectrogramService>();
                 services.AddSingleton<FileAssociationService>();
                 services.AddSingleton<SettingsWindowService>();
                 services.AddTransient<SettingsWindow>();
