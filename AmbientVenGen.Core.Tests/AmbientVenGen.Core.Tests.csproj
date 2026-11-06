@@ -13,6 +13,11 @@
     <PackageReference Include="xunit.runner.visualstudio" />
   </ItemGroup>
 
+  <!-- global using Xunit for every test file (Fact, Theory, Assert...) -->
+  <ItemGroup>
+    <Using Include="Xunit" />
+  </ItemGroup>
+
   <ItemGroup>
     <ProjectReference Include="..\AmbientVenGen.Core\AmbientVenGen.Core.csproj" />
   </ItemGroup>
