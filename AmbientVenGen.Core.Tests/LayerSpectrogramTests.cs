@@ -6,34 +6,6 @@ namespace AmbientVenGen.Core.Tests;
 public class LayerSpectrogramTests
 {
     [Fact]
-    public void FftFindsTheBinOfASine()
-    {
-        const int n = LayerSpectrogram.FftSize;
-        const int bin = 100;
-        double[] re = new double[n];
-        double[] im = new double[n];
-
-        for (int i = 0; i < n; i++)
-            re[i] = Math.Sin(2 * Math.PI * bin * i / n);
-
-        LayerSpectrogram.Fft(re, im);
-
-        int peak = 0;
-        double best = 0;
-        for (int k = 1; k < n / 2; k++)
-        {
-            double magnitude = Math.Sqrt(re[k] * re[k] + im[k] * im[k]);
-            if (magnitude > best)
-            {
-                best = magnitude;
-                peak = k;
-            }
-        }
-
-        Assert.Equal(bin, peak);
-    }
-
-    [Fact]
     public void IsolateKeepsTheSoundButDropsPlacementRepeatsAndReverb()
     {
         LayerSpec layer = TestSpecs.Layer(LayerType.Pad, start: 40, duration: 30, repeats: 3, gap: 5, muted: true, pitchHz: 130);
@@ -50,17 +22,15 @@ public class LayerSpectrogramTests
     }
 
     [Fact]
-    public void ADroneHasColumnsInRangeAndSomethingToSee()
+    public void ADroneHasPeaksInRangeAndSomethingToSee()
     {
         LayerSpec drone = TestSpecs.Layer(LayerType.Drone, duration: 8, pitchHz: 110);
 
-        SpectrogramData data = LayerSpectrogram.Compute(drone, projectSeed: 5, bands: 32);
+        SpectrogramData data = LayerSpectrogram.Compute(drone, projectSeed: 5);
 
         Assert.Equal(LayerSpectrogram.ColumnsFor(8), data.Columns);
-        Assert.Equal(32, data.Bands);
-        Assert.Equal(data.Columns * data.Bands, data.Values.Length);
-        Assert.All(data.Values, v => Assert.InRange(v, 0f, 1f));
-        Assert.Contains(data.Values, v => v > 0.05f);
+        Assert.All(data.Peaks, v => Assert.InRange(v, 0f, 1f));
+        Assert.True(data.Max > 0.01f);
     }
 
     [Fact]

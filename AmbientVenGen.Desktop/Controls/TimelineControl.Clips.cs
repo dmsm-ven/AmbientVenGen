@@ -1,4 +1,6 @@
+using AmbientVenGen.Core.Audio;
 using AmbientVenGen.Core.Composition;
+using AmbientVenGen.Desktop.Services;
 using System.Globalization;
 using System.Windows;
 using System.Windows.Input;
@@ -79,13 +81,9 @@ public sealed partial class TimelineControl
 
         dc.PushClip(new RectangleGeometry(rect, 8, 8));
 
-        // The spectrogram of one play, under the envelope; repeats show the same picture.
-        if (ShowSpectrogram && Spectrograms?.GetBitmap(layer) is { } spectrogram)
-        {
-            dc.PushOpacity(0.75);
-            dc.DrawImage(spectrogram, rect);
-            dc.Pop();
-        }
+        // Loudness bars of one play, under the envelope; repeats show the same bars.
+        if (ShowSpectrogram && Spectrograms?.GetData(layer) is { } bars)
+            DrawBars(dc, bars, rect);
 
         DrawEnvelope(dc, layer, rect, accent, play * layer.PeriodSeconds);
 
@@ -107,6 +105,42 @@ public sealed partial class TimelineControl
             DrawFadeHandles(dc, layer, rect, accent);
 
         dc.Pop();
+    }
+
+    // The same stepped bars as the thumbnails of the preset library: the same width of a bar and of the step,
+    // the colour of the bars, bottom aligned, at least 2 px high. The height follows the loudest moment of the layer.
+    private static readonly Brush BarBrush = CreateBarBrush();
+
+    private static Brush CreateBarBrush()
+    {
+        var brush = new SolidColorBrush(Color.FromArgb(0xB0, 0x5B, 0x9B, 0xFF));
+        brush.Freeze();
+        return brush;
+    }
+
+    private void DrawBars(DrawingContext dc, SpectrogramData data, Rect rect)
+    {
+        if (data.Columns == 0 || data.Max <= 0 || rect.Width <= 0)
+            return;
+
+        const double step = WaveformRenderer.StepWidth;
+        double maxHeight = rect.Height - 4;
+        double from = Math.Max(rect.Left, HeaderWidth);
+        double to = Math.Min(rect.Right, ActualWidth);
+
+        // bars are placed on a fixed grid so that they do not shimmer while the view scrolls
+        for (double x = Math.Floor((from - rect.Left) / step) * step + rect.Left; x < to; x += step)
+        {
+            int first = (int)Math.Clamp((x - rect.Left) / rect.Width * data.Columns, 0, data.Columns - 1);
+            int last = (int)Math.Clamp((x + step - rect.Left) / rect.Width * data.Columns, first, data.Columns - 1);
+
+            float peak = 0;
+            for (int i = first; i <= last; i++)
+                peak = Math.Max(peak, data.Peaks[i]);
+
+            double height = Math.Clamp(peak / data.Max * maxHeight, 2, maxHeight);
+            dc.DrawRectangle(BarBrush, null, new Rect(x, rect.Bottom - 2 - height, step - 0.5, height));
+        }
     }
 
     // The loudness envelope (level curve x fades) drawn as a translucent filled shape.
