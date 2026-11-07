@@ -82,8 +82,13 @@ public sealed partial class TimelineControl
         dc.PushClip(new RectangleGeometry(rect, 8, 8));
 
         // Loudness bars of one play, under the envelope; repeats show the same bars.
-        if (ShowSpectrogram && Spectrograms?.GetData(layer) is { } bars)
-            DrawBars(dc, bars, rect);
+        if (ShowSpectrogram && Spectrograms is { } spectrograms)
+        {
+            if (spectrograms.GetData(layer) is { } bars)
+                DrawBars(dc, bars, rect);
+            else if (spectrograms.IsPending(layer))
+                DrawAnalysing(dc, rect);
+        }
 
         DrawEnvelope(dc, layer, rect, accent, play * layer.PeriodSeconds);
 
@@ -109,13 +114,29 @@ public sealed partial class TimelineControl
 
     // The same stepped bars as the thumbnails of the preset library: the same width of a bar and of the step,
     // the colour of the bars, bottom aligned, at least 2 px high. The height follows the loudest moment of the layer.
-    private static readonly Brush BarBrush = CreateBarBrush();
+    private Brush _barBrush = CreateBarBrush(Color.FromRgb(0x5B, 0x9B, 0xFF));
 
-    private static Brush CreateBarBrush()
+    private static Brush CreateBarBrush(Color color)
     {
-        var brush = new SolidColorBrush(Color.FromArgb(0xB0, 0x5B, 0x9B, 0xFF));
+        var brush = new SolidColorBrush(Color.FromArgb(0xB0, color.R, color.G, color.B));
         brush.Freeze();
         return brush;
+    }
+
+    private void OnSpectrogramColorChanged()
+    {
+        _barBrush = CreateBarBrush(SpectrogramColor);
+        InvalidateContent();
+    }
+
+    // Shown while the bars of a changed layer are being prepared (they can take a while).
+    private void DrawAnalysing(DrawingContext dc, Rect rect)
+    {
+        if (rect.Width < 90)
+            return;
+
+        FormattedText text = MakeText("analysing\u2026", 11, WithAlpha(SpectrogramColor, 0xE0));
+        dc.DrawText(text, new Point(rect.Left + 8, rect.Bottom - text.Height - 4));
     }
 
     private void DrawBars(DrawingContext dc, SpectrogramData data, Rect rect)
@@ -139,7 +160,7 @@ public sealed partial class TimelineControl
                 peak = Math.Max(peak, data.Peaks[i]);
 
             double height = Math.Clamp(peak / data.Max * maxHeight, 2, maxHeight);
-            dc.DrawRectangle(BarBrush, null, new Rect(x, rect.Bottom - 2 - height, step - 0.5, height));
+            dc.DrawRectangle(_barBrush, null, new Rect(x, rect.Bottom - 2 - height, step - 0.5, height));
         }
     }
 

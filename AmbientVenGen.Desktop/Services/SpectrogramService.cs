@@ -29,6 +29,10 @@ public sealed class SpectrogramService : IDisposable
     public SpectrogramData? GetData(Layer layer) =>
         _entries.TryGetValue(layer.Id, out Entry? entry) ? entry.Data : null;
 
+    /// <summary>True while the bars of the layer are waiting for the analysis or being analysed.</summary>
+    public bool IsPending(Layer layer) =>
+        _entries.TryGetValue(layer.Id, out Entry? entry) && entry.PendingKey is not null;
+
     /// <summary>Call on the UI thread whenever the project changes: only layers whose sound changed are (re)analysed.</summary>
     public void Update(IReadOnlyList<Layer> layers, int projectSeed)
     {
@@ -61,7 +65,16 @@ public sealed class SpectrogramService : IDisposable
             }
             else if (key != entry.PendingKey)
             {
+                // The sound changed: the old bars no longer belong to it, so they go away at once
+                // and the clip shows that the new ones are being prepared.
+                if (entry.Data is not null)
+                {
+                    entry.Data = null;
+                    entry.Key = null;
+                }
+
                 Schedule(entry, spec, key, projectSeed);
+                changed = true;
             }
         }
 
@@ -131,6 +144,14 @@ public sealed class SpectrogramService : IDisposable
         catch (Exception)
         {
             // an analysis that fails (for example an unreadable recording) simply leaves the clip without a picture
+            if (!token.IsCancellationRequested && Application.Current is { } app)
+                _ = app.Dispatcher.InvokeAsync(() =>
+                {
+                    if (entry.PendingKey == key)
+                        entry.PendingKey = null;
+
+                    Changed?.Invoke();
+                });
         }
     }
 

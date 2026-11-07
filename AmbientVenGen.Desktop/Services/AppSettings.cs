@@ -2,6 +2,7 @@
 using System.IO;
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using System.Windows.Media;
 
 namespace AmbientVenGen.Desktop.Services;
 
@@ -66,6 +67,36 @@ public sealed partial class AppSettings : ObservableObject
     }
 
     private bool _showSpectrogram = false;
+
+    /// <summary>Colours offered for the bars of the timeline spectrogram.</summary>
+    public static IReadOnlyList<Color> SpectrogramPalette { get; } =
+    [
+        Color.FromRgb(0x5B, 0x9B, 0xFF),
+        Color.FromRgb(0x4F, 0xD8, 0xE8),
+        Color.FromRgb(0x5F, 0xD3, 0x8A),
+        Color.FromRgb(0xE6, 0xD2, 0x5A),
+        Color.FromRgb(0xFF, 0x9A, 0x4D),
+        Color.FromRgb(0xF2, 0x6E, 0x9E),
+        Color.FromRgb(0xB7, 0x8B, 0xFF),
+        Color.FromRgb(0xE8, 0xE8, 0xF0)
+    ];
+
+    /// <summary>Colour of the spectrogram bars on the timeline.</summary>
+    public Color SpectrogramColor
+    {
+        get => _spectrogramColor;
+        set
+        {
+            if (_spectrogramColor == value)
+                return;
+
+            _spectrogramColor = value;
+            OnPropertyChanged();
+            Save();
+        }
+    }
+
+    private Color _spectrogramColor = SpectrogramPalette[0];
 
     public string? LastProjectPath
     {
@@ -132,6 +163,9 @@ public sealed partial class AppSettings : ObservableObject
                 _lastProjectPath = file.LastProjectPath;
                 _intervalMathExpanded = file.IntervalMathExpanded;
                 _showSpectrogram = file.ShowSpectrogram;
+
+                if (!string.IsNullOrWhiteSpace(file.SpectrogramColor))
+                    _spectrogramColor = (Color)ColorConverter.ConvertFromString(file.SpectrogramColor);
             }
         }
         catch (Exception)
@@ -145,7 +179,7 @@ public sealed partial class AppSettings : ObservableObject
         try
         {
             Directory.CreateDirectory(Path.GetDirectoryName(_path)!);
-            File.WriteAllText(_path, JsonSerializer.Serialize(new SettingsFile { ControlStyle = ControlStyle, LastProjectPath = LastProjectPath, IntervalMathExpanded = IntervalMathExpanded, ShowSpectrogram = ShowSpectrogram }, Options));
+            File.WriteAllText(_path, JsonSerializer.Serialize(new SettingsFile { ControlStyle = ControlStyle, LastProjectPath = LastProjectPath, IntervalMathExpanded = IntervalMathExpanded, ShowSpectrogram = ShowSpectrogram, SpectrogramColor = SpectrogramColor.ToString() }, Options));
         }
         catch (Exception)
         {
@@ -159,5 +193,6 @@ public sealed partial class AppSettings : ObservableObject
         public string? LastProjectPath { get; set; }
         public bool IntervalMathExpanded { get; set; } = true;
         public bool ShowSpectrogram { get; set; }
+        public string? SpectrogramColor { get; set; }
     }
 }
