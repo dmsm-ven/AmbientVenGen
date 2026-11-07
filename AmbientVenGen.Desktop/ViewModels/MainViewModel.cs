@@ -87,6 +87,7 @@ public partial class MainViewModel : ObservableObject, IDisposable
     [NotifyPropertyChangedFor(nameof(IsLayerSelectionEmpty))]
     [NotifyCanExecuteChangedFor(nameof(DeleteSelectedLayerCommand))]
     [NotifyCanExecuteChangedFor(nameof(RandomizeSelectedLayerCommand))]
+    [NotifyCanExecuteChangedFor(nameof(ClearSelectedLayerCommand))]
     [NotifyCanExecuteChangedFor(nameof(DuplicateSelectedLayerCommand))]
     [NotifyCanExecuteChangedFor(nameof(OpenIntervalPanelCommand))]
     [NotifyCanExecuteChangedFor(nameof(ApplyIntervalCommand))]
