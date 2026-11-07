@@ -13,7 +13,22 @@ public partial class PresetLibraryWindow : FluentWindow
         InitializeComponent();
         DataContext = viewModel;
 
-        Closed += (_, _) => viewModel.Shutdown();
+        viewModel.ScrollToTopRequested += OnScrollToTopRequested;
+        Closed += (_, _) =>
+        {
+            viewModel.ScrollToTopRequested -= OnScrollToTopRequested;
+            viewModel.Shutdown();
+        };
+    }
+
+    // A new record sits at the top of the table: show the top, with the new row in view.
+    private void OnScrollToTopRequested()
+    {
+        if (PresetsGrid.Items.Count == 0)
+            return;
+
+        PresetsGrid.UpdateLayout();
+        PresetsGrid.ScrollIntoView(PresetsGrid.Items[0]);
     }
 
     private PresetLibraryViewModel? ViewModel => DataContext as PresetLibraryViewModel;

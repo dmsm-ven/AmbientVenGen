@@ -36,7 +36,7 @@ public sealed class FieldPresetRepository
 
         IEnumerable<FieldPreset> presets = await connection.QueryAsync<FieldPreset>(
             "SELECT Id, Name, FilePath, AddedAtUnix, DurationSeconds, SizeBytes, Extension " +
-            "FROM FieldPresets ORDER BY Id");
+            "FROM FieldPresets ORDER BY Id DESC");
 
         return presets.ToList();
     }

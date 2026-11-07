@@ -8,6 +8,7 @@ using CommunityToolkit.Mvvm.Messaging;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.IO;
+using System.Windows;
 using System.Windows.Data;
 using System.Windows.Threading;
 
@@ -37,6 +38,9 @@ public partial class PresetLibraryViewModel : ObservableObject
 
     [ObservableProperty]
     private bool _hasTagFilter;
+
+    /// <summary>Raised after a new record was added: the table must show its top (the newest record is the first row).</summary>
+    public event Action? ScrollToTopRequested;
 
     /// <summary>One switch for all rows: repeat the previewed file or play it once.</summary>
     [ObservableProperty]
@@ -256,40 +260,65 @@ public partial class PresetLibraryViewModel : ObservableObject
         list.Insert(index, tag);
     }
 
-    /// <summary>Called when the window is shown: rows appear at once, thumbnails follow one by one.</summary>
+    /// <summary>
+    /// Called when the window has been shown (Loaded): the window opens at once and the data follows. The database is read
+    /// and the rows are built on a background thread (SQLite works synchronously under the async calls), then the rows are
+    /// added in small portions, so the window stays responsive. Durations and sizes come from the database, no file is opened.
+    /// </summary>
     [RelayCommand]
     private async Task LoadAsync()
     {
+        List<FieldPresetItem> items;
+        List<string> allTags;
+
         try
         {
-            IReadOnlyList<FieldPreset> stored = await _repository.GetAllAsync();
-            IReadOnlyList<PresetTagRow> tagRows = await _repository.GetAllTagsAsync();
-
-            Presets.Clear();
-            foreach (FieldPreset preset in stored)
+            (items, allTags) = await Task.Run(async () =>
             {
-                FieldPresetItem item = CreateItem(preset);
+                IReadOnlyList<FieldPreset> stored = await _repository.GetAllAsync();
+                IReadOnlyList<PresetTagRow> tagRows = await _repository.GetAllTagsAsync();
 
-                foreach (PresetTagRow row in tagRows.Where(r => r.PresetId == preset.Id))
-                    item.Tags.Add(row.Tag);
+                ILookup<long, string> tagsOf = tagRows.ToLookup(r => r.PresetId, r => r.Tag);
+                var rows = new List<FieldPresetItem>(stored.Count);
 
-                Presets.Add(item);
-            }
+                foreach (FieldPreset preset in stored)
+                {
+                    FieldPresetItem item = CreateItem(preset);
 
-            AllTags.Clear();
-            foreach (string tag in tagRows.Select(r => r.Tag).Distinct(StringComparer.OrdinalIgnoreCase)
-                         .OrderBy(t => t, StringComparer.CurrentCultureIgnoreCase))
-            {
-                AllTags.Add(tag);
-            }
+                    foreach (string tag in tagsOf[preset.Id])
+                        item.Tags.Add(tag);
 
-            RebuildTagFilters();
+                    rows.Add(item);
+                }
+
+                List<string> tags = tagRows.Select(r => r.Tag).Distinct(StringComparer.OrdinalIgnoreCase)
+                    .OrderBy(t => t, StringComparer.CurrentCultureIgnoreCase).ToList();
+
+                return (rows, tags);
+            });
         }
         catch (Exception ex)
         {
             _messageService.ShowError($"Cannot read the preset library:\n{ex.Message}");
             return;
         }
+
+        Presets.Clear();
+        AllTags.Clear();
+        foreach (string tag in allTags)
+            AllTags.Add(tag);
+
+        const int portion = 40;
+        for (int i = 0; i < items.Count; i += portion)
+        {
+            foreach (FieldPresetItem item in items.Skip(i).Take(portion))
+                Presets.Add(item);
+
+            // let the window draw what has been added
+            await Application.Current.Dispatcher.InvokeAsync(() => { }, DispatcherPriority.Background);
+        }
+
+        RebuildTagFilters();
 
         // Waveforms are built only for files that were played (see TogglePreview).
     }
@@ -329,11 +358,59 @@ public partial class PresetLibraryViewModel : ObservableObject
         }
 
         FieldPresetItem item = CreateItem(preset);
-        Presets.Add(item);
+        Presets.Insert(0, item);
         SelectedPreset = item;
+
+        // Tags that already exist and are named in the file name are put on at once ("123_wind_howl.wav": Wind, Howl).
+        await AddTagsFromNameAsync(item);
+
+        // The new record is on top, and it must not be hidden by a tag filter.
+        if (!MatchesTagFilter(item))
+            ClearTagFilter();
+
+        ScrollToTopRequested?.Invoke();
 
         // A new record: the tag box is open at once.
         item.IsTagEditing = true;
+    }
+
+    // Puts on every existing tag whose words are found in the name of the file (whole words, any case).
+    // Only the tags that are already in the database are used: the file name never creates a new one.
+    private async Task AddTagsFromNameAsync(FieldPresetItem item)
+    {
+        string name = $" {Words(item.Name)} ";
+
+        foreach (string tag in AllTags.ToList())
+        {
+            string words = Words(tag);
+            if (words.Length < 2 || !name.Contains($" {words} ", StringComparison.Ordinal))
+                continue;
+
+            await AddTagAsync(item, tag);
+        }
+    }
+
+    // Letters and digits only, one space between the words, lower case: "123_Wind-howl" -> "123 wind howl".
+    private static string Words(string text)
+    {
+        var builder = new System.Text.StringBuilder(text.Length);
+        bool space = true;
+
+        foreach (char c in text)
+        {
+            if (char.IsLetterOrDigit(c))
+            {
+                builder.Append(char.ToLowerInvariant(c));
+                space = false;
+            }
+            else if (!space)
+            {
+                builder.Append(' ');
+                space = true;
+            }
+        }
+
+        return builder.ToString().TrimEnd();
     }
 
     private FieldPresetItem CreateItem(FieldPreset preset) =>
