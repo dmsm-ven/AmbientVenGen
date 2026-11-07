@@ -27,10 +27,9 @@ public partial class MainViewModel
 
         if (NewLayer.Type == LayerType.FieldRecord)
         {
-            // A recording layer needs a file: choose it in the preset library ("Add to project" there adds the layer).
-            _layerAwaitingSource = null;
+            // A recording layer needs a file: choose it in the preset library ("Add new Layer" there adds the layer).
             _presetLibraryWindowService.Show();
-            StatusMessage = "Choose a recording in the library and press \"Add to project\"";
+            StatusMessage = "Choose a recording in the library and press \"Add new Layer\"";
             return;
         }
 
@@ -91,6 +90,17 @@ public partial class MainViewModel
         StatusMessage = $"Restored layer: {deleted.Layer.Name}";
     }
 
+    /// <summary>Back to the sound settings of a newly created layer (name, mute, position, length, repeats and file stay).</summary>
+    [RelayCommand(CanExecute = nameof(HasSelectedLayer))]
+    private void ClearSelectedLayer()
+    {
+        if (SelectedLayer is not { } layer)
+            return;
+
+        LayerDefaults.Reset(layer);
+        StatusMessage = $"Cleared layer: {layer.Name}";
+    }
+
     /// <summary>New random sound settings for the selected layer (name, position, length and file stay).</summary>
     [RelayCommand(CanExecute = nameof(HasSelectedLayer))]
     private void RandomizeSelectedLayer()
@@ -105,30 +115,6 @@ public partial class MainViewModel
     /// <summary>Adds a recording (from the preset library) as a new Field record layer.</summary>
     private void AddFieldRecordLayer(string path, string name)
     {
-        // The library was opened from "Change file": the recording replaces the file of that layer.
-        if (_layerAwaitingSource is { } waiting)
-        {
-            _layerAwaitingSource = null;
-
-            if (Project.Layers.Contains(waiting))
-            {
-                // A layer that carries the name of its old file (the default for a recording) follows the new file;
-                // a name the user typed himself is kept.
-                string? oldPath = waiting.SourcePath;
-                bool autoNamed = !string.IsNullOrEmpty(oldPath)
-                    && (string.Equals(waiting.Name, Path.GetFileNameWithoutExtension(oldPath), StringComparison.OrdinalIgnoreCase)
-                        || string.Equals(waiting.Name, Path.GetFileName(oldPath), StringComparison.OrdinalIgnoreCase));
-
-                waiting.SourcePath = path;
-                if (autoNamed)
-                    waiting.Name = name;
-
-                SelectedLayer = waiting;
-                StatusMessage = $"{waiting.Name}: {Path.GetFileName(path)}";
-                return;
-            }
-        }
-
         double total = Project.DurationSeconds;
 
         Layer layer = LayerDefaults.Create(LayerType.FieldRecord, name);
@@ -141,6 +127,32 @@ public partial class MainViewModel
         StatusMessage = $"Added layer: {layer.Name}";
     }
 
+    /// <summary>The name of the selected layer when it is a Field record layer (the library can replace its file), else null.</summary>
+    private string? FieldRecordTargetName => SelectedLayer is { Type: LayerType.FieldRecord } layer ? layer.Name : null;
+
+    /// <summary>Puts another recording (from the preset library) into the selected Field record layer.</summary>
+    private void ReplaceFieldRecordSource(string path, string name)
+    {
+        if (SelectedLayer is not { Type: LayerType.FieldRecord } layer)
+        {
+            StatusMessage = "Select a Field record layer first";
+            return;
+        }
+
+        // A layer that carries the name of its old file (the default for a recording) follows the new file;
+        // a name the user typed himself is kept.
+        string? oldPath = layer.SourcePath;
+        bool autoNamed = !string.IsNullOrEmpty(oldPath)
+            && (string.Equals(layer.Name, Path.GetFileNameWithoutExtension(oldPath), StringComparison.OrdinalIgnoreCase)
+                || string.Equals(layer.Name, Path.GetFileName(oldPath), StringComparison.OrdinalIgnoreCase));
+
+        layer.SourcePath = path;
+        if (autoNamed)
+            layer.Name = name;
+
+        StatusMessage = $"{layer.Name}: {Path.GetFileName(path)}";
+    }
+
     /// <summary>Lets the user pick another audio file for the selected Field record layer.</summary>
     [RelayCommand]
     private void ChangeSource()
@@ -148,9 +160,8 @@ public partial class MainViewModel
         if (SelectedLayer is not { Type: LayerType.FieldRecord } layer)
             return;
 
-        _layerAwaitingSource = layer;
         _presetLibraryWindowService.Show();
-        StatusMessage = "Choose a recording in the library and press \"Add to project\" to use it for this layer";
+        StatusMessage = "Choose a recording in the library and press \"Replace in current Layer\"";
     }
 
     [RelayCommand]

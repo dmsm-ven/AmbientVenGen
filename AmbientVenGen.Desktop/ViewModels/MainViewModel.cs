@@ -36,7 +36,6 @@ public partial class MainViewModel : ObservableObject, IDisposable
     private readonly Stack<DeletedLayer> _deletedLayers = new();
 
     // Set while the library is open to choose a new file for an existing Field record layer.
-    private Layer? _layerAwaitingSource;
 
     private ExportOptions? _lastExportOptions;
     private CancellationTokenSource? _exportCts;
@@ -171,10 +170,18 @@ public partial class MainViewModel : ObservableObject, IDisposable
                 .Select(minutes => new Choice<double>($"{minutes} min", minutes * 60.0)));
 
         Project.Changed += OnProjectChanged;
-        _presetLibraryWindowService.WindowClosed += () => _layerAwaitingSource = null;
         WeakReferenceMessenger.Default.Register<MainViewModel, UseFieldPresetMessage>(
             this,
-            static (viewModel, message) => viewModel.AddFieldRecordLayer(message.Path, message.Name));
+            static (viewModel, message) =>
+            {
+                if (message.ReplaceCurrent)
+                    viewModel.ReplaceFieldRecordSource(message.Path, message.Name);
+                else
+                    viewModel.AddFieldRecordLayer(message.Path, message.Name);
+            });
+        WeakReferenceMessenger.Default.Register<MainViewModel, FieldRecordTargetRequest>(
+            this,
+            static (viewModel, request) => request.Reply(viewModel.FieldRecordTargetName));
         _playbackService.PlaybackEnded += OnPlaybackEnded;
 
         // Start with a ready-made composition so there is something to hear and see right away.

@@ -82,6 +82,44 @@ public static class LayerDefaults
         layer.Seed = random.Next(1, int.MaxValue);
     }
 
+    /// <summary>
+    /// Brings the sound settings of the layer back to the state of a newly created layer of its type (levels, brightness,
+    /// modulation, curves, pitch, pan, fades, noise kind, filter, delay, drifts, speed). Name, type, mute, position, length,
+    /// repeats, gap, the source file and the seed are kept.
+    /// </summary>
+    public static void Reset(Layer layer)
+    {
+        Layer fresh = Create(layer.Type, layer.Name);
+
+        layer.LevelFrom = fresh.LevelFrom;
+        layer.LevelTo = fresh.LevelTo;
+        layer.LevelEasing = fresh.LevelEasing;
+        layer.BrightnessFrom = fresh.BrightnessFrom;
+        layer.BrightnessTo = fresh.BrightnessTo;
+        layer.BrightnessEasing = fresh.BrightnessEasing;
+        layer.ModulationFrom = fresh.ModulationFrom;
+        layer.ModulationTo = fresh.ModulationTo;
+        layer.ModulationEasing = fresh.ModulationEasing;
+        layer.PitchHz = fresh.PitchHz;
+        layer.Pan = fresh.Pan;
+        layer.PanDrift = fresh.PanDrift;
+        layer.PitchDrift = fresh.PitchDrift;
+        layer.Speed = fresh.Speed;
+        layer.FilterCutoffHz = fresh.FilterCutoffHz;
+        layer.FilterResonance = fresh.FilterResonance;
+        layer.DelaySeconds = fresh.DelaySeconds;
+        layer.DelayFeedback = fresh.DelayFeedback;
+        layer.ReverbSend = fresh.ReverbSend;
+        layer.NoiseType = fresh.NoiseType;
+
+        // The fades of a new layer (30 s, sine), as long as the layer is long enough for them.
+        double fade = Math.Min(30, layer.DurationSeconds / 2.0);
+        layer.FadeInSeconds = fade;
+        layer.FadeOutSeconds = fade;
+        layer.FadeEasing = Easing.Sine;
+        layer.FadeOutEasing = fresh.FadeOutEasing;
+    }
+
     /// <summary>Creates a layer and lets the caller adjust it, to keep templates compact.</summary>
     public static Layer Create(LayerType type, string name, Action<Layer> configure)
     {

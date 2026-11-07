@@ -49,7 +49,13 @@ public partial class PresetLibraryViewModel : ObservableObject
     [ObservableProperty]
     [NotifyCanExecuteChangedFor(nameof(DeletePresetCommand))]
     [NotifyCanExecuteChangedFor(nameof(UsePresetCommand))]
+    [NotifyCanExecuteChangedFor(nameof(ReplaceInLayerCommand))]
     private FieldPresetItem? _selectedPreset;
+
+    /// <summary>True while a Field record layer is selected in the project: its file can be replaced.</summary>
+    [ObservableProperty]
+    [NotifyCanExecuteChangedFor(nameof(ReplaceInLayerCommand))]
+    private bool _hasReplaceTarget;
 
     public PresetLibraryViewModel(
         FieldPresetRepository repository,
@@ -66,6 +72,13 @@ public partial class PresetLibraryViewModel : ObservableObject
 
         _preview.Loop = Loop;
         _preview.Ended += OnPreviewEnded;
+
+        // Which layer would get the file: asked now, and told again whenever the selected layer changes.
+        WeakReferenceMessenger.Default.Register<PresetLibraryViewModel, FieldRecordTargetMessage>(
+            this,
+            static (viewModel, message) => viewModel.HasReplaceTarget = message.LayerName is not null);
+        FieldRecordTargetRequest target = WeakReferenceMessenger.Default.Send(new FieldRecordTargetRequest());
+        HasReplaceTarget = target.HasReceivedResponse && target.Response is not null;
 
         // The table shows only the presets that have every switched-on tag.
         CollectionViewSource.GetDefaultView(Presets).Filter = MatchesTagFilter;
@@ -189,6 +202,7 @@ public partial class PresetLibraryViewModel : ObservableObject
     {
         StopPreview();
         _preview.Ended -= OnPreviewEnded;
+        WeakReferenceMessenger.Default.UnregisterAll(this);
     }
 
     /// <summary>Puts a tag on a preset. A tag that does not exist yet is created (and remembered in the database).</summary>
@@ -424,6 +438,16 @@ public partial class PresetLibraryViewModel : ObservableObject
     {
         if (SelectedPreset is { } item)
             WeakReferenceMessenger.Default.Send(new UseFieldPresetMessage(item.FilePath, item.Name));
+    }
+
+    private bool CanReplace() => HasReplaceTarget && SelectedPreset is { IsUnavailable: false };
+
+    /// <summary>Puts the selected recording into the selected Field record layer instead of its current file.</summary>
+    [RelayCommand(CanExecute = nameof(CanReplace))]
+    private void ReplaceInLayer()
+    {
+        if (SelectedPreset is { } item)
+            WeakReferenceMessenger.Default.Send(new UseFieldPresetMessage(item.FilePath, item.Name, ReplaceCurrent: true));
     }
 
     private bool CanDeletePreset() => SelectedPreset is not null;

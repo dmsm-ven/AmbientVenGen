@@ -97,6 +97,8 @@ public partial class MainViewModel
 
     partial void OnSelectedLayerChanged(Layer? value)
     {
+        WeakReferenceMessenger.Default.Send(new FieldRecordTargetMessage(FieldRecordTargetName));
+
         // The panel is built for one selected layer.
         if (IsIntervalPanelOpen)
             IsIntervalPanelOpen = false;

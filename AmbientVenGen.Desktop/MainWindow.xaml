@@ -824,6 +824,16 @@
                             </Border>
                         </Popup>
                         <ui:Button
+                            Margin="0,0,60,0"
+                            HorizontalAlignment="Right"
+                            Command="{Binding ClearSelectedLayerCommand}"
+                            Style="{StaticResource ToolIconButton}"
+                            ToolTip="Clear: bring the sound settings back to those of a new layer (name, mute, position, length, repeats and file stay)">
+                            <ui:Button.Icon>
+                                <ui:SymbolIcon Symbol="ArrowCounterclockwise24" />
+                            </ui:Button.Icon>
+                        </ui:Button>
+                        <ui:Button
                             Margin="0,0,30,0"
                             HorizontalAlignment="Right"
                             Command="{Binding RandomizeSelectedLayerCommand}"

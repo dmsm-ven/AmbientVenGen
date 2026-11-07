@@ -129,7 +129,7 @@
             </ui:TitleBar.TrailingContent>
         </ui:TitleBar>
 
-        <!--  Under the title: Add / Remove / Add to project and one Loop switch for all previews  -->
+        <!--  Under the title: Replace / Add new Layer (left), Loop, Add / Remove (right)  -->
         <Border
             Grid.Row="1"
             Margin="10,2,6,0"
@@ -138,48 +138,73 @@
             BorderBrush="#2EFFFFFF"
             BorderThickness="1"
             CornerRadius="8">
-            <StackPanel Orientation="Horizontal">
-                <ui:Button
-                    Command="{Binding AddPresetCommand}"
-                    Style="{StaticResource ToolIconButton}"
-                    ToolTip="Add file">
-                    <ui:Button.Icon>
-                        <ui:SymbolIcon Symbol="Add24" />
-                    </ui:Button.Icon>
-                </ui:Button>
-                <ui:Button
-                    Command="{Binding DeletePresetCommand}"
-                    Style="{StaticResource ToolIconButton}"
-                    ToolTip="Remove from library (the file is kept)">
-                    <ui:Button.Icon>
-                        <ui:SymbolIcon Symbol="Delete24" />
-                    </ui:Button.Icon>
-                </ui:Button>
-                <ui:Button
-                    Margin="8,0,0,0"
-                    VerticalAlignment="Center"
-                    Command="{Binding UsePresetCommand}"
-                    Content="Add to project"
-                    ToolTip="Add the selected recording to the project as a Field record layer" />
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
 
-                <Rectangle
-                    Width="1"
-                    Margin="14,2,14,2"
-                    Fill="#3A3945" />
+                <!--  Left: what to do with the selected recording  -->
+                <StackPanel Orientation="Horizontal">
+                    <ui:Button
+                        VerticalAlignment="Center"
+                        Command="{Binding ReplaceInLayerCommand}"
+                        Content="Replace in current Layer"
+                        ToolTip="Use the selected recording as the file of the selected Field record layer" />
+                    <ui:Button
+                        Margin="8,0,0,0"
+                        VerticalAlignment="Center"
+                        Command="{Binding UsePresetCommand}"
+                        Content="Add new Layer"
+                        ToolTip="Add the selected recording to the project as a new Field record layer" />
+                </StackPanel>
 
-                <ToggleButton
+                <!--  Centre: one Loop switch for all previews  -->
+                <StackPanel
+                    Grid.Column="1"
+                    Margin="14,0,0,0"
                     VerticalAlignment="Center"
-                    IsChecked="{Binding Loop, Mode=TwoWay}"
-                    Style="{StaticResource ToolIconToggleButton}"
-                    ToolTip="Loop: repeat the previewed file (off: play it once)">
-                    <ui:SymbolIcon Symbol="ArrowRepeatAll24" />
-                </ToggleButton>
-                <TextBlock
-                    Margin="4,0,0,0"
-                    VerticalAlignment="Center"
-                    Foreground="#C9C8D6"
-                    Text="Loop preview" />
-            </StackPanel>
+                    Orientation="Horizontal">
+                    <Rectangle
+                        Width="1"
+                        Height="22"
+                        Margin="0,0,14,0"
+                        Fill="#3A3945" />
+                    <ToggleButton
+                        VerticalAlignment="Center"
+                        IsChecked="{Binding Loop, Mode=TwoWay}"
+                        Style="{StaticResource ToolIconToggleButton}"
+                        ToolTip="Loop: repeat the previewed file (off: play it once)">
+                        <ui:SymbolIcon Symbol="ArrowRepeatAll24" />
+                    </ToggleButton>
+                    <TextBlock
+                        Margin="4,0,0,0"
+                        VerticalAlignment="Center"
+                        Foreground="#C9C8D6"
+                        Text="Loop preview" />
+                </StackPanel>
+
+                <!--  Right: the library itself  -->
+                <StackPanel Grid.Column="2" Orientation="Horizontal">
+                    <ui:Button
+                        Command="{Binding AddPresetCommand}"
+                        Style="{StaticResource ToolIconButton}"
+                        ToolTip="Add file">
+                        <ui:Button.Icon>
+                            <ui:SymbolIcon Symbol="Add24" />
+                        </ui:Button.Icon>
+                    </ui:Button>
+                    <ui:Button
+                        Command="{Binding DeletePresetCommand}"
+                        Style="{StaticResource ToolIconButton}"
+                        ToolTip="Remove from library (the file is kept)">
+                        <ui:Button.Icon>
+                            <ui:SymbolIcon Symbol="Delete24" />
+                        </ui:Button.Icon>
+                    </ui:Button>
+                </StackPanel>
+            </Grid>
         </Border>
 
         <!--  Tag sidebar: all tags, the most used first; the presets must have every switched-on tag  -->
@@ -258,7 +283,7 @@
             SelectionMode="Single"
             VirtualizingPanel.IsVirtualizing="True">
             <ui:DataGrid.InputBindings>
-                <!--  Double click on a row = Add to project  -->
+                <!--  Double click on a row = Add new Layer  -->
                 <MouseBinding Command="{Binding UsePresetCommand}" MouseAction="LeftDoubleClick" />
             </ui:DataGrid.InputBindings>
             <ui:DataGrid.Columns>
