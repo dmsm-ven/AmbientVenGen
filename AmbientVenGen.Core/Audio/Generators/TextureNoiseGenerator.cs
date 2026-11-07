@@ -4,7 +4,7 @@ namespace AmbientVenGen.Core.Audio;
 
 /// <summary>
 /// Noise textures made of events (clicks, drops, dropouts) and slow movement (gusts, tuning drift) on top of filtered
-/// noise: Crackle, Vinyl, RadioStatic, Wind, Rain, Ocean, ElectricalHum, TapeHiss, SpaceRumble and Geiger. Every channel has its own random stream, so the left and the right
+/// noise: Crackle, Vinyl, RadioStatic, Wind, Rain, Ocean, ElectricalHum, TapeHiss, SpaceRumble, Geiger, IceSinging, HighVoltage, EnergyShield, CrtWhine and PlasmaArc. Every channel has its own random stream, so the left and the right
 /// side are different (wide). Brightness sets the tone, Modulation the density or the amount of movement.
 /// Everything is random-driven from the seed, so the sound is the same every time and can have any length.
 /// </summary>
@@ -46,6 +46,11 @@ internal sealed class TextureNoiseGenerator : LayerGenerator
         NoiseType.TapeHiss => new TapeChannel(seed),
         NoiseType.SpaceRumble => new RumbleChannel(seed),
         NoiseType.Geiger => new GeigerChannel(seed),
+        NoiseType.IceSinging => new IceChannel(seed),
+        NoiseType.HighVoltage => new HighVoltageChannel(seed),
+        NoiseType.EnergyShield => new ShieldChannel(seed),
+        NoiseType.CrtWhine => new WhineChannel(seed),
+        NoiseType.PlasmaArc => new ArcChannel(seed),
         _ => new CrackleChannel(seed)
     };
 
@@ -126,6 +131,45 @@ internal sealed class TextureNoiseGenerator : LayerGenerator
             _envelope *= _decay;
             _filter.Process(noise * _envelope, out _, out float band, out _);
             return band;
+        }
+    }
+
+    /// <summary>A tone that falls quickly from a high to a low pitch (a "laser shot", a crack running through ice).</summary>
+    private struct Chirp
+    {
+        private float _envelope, _decay, _amplitude, _low, _span, _sweep, _sweepDecay;
+        private float _phase;
+
+        public void Trigger(float amplitude, float fromHz, float toHz, float sweepSeconds, float ringSeconds)
+        {
+            _amplitude = amplitude;
+            _low = toHz;
+            _span = fromHz - toHz;
+            _sweep = 1f;
+            _sweepDecay = MathF.Exp(-1f / (Math.Max(sweepSeconds, 1e-3f) * Sr));
+            _envelope = 1f;
+            _decay = MathF.Exp(-1f / (Math.Max(ringSeconds, 1e-3f) * Sr));
+            _attack = 0f;
+        }
+
+        private float _attack;
+
+        public float Next()
+        {
+            if (_envelope < 1e-4f)
+                return 0f;
+
+            float hz = _low + _span * _sweep;
+            _sweep *= _sweepDecay;
+            _envelope *= _decay;
+            _attack = Math.Min(1f, _attack + 1f / (0.001f * Sr));
+
+            _phase += hz / Sr;
+            if (_phase >= 1f)
+                _phase -= 1f;
+
+            float x = MathF.Sin(_phase * MathF.Tau) + 0.2f * MathF.Sin(_phase * 2f * MathF.Tau);
+            return x * _envelope * _attack * _amplitude;
         }
     }
 
@@ -618,6 +662,237 @@ internal sealed class TextureNoiseGenerator : LayerGenerator
                 _spark.Trigger(1f, 1500f + 3500f * brightness, 0.8f, 0.003f + 0.004f * _rng.Next01());
 
             return (_click.Next(_rng.Signed()) * 3f + _spark.Next(_rng.Signed()) * 2.5f);
+        }
+    }
+
+    /// <summary>
+    /// Singing ice: rare cracks, each a quick falling tone (a "blaster shot"), now and then with an echo from the far side
+    /// of the lake and a low thump; a very faint creak below.
+    /// </summary>
+    private sealed class IceChannel : Channel
+    {
+        private Rng _rng;
+        private Chirp _crack, _echo;
+        private Clicker _thump;
+        private Svf _creak = new(260f, 1.2f);
+        private Wander _creakLevel;
+        private int _echoLeft;
+        private float _echoAmplitude, _echoFrom, _echoTo, _echoSweep, _echoRing;
+
+        public IceChannel(uint seed)
+        {
+            _rng = new Rng(seed);
+            _creakLevel = new Wander(seed ^ 0x9E3779B9u);
+        }
+
+        public override float Next(float brightness, float modulation)
+        {
+            if (_rng.Event(0.15f + 1.2f * modulation))
+            {
+                // thin ice rings high, thick ice lower
+                float from = (2500f + 5500f * brightness) * (0.75f + 0.5f * _rng.Next01());
+                float to = from * (0.06f + 0.09f * _rng.Next01());
+                float length = 0.08f + 0.32f * _rng.Next01();
+                float amplitude = 0.4f + 0.6f * _rng.Next01();
+
+                _crack.Trigger(amplitude, from, to, length / 3f, length * 0.8f);
+
+                if (_rng.Next01() < 0.5f)
+                {
+                    _echoLeft = (int)((0.03f + 0.09f * _rng.Next01()) * Sr);
+                    _echoAmplitude = amplitude * 0.35f;
+                    _echoFrom = from * 0.8f;
+                    _echoTo = to * 0.9f;
+                    _echoSweep = length / 2.5f;
+                    _echoRing = length;
+                }
+
+                if (_rng.Next01() < 0.4f)
+                    _thump.Trigger(0.8f, 90f, 1f, 0.06f);
+            }
+
+            if (_echoLeft > 0 && --_echoLeft == 0)
+                _echo.Trigger(_echoAmplitude, _echoFrom, _echoTo, _echoSweep, _echoRing);
+
+            _creak.Process(_rng.Signed(), out float creak, out _, out _);
+
+            return (_crack.Next() + _echo.Next()) * 0.45f
+                + _thump.Next(_rng.Signed()) * 1.5f
+                + creak * 0.1f * (0.3f + 0.7f * _creakLevel.Next(9f));
+        }
+    }
+
+    /// <summary>Power line in damp weather: a faint 50 Hz hum, a hiss and crackles that come on the peaks of the voltage.</summary>
+    private sealed class HighVoltageChannel : Channel
+    {
+        private Rng _rng;
+        private float _phase;
+        private Clicker _crackle;
+        private Svf _hiss = new(2500f, 0.7f);
+        private Wander _humidity;
+
+        public HighVoltageChannel(uint seed)
+        {
+            _rng = new Rng(seed);
+            _humidity = new Wander(seed ^ 0x9E3779B9u);
+            _phase = _rng.Next01();
+        }
+
+        public override float Next(float brightness, float modulation)
+        {
+            _phase = (_phase + 50f / Sr) % 1f;
+            float sine = MathF.Sin(_phase * MathF.Tau);
+            float peak = sine * sine;             // 100 Hz: both peaks of the voltage
+            float peak3 = peak * peak * peak;
+
+            // The discharge happens at the peaks. The damper the air, the more of it.
+            float humidity = 0.5f + _humidity.Next(18f);
+            if (_rng.Event((40f + 500f * modulation) * humidity * peak3 * 3f))
+            {
+                float loudness = _rng.Next01();
+                _crackle.Trigger(0.1f + 0.9f * loudness * loudness, (2500f + 5500f * brightness) * (0.6f + 0.8f * _rng.Next01()), 0.8f,
+                    0.0003f + 0.0008f * _rng.Next01());
+            }
+
+            _hiss.Process(_rng.Signed(), out _, out _, out float high);
+            float hiss = high * 0.05f * (0.2f + 0.8f * peak) * (0.5f + 0.5f * humidity);
+
+            float hum = 0.05f * sine + 0.025f * MathF.Sin(_phase * 3f * MathF.Tau);
+
+            return _crackle.Next(_rng.Signed()) * 2.5f + hiss + hum;
+        }
+    }
+
+    /// <summary>Force field: three detuned humming voices through a resonant filter that slowly breathes, with a shiver now and then.</summary>
+    private sealed class ShieldChannel : Channel
+    {
+        private const int Harmonics = 4;
+        private Rng _rng;
+        private readonly float[] _phase = new float[3];
+        private Svf _filter = new(400f, 4f);
+        private Wander _sweep, _shiverGate;
+        private float _lfo;
+        private Leveler _leveler;
+        private int _tick;
+
+        public ShieldChannel(uint seed)
+        {
+            _rng = new Rng(seed);
+            _sweep = new Wander(seed ^ 0x9E3779B9u);
+            _shiverGate = new Wander(seed ^ 0x85EBCA6Bu);
+
+            for (int i = 0; i < _phase.Length; i++)
+                _phase[i] = _rng.Next01();
+        }
+
+        private static readonly float[] Detune = [1f, 1.0045f, 0.9915f];
+
+        public override float Next(float brightness, float modulation)
+        {
+            float raw = 0f;
+            for (int v = 0; v < _phase.Length; v++)
+            {
+                _phase[v] = (_phase[v] + 62f * Detune[v] / Sr) % 1f;
+
+                for (int k = 1; k <= Harmonics; k++)
+                    raw += MathF.Sin(_phase[v] * k * MathF.Tau) / k;
+            }
+
+            _lfo = (_lfo + 0.13f / Sr) % 1f;
+            float breath = 0.5f * _sweep.Next(7f) + 0.5f * (0.5f + 0.5f * MathF.Sin(_lfo * MathF.Tau));
+
+            if ((_tick++ & 31) == 0)
+                _filter.Set((150f + 1800f * brightness) * (0.5f + 1.5f * breath * (0.4f + 0.6f * modulation)), 4f);
+
+            _filter.Process(raw, out _, out float band, out _);
+            float tone = _leveler.Next(band * 0.8f + raw * 0.1f);
+
+            // Shiver: the field trembles for a moment
+            float shiverGate = Math.Clamp((_shiverGate.Next(6f) - 0.75f) * 5f, 0f, 1f);
+            float shiver = 1f - 0.5f * modulation * shiverGate * (0.5f + 0.5f * MathF.Sin(_lfo * 55f * MathF.Tau));
+
+            return tone * 0.28f * shiver;
+        }
+    }
+
+    /// <summary>Old electronics in a silent room: a thin high whine with a slight wobble and rare soft ticks.</summary>
+    private sealed class WhineChannel : Channel
+    {
+        private Rng _rng;
+        private float _phase;
+        private Wander _drift, _flicker;
+        private Clicker _tick;
+        private Svf _air = new(6000f, 0.7f);
+
+        public WhineChannel(uint seed)
+        {
+            _rng = new Rng(seed);
+            _drift = new Wander(seed ^ 0x9E3779B9u);
+            _flicker = new Wander(seed ^ 0x85EBCA6Bu);
+            _phase = _rng.Next01();
+        }
+
+        public override float Next(float brightness, float modulation)
+        {
+            // From 8 kHz to 16 kHz; with Modulation the pitch wobbles a little
+            float hz = (8000f + 8000f * brightness) * (1f + 0.01f * modulation * (_drift.Next(4f) - 0.5f));
+            _phase = (_phase + hz / Sr) % 1f;
+
+            float level = 1f - 0.6f * modulation * _flicker.Next(1.2f);
+            float tone = MathF.Sin(_phase * MathF.Tau) * 0.07f * level;
+
+            if (_rng.Event(0.5f + 4f * modulation))
+                _tick.Trigger(0.15f, 3000f + 3000f * _rng.Next01(), 1f, 0.0008f);
+
+            _air.Process(_rng.Signed(), out _, out _, out float high);
+
+            return tone + high * 0.01f + _tick.Next(_rng.Signed()) * 2f;
+        }
+    }
+
+    /// <summary>Plasma arc: the arc strikes with a zap, sizzles with dense crackle for a moment and goes out.</summary>
+    private sealed class ArcChannel : Channel
+    {
+        private Rng _rng;
+        private Clicker _zap, _crackle;
+        private Svf _sizzle = new(2000f, 0.7f);
+        private Svf _buzz = new(240f, 5f);
+        private float _gain, _flutter = 0.5f;
+        private int _onLeft;
+
+        public ArcChannel(uint seed) => _rng = new Rng(seed);
+
+        public override float Next(float brightness, float modulation)
+        {
+            if (_onLeft > 0)
+                _onLeft--;
+            else if (_rng.Event(0.3f + 1.5f * modulation))
+            {
+                _onLeft = (int)((0.1f + 1.1f * _rng.Next01()) * Sr);
+                _zap.Trigger(1f, 800f + 1200f * _rng.Next01(), 0.8f, 0.008f);
+            }
+
+            bool on = _onLeft > 0;
+            float seconds = on ? 0.003f : 0.04f;
+            _gain += ((on ? 1f : 0f) - _gain) * (1f - MathF.Exp(-1f / (seconds * Sr)));
+
+            if (_gain < 1e-3f)
+                return _zap.Next(_rng.Signed()) * 2f;
+
+            // quick random swell of the arc (about 15 Hz)
+            _flutter += (_rng.Next01() - _flutter) * 0.003f;
+
+            if (_rng.Event(400f * _gain))
+                _crackle.Trigger(0.2f + 0.8f * _rng.Next01(), (2500f + 5000f * brightness) * (0.6f + 0.8f * _rng.Next01()), 0.8f, 0.0005f);
+
+            if (((int)(_flutter * 1000f) & 15) == 0)
+                _sizzle.Set(1200f + 3000f * brightness, 0.7f);
+
+            _sizzle.Process(_rng.Signed(), out _, out _, out float high);
+            _buzz.Process(_rng.Signed(), out _, out float band, out _);
+
+            float arc = high * 0.3f * (0.4f + 1.2f * _flutter) + band * 0.35f * _flutter;
+            return (arc + _crackle.Next(_rng.Signed()) * 2.5f) * _gain + _zap.Next(_rng.Signed()) * 2f;
         }
     }
 }

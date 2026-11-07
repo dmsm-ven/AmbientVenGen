@@ -30,7 +30,12 @@ public enum NoiseType
     ElectricalHum,
     TapeHiss,
     SpaceRumble,
-    Geiger
+    Geiger,
+    IceSinging,
+    HighVoltage,
+    EnergyShield,
+    CrtWhine,
+    PlasmaArc
 }
 
 /// <summary>A parameter that moves from one value to another over the length of a layer.</summary>

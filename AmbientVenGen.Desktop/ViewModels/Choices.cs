@@ -107,7 +107,22 @@ public static class Choices
             "Sounds like: the engine room of a starship, a very low rumble that slowly shifts."),
         new(NoiseType.Geiger, "Geiger / sparks",
             "Rare hard clicks at random intervals.",
-            "Sounds like: a Geiger counter near a source, or sparks from a faulty cable.")
+            "Sounds like: a Geiger counter near a source, or sparks from a faulty cable."),
+        new(NoiseType.IceSinging, "Ice singing",
+            "Cracks running through ice: quick falling tones.",
+            "Sounds like: cracks running through the ice of a frozen lake, a ringing sci-fi laser shot."),
+        new(NoiseType.HighVoltage, "High-voltage line",
+            "Hum with crackles locked to its peaks.",
+            "Sounds like: a power line in damp weather, crackling in time with the hum."),
+        new(NoiseType.EnergyShield, "Energy shield",
+            "Detuned hum through a breathing filter.",
+            "Sounds like: a sci-fi force field, a detuned hum that slowly breathes."),
+        new(NoiseType.CrtWhine, "CRT / coil whine",
+            "A thin high tone with rare ticks.",
+            "Sounds like: an old TV or a transformer in a quiet room, a thin high whine."),
+        new(NoiseType.PlasmaArc, "Plasma arc",
+            "Bursts of sizzling crackle.",
+            "Sounds like: a welding arc or a plasma ball, bursts of sizzling crackle.")
     ];
 
     /// <summary>Three-layer relations (the arithmetic lives in Core: <see cref="PitchRelations"/>).</summary>
