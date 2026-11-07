@@ -25,7 +25,12 @@ public enum NoiseType
     Vinyl,
     RadioStatic,
     Wind,
-    Rain
+    Rain,
+    Ocean,
+    ElectricalHum,
+    TapeHiss,
+    SpaceRumble,
+    Geiger
 }
 
 /// <summary>A parameter that moves from one value to another over the length of a layer.</summary>

@@ -92,7 +92,22 @@ public static class Choices
             "Sounds like: wind in a chimney or in the trees, a storm outside the window."),
         new(NoiseType.Rain, "Rain",
             "A dense fine hiss with many separate drops. Modulation = how heavy the rain is.",
-            "Sounds like: rain on a window or on leaves, a drizzle under an awning.")
+            "Sounds like: rain on a window or on leaves, a drizzle under an awning."),
+        new(NoiseType.Ocean, "Ocean waves",
+            "Brown noise swelling in waves with foam on the crests.",
+            "Sounds like: sea waves rolling onto a beach, foam hissing at each crest."),
+        new(NoiseType.ElectricalHum, "Electrical hum",
+            "Mains hum with harmonics and a light buzz.",
+            "Sounds like: a power transformer or a fluorescent lamp, a steady mains hum."),
+        new(NoiseType.TapeHiss, "Tape hiss",
+            "High hiss whose level and tone float slowly.",
+            "Sounds like: an old cassette between songs, the tape hiss slowly floating."),
+        new(NoiseType.SpaceRumble, "Deep space rumble",
+            "Very low rumble with rare slow shifts.",
+            "Sounds like: the engine room of a starship, a very low rumble that slowly shifts."),
+        new(NoiseType.Geiger, "Geiger / sparks",
+            "Rare hard clicks at random intervals.",
+            "Sounds like: a Geiger counter near a source, or sparks from a faulty cable.")
     ];
 
     /// <summary>Three-layer relations (the arithmetic lives in Core: <see cref="PitchRelations"/>).</summary>
