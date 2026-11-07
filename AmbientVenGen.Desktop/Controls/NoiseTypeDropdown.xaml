@@ -40,20 +40,32 @@
         </Style>
 
         <Style x:Key="ItemStyle" TargetType="ListBoxItem">
-            <Setter Property="Padding" Value="6" />
+            <Setter Property="Padding" Value="6,3" />
             <Setter Property="Margin" Value="0,1" />
             <Setter Property="Cursor" Value="Hand" />
             <Setter Property="Template">
                 <Setter.Value>
                     <ControlTemplate TargetType="ListBoxItem">
-                        <Border
-                            x:Name="Row"
-                            Padding="{TemplateBinding Padding}"
-                            Background="Transparent"
-                            CornerRadius="6">
-                            <ContentPresenter />
-                        </Border>
+                        <StackPanel>
+                            <!--  Divider between the basic noises and the textures  -->
+                            <Border
+                                x:Name="Divider"
+                                Height="1"
+                                Margin="6,5,6,6"
+                                Background="#44FFFFFF"
+                                Visibility="Collapsed" />
+                            <Border
+                                x:Name="Row"
+                                Padding="{TemplateBinding Padding}"
+                                Background="Transparent"
+                                CornerRadius="6">
+                                <ContentPresenter />
+                            </Border>
+                        </StackPanel>
                         <ControlTemplate.Triggers>
+                            <DataTrigger Binding="{Binding StartsGroup}" Value="True">
+                                <Setter TargetName="Divider" Property="Visibility" Value="Visible" />
+                            </DataTrigger>
                             <Trigger Property="IsMouseOver" Value="True">
                                 <Setter TargetName="Row" Property="Background" Value="#26FFFFFF" />
                             </Trigger>
@@ -110,6 +122,9 @@
                 <ListBox
                     Background="Transparent"
                     BorderThickness="0"
+                    MaxHeight="560"
+                    ScrollViewer.HorizontalScrollBarVisibility="Disabled"
+                    ScrollViewer.VerticalScrollBarVisibility="Auto"
                     ItemContainerStyle="{StaticResource ItemStyle}"
                     ItemsSource="{x:Static vm:Choices.NoiseOptions}"
                     SelectedValue="{Binding Value, ElementName=Root, Mode=TwoWay}"
@@ -119,29 +134,29 @@
                         <DataTemplate>
                             <StackPanel Orientation="Horizontal">
                                 <local:NoiseColorIcon
-                                    Width="64"
-                                    Height="36"
+                                    Width="48"
+                                    Height="27"
                                     Noise="{Binding Value}" />
                                 <StackPanel
-                                    MaxWidth="250"
-                                    Margin="10,0,4,0"
+                                    MaxWidth="300"
+                                    Margin="8,0,4,0"
                                     VerticalAlignment="Center">
                                     <TextBlock
                                         Margin="0"
-                                        FontSize="13"
+                                        FontSize="12.5"
                                         FontWeight="SemiBold"
                                         Foreground="#F2F2F8"
                                         Text="{Binding Label}" />
                                     <!--  What it sounds like first, then the technical description; both always shown  -->
                                     <TextBlock
-                                        Margin="0,2,0,0"
-                                        FontSize="11"
+                                        Margin="0,1,0,0"
+                                        FontSize="10.5"
                                         Foreground="#C9C4F2"
                                         Text="{Binding Likeness}"
                                         TextWrapping="Wrap" />
                                     <TextBlock
-                                        Margin="0,3,0,0"
-                                        FontSize="11"
+                                        Margin="0,1,0,0"
+                                        FontSize="10.5"
                                         Foreground="#A9A7C2"
                                         Text="{Binding Description}"
                                         TextWrapping="Wrap" />

@@ -1,0 +1,402 @@
+using AmbientVenGen.Core.Composition;
+
+namespace AmbientVenGen.Core.Audio;
+
+/// <summary>
+/// Noise textures made of events (clicks, drops, dropouts) and slow movement (gusts, tuning drift) on top of filtered
+/// noise: Crackle, Vinyl, RadioStatic, Wind and Rain. Every channel has its own random stream, so the left and the right
+/// side are different (wide). Brightness sets the tone, Modulation the density or the amount of movement.
+/// Everything is random-driven from the seed, so the sound is the same every time and can have any length.
+/// </summary>
+internal sealed class TextureNoiseGenerator : LayerGenerator
+{
+    private readonly Channel _left;
+    private readonly Channel _right;
+
+    public TextureNoiseGenerator(int seed, NoiseType type)
+    {
+        var random = new Random(seed);
+        _left = CreateChannel(type, (uint)random.Next(1, int.MaxValue));
+        _right = CreateChannel(type, (uint)random.Next(1, int.MaxValue));
+    }
+
+    public override void Render(in BlockParams p, Span<float> left, Span<float> right)
+    {
+        float brightness = Math.Clamp(p.Brightness, 0f, 1f);
+        float modulation = Math.Clamp(p.Modulation, 0f, 1f);
+
+        for (int n = 0; n < left.Length; n++)
+        {
+            left[n] = SoftLimit(_left.Next(brightness, modulation));
+            right[n] = SoftLimit(_right.Next(brightness, modulation));
+        }
+    }
+
+    // Keeps rare loud events inside +-1 without touching the quiet part much.
+    private static float SoftLimit(float x) => MathF.Tanh(x);
+
+    private static Channel CreateChannel(NoiseType type, uint seed) => type switch
+    {
+        NoiseType.Vinyl => new VinylChannel(seed),
+        NoiseType.RadioStatic => new RadioChannel(seed),
+        NoiseType.Wind => new WindChannel(seed),
+        NoiseType.Rain => new RainChannel(seed),
+        _ => new CrackleChannel(seed)
+    };
+
+    // ---------------------------------------------------------------- building blocks
+
+    private const float Sr = SampleRate;
+
+    private struct Rng(uint seed)
+    {
+        private uint _state = seed | 1u;
+
+        /// <summary>0..1</summary>
+        public float Next01()
+        {
+            _state ^= _state << 13;
+            _state ^= _state >> 17;
+            _state ^= _state << 5;
+            return (_state & 0xFFFFFF) / 16777216f;
+        }
+
+        /// <summary>-1..1</summary>
+        public float Signed() => Next01() * 2f - 1f;
+
+        /// <summary>True with the probability "perSecond / sample rate": a Poisson stream of events.</summary>
+        public bool Event(float perSecond) => Next01() < perSecond / Sr;
+    }
+
+    /// <summary>Zavalishin's state-variable filter: stable while the frequency moves.</summary>
+    private struct Svf
+    {
+        private float _k, _a1, _a2, _a3, _ic1, _ic2;
+
+        public Svf(float hz, float q) : this() => Set(hz, q);
+
+        public void Set(float hz, float q)
+        {
+            float g = MathF.Tan(MathF.PI * Math.Clamp(hz, 20f, Sr * 0.45f) / Sr);
+            _k = 1f / Math.Max(q, 0.1f);
+            _a1 = 1f / (1f + g * (g + _k));
+            _a2 = g * _a1;
+            _a3 = g * _a2;
+        }
+
+        /// <summary>Band is scaled to a peak gain of 1.</summary>
+        public void Process(float x, out float low, out float band, out float high)
+        {
+            float v3 = x - _ic2;
+            float v1 = _a1 * _ic1 + _a2 * v3;
+            float v2 = _ic2 + _a2 * _ic1 + _a3 * v3;
+            _ic1 = 2f * v1 - _ic1;
+            _ic2 = 2f * v2 - _ic2;
+
+            low = v2;
+            band = _k * v1;
+            high = x - _k * v1 - v2;
+        }
+    }
+
+    /// <summary>A short noise burst through a band-pass: one click, pop or drop (a new one retunes it).</summary>
+    private struct Clicker
+    {
+        private Svf _filter;
+        private float _envelope;
+        private float _decay;
+
+        public void Trigger(float amplitude, float hz, float q, float decaySeconds)
+        {
+            _envelope = amplitude;
+            _decay = MathF.Exp(-1f / (Math.Max(decaySeconds, 1e-4f) * Sr));
+            _filter.Set(hz, q);
+        }
+
+        public float Next(float noise)
+        {
+            if (_envelope < 1e-4f)
+                return 0f;
+
+            _envelope *= _decay;
+            _filter.Process(noise * _envelope, out _, out float band, out _);
+            return band;
+        }
+    }
+
+    /// <summary>A slow random value 0..1: smooth steps between random targets.</summary>
+    private struct Wander
+    {
+        private Rng _rng;
+        private float _from, _to, _position;
+
+        public Wander(uint seed)
+        {
+            _rng = new Rng(seed);
+            _from = _rng.Next01();
+            _to = _rng.Next01();
+            _position = _rng.Next01();
+        }
+
+        public float Next(float periodSeconds)
+        {
+            _position += 1f / (Math.Max(periodSeconds, 0.05f) * Sr);
+
+            if (_position >= 1f)
+            {
+                _position -= 1f;
+                _from = _to;
+                _to = _rng.Next01();
+            }
+
+            float s = _position * _position * (3f - 2f * _position);
+            return _from + (_to - _from) * s;
+        }
+    }
+
+    /// <summary>Slowly evens out the loudness of a filtered noise, so moving the filter does not change the volume.</summary>
+    private struct Leveler
+    {
+        private float _power;
+
+        public float Next(float x)
+        {
+            _power += (x * x - _power) * 2e-5f;
+            return x / MathF.Sqrt(_power + 1e-7f);
+        }
+    }
+
+    private static float Lerp(float a, float b, float t) => a + (b - a) * t;
+
+    private abstract class Channel
+    {
+        public abstract float Next(float brightness, float modulation);
+    }
+
+    // ---------------------------------------------------------------- textures
+
+    /// <summary>Fire: random snaps and pops over a low flickering rumble.</summary>
+    private sealed class CrackleChannel : Channel
+    {
+        private Rng _rng;
+        private Clicker _snap, _pop;
+        private Wander _density, _flicker;
+        private Svf _bed = new(160f, 0.7f);
+
+        public CrackleChannel(uint seed)
+        {
+            _rng = new Rng(seed);
+            _density = new Wander(seed ^ 0x9E3779B9u);
+            _flicker = new Wander(seed ^ 0x85EBCA6Bu);
+        }
+
+        public override float Next(float brightness, float modulation)
+        {
+            // The crackling comes in waves: the density wanders between a third and 1.7 times the set rate.
+            float density = 0.35f + 1.35f * _density.Next(5f);
+            float rate = (6f + 40f * modulation) * density;
+
+            if (_rng.Event(rate))
+            {
+                float loudness = _rng.Next01();
+                float hz = (900f + 4500f * brightness) * (0.6f + 0.8f * _rng.Next01());
+                _snap.Trigger(0.05f + 1.2f * loudness * loudness * loudness, hz, 1.5f, 0.0015f + 0.004f * _rng.Next01());
+            }
+
+            // Rare bigger, lower pops
+            if (_rng.Event(rate * 0.06f))
+                _pop.Trigger(0.5f + 0.5f * _rng.Next01(), 350f + 900f * brightness, 1.2f, 0.012f);
+
+            _bed.Process(_rng.Signed(), out float rumble, out _, out _);
+            float bed = rumble * 2.2f * (0.5f + 0.5f * _flicker.Next(1.3f)) * (0.6f + 0.4f * density);
+
+            return (_snap.Next(_rng.Signed()) + _pop.Next(_rng.Signed())) * 2f + bed;
+        }
+    }
+
+    /// <summary>Old record: fine surface hiss, a stream of tiny ticks and a few bigger pops.</summary>
+    private sealed class VinylChannel : Channel
+    {
+        private Rng _rng;
+        private Clicker _tick, _dust, _pop;
+        private Svf _hiss = new(1500f, 0.7f);
+
+        public VinylChannel(uint seed) => _rng = new Rng(seed);
+
+        public override float Next(float brightness, float modulation)
+        {
+            if (_rng.Event(2f + 10f * modulation))
+            {
+                float loudness = _rng.Next01();
+                _tick.Trigger(0.15f + 0.85f * loudness * loudness, (2500f + 5000f * brightness) * (0.7f + 0.6f * _rng.Next01()), 0.9f,
+                    0.0004f + 0.0008f * _rng.Next01());
+            }
+
+            // Fine dust: many quiet ticks
+            if (_rng.Event(30f + 60f * modulation))
+            {
+                float loudness = _rng.Next01();
+                _dust.Trigger(0.04f + 0.2f * loudness * loudness, 3000f + 5000f * _rng.Next01(), 1.2f, 0.0003f);
+            }
+
+            // A scratch: a lower, longer pop about every two seconds
+            if (_rng.Event(0.3f + 0.6f * modulation))
+                _pop.Trigger(0.6f + 0.4f * _rng.Next01(), 600f + 900f * _rng.Next01(), 1f, 0.006f);
+
+            _hiss.Process(_rng.Signed(), out _, out _, out float high);
+            float hiss = high * 0.07f * (0.4f + brightness);
+
+            return (_tick.Next(_rng.Signed()) + _pop.Next(_rng.Signed())) * 2.2f + _dust.Next(_rng.Signed()) * 2f + hiss;
+        }
+    }
+
+    /// <summary>Radio between stations: band-limited static, drifting tuning, dropouts, a faint whistle.</summary>
+    private sealed class RadioChannel : Channel
+    {
+        private Rng _rng;
+        private Svf _band = new(1500f, 1.4f);
+        private Clicker _pops;
+        private Wander _tuning, _whistleGate, _whistlePitch;
+        private double _whistlePhase;
+        private float _gain = 1f;
+        private float _targetGain = 1f;
+        private int _dropoutLeft;
+        private int _tick;
+        private float _center = 1500f;
+
+        public RadioChannel(uint seed)
+        {
+            _rng = new Rng(seed);
+            _tuning = new Wander(seed ^ 0x9E3779B9u);
+            _whistleGate = new Wander(seed ^ 0x85EBCA6Bu);
+            _whistlePitch = new Wander(seed ^ 0xC2B2AE35u);
+        }
+
+        public override float Next(float brightness, float modulation)
+        {
+            float tuning = _tuning.Next(7f);
+
+            // The tuning wanders up to +-2 octaves (with Modulation) around the base frequency.
+            if ((_tick++ & 15) == 0)
+            {
+                _center = (400f + 3600f * brightness) * MathF.Pow(2f, (tuning - 0.5f) * 4f * modulation);
+                _band.Set(_center, 1.4f);
+            }
+
+            // Dropouts: the signal sinks for a moment and comes back.
+            if (_dropoutLeft > 0)
+            {
+                if (--_dropoutLeft == 0)
+                    _targetGain = 1f;
+            }
+            else if (_rng.Event(0.05f + 0.3f * modulation))
+            {
+                _dropoutLeft = (int)((0.05f + 0.35f * _rng.Next01()) * Sr);
+                _targetGain = 0.08f;
+            }
+
+            float seconds = _targetGain < _gain ? 0.004f : 0.015f;
+            _gain += (_targetGain - _gain) * (1f - MathF.Exp(-1f / (seconds * Sr)));
+
+            float white = _rng.Signed();
+            _band.Process(white, out _, out float band, out _);
+
+            if (_rng.Event(5f + 10f * modulation))
+                _pops.Trigger(0.25f, 1500f + 3000f * _rng.Next01(), 1f, 0.002f);
+
+            // Heterodyne whistle: a thin tone that appears now and then and slides slowly.
+            float gate = Math.Clamp((_whistleGate.Next(8f) - 0.7f) * 4f, 0f, 1f);
+            float whistleHz = 600f + 2400f * _whistlePitch.Next(3f);
+            _whistlePhase += TwoPi * whistleHz / SampleRate;
+            Wrap(ref _whistlePhase);
+            float whistle = (float)Math.Sin(_whistlePhase) * gate * 0.05f * modulation;
+
+            return (band * 2.2f + white * 0.04f + _pops.Next(_rng.Signed()) * 2f) * _gain + whistle * _gain;
+        }
+    }
+
+    /// <summary>Wind: a resonant band of pink noise whose pitch and loudness swell in slow gusts, over a low rumble.</summary>
+    private sealed class WindChannel : Channel
+    {
+        private Rng _rng;
+        private readonly NoiseColor _pink = new(NoiseType.Pink);
+        private Svf _band = new(500f, 2.5f);
+        private Svf _rumble = new(120f, 0.7f);
+        private Wander _gustSlow, _gustFast;
+        private Leveler _leveler;
+        private int _tick;
+
+        public WindChannel(uint seed)
+        {
+            _rng = new Rng(seed);
+            _gustSlow = new Wander(seed ^ 0x9E3779B9u);
+            _gustFast = new Wander(seed ^ 0x85EBCA6Bu);
+        }
+
+        public override float Next(float brightness, float modulation)
+        {
+            float gust = 0.65f * _gustSlow.Next(6f) + 0.35f * _gustFast.Next(2.3f);
+
+            if ((_tick++ & 15) == 0)
+                _band.Set((180f + 900f * brightness) * (0.6f + 1.1f * gust), 2.5f);
+
+            float depth = 0.3f + 0.7f * modulation;
+            float gain = (1f - depth) + depth * 1.3f * MathF.Pow(gust, 1.5f);
+
+            _band.Process(_pink.Next(_rng.Signed()), out _, out float band, out _);
+            _rumble.Process(_rng.Signed(), out float low, out _, out _);
+
+            return _leveler.Next(band) * 0.3f * gain + low * 1.5f * (0.3f + 0.7f * gust);
+        }
+    }
+
+    /// <summary>Rain: a dense fine hiss with many separate drops.</summary>
+    private sealed class RainChannel : Channel
+    {
+        private Rng _rng;
+        private readonly NoiseColor _pink = new(NoiseType.Pink);
+        private Svf _highPass = new(400f, 0.7f);
+        private Svf _lowPass = new(6000f, 0.7f);
+        private Clicker _drop0, _drop1, _drop2;
+        private int _next;
+        private Wander _intensity;
+        private Leveler _leveler;
+        private int _tick;
+
+        public RainChannel(uint seed)
+        {
+            _rng = new Rng(seed);
+            _intensity = new Wander(seed ^ 0x9E3779B9u);
+        }
+
+        public override float Next(float brightness, float modulation)
+        {
+            float intensity = 0.75f + 0.5f * _intensity.Next(8f);
+
+            if ((_tick++ & 63) == 0)
+                _lowPass.Set(3500f + 6500f * brightness, 0.7f);
+
+            if (_rng.Event((30f + 220f * modulation) * intensity))
+            {
+                float loudness = _rng.Next01();
+                float hz = 2000f + 6000f * _rng.Next01() * (0.4f + 0.6f * brightness);
+                float amplitude = 0.15f + 0.85f * loudness * loudness;
+                float decay = 0.0008f + 0.002f * _rng.Next01();
+
+                // Three voices in turn, so that close drops do not cut each other off
+                switch (_next++ % 3)
+                {
+                    case 0: _drop0.Trigger(amplitude, hz, 2f, decay); break;
+                    case 1: _drop1.Trigger(amplitude, hz, 2f, decay); break;
+                    default: _drop2.Trigger(amplitude, hz, 2f, decay); break;
+                }
+            }
+
+            _highPass.Process(_pink.Next(_rng.Signed()), out _, out _, out float high);
+            _lowPass.Process(high, out float bed, out _, out _);
+
+            float drops = _drop0.Next(_rng.Signed()) + _drop1.Next(_rng.Signed()) + _drop2.Next(_rng.Signed());
+            return _leveler.Next(bed) * 0.16f * intensity + drops * 1.8f;
+        }
+    }
+}
