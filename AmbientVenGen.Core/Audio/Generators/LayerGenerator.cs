@@ -42,6 +42,7 @@ internal abstract class LayerGenerator
     public static LayerGenerator Create(LayerType type, int seed, string? sourcePath = null, NoiseType noiseType = NoiseType.White) => type switch
     {
         LayerType.FieldRecord => new FieldRecordGenerator(seed, sourcePath),
+        LayerType.Noise when noiseType >= NoiseType.Crackle => new TextureNoiseGenerator(seed, noiseType),
         LayerType.Noise => new NoiseGenerator(seed, noiseType),
         LayerType.Pad => new PadGenerator(seed),
         _ => new DroneGenerator(seed)

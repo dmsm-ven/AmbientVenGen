@@ -75,7 +75,24 @@ public static class Choices
             "Sounds like: a piercing sharp hiss, like a mosquito-thin whistle of escaping air or a sizzling frying pan."),
         new(NoiseType.Grey, "Grey noise",
             "White noise corrected for the ear: lows and highs are lifted, so every part of the spectrum sounds equally loud.",
-            "Sounds like: a balanced, even wash of air, like a quiet fan or an air conditioner in a calm room.")
+            "Sounds like: a balanced, even wash of air, like a quiet fan or an air conditioner in a calm room."),
+
+        // Textures: a divider is drawn above the first of them.
+        new(NoiseType.Crackle, "Crackle (fire)",
+            "Random snaps and pops over a low, flickering rumble. Modulation = how often it crackles.",
+            "Sounds like: a campfire or a fireplace, dry wood popping and embers settling.", StartsGroup: true),
+        new(NoiseType.Vinyl, "Vinyl dust",
+            "A fine surface hiss, tiny ticks and a few bigger pops. Modulation = how worn the record is.",
+            "Sounds like: an old record before the music starts, dust on the needle."),
+        new(NoiseType.RadioStatic, "Radio static",
+            "Band-limited static with a drifting tuning, short dropouts and a faint whistle. Modulation = how much it drifts.",
+            "Sounds like: an old radio between stations, a distant shortwave broadcast, a walkie-talkie."),
+        new(NoiseType.Wind, "Wind",
+            "A resonant band of noise whose pitch and loudness swell in slow gusts. Modulation = how strong the gusts are.",
+            "Sounds like: wind in a chimney or in the trees, a storm outside the window."),
+        new(NoiseType.Rain, "Rain",
+            "A dense fine hiss with many separate drops. Modulation = how heavy the rain is.",
+            "Sounds like: rain on a window or on leaves, a drizzle under an awning.")
     ];
 
     /// <summary>Three-layer relations (the arithmetic lives in Core: <see cref="PitchRelations"/>).</summary>
@@ -119,7 +136,7 @@ public sealed partial class IntervalRow : CommunityToolkit.Mvvm.ComponentModel.O
 public sealed record IntervalSource(Layer Layer, string Text);
 
 /// <summary>One entry of the noise type list: value, title and a short explanation.</summary>
-public sealed record NoiseOption(NoiseType Value, string Label, string Description, string Likeness);
+public sealed record NoiseOption(NoiseType Value, string Label, string Description, string Likeness, bool StartsGroup = false);
 
 public sealed record EasingOption(Easing Value, string Label, string Description);
 

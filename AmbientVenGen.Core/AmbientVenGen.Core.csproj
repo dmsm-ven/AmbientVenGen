@@ -11,6 +11,10 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <InternalsVisibleTo Include="AmbientVenGen.Core.Tests" />
+  </ItemGroup>
+
+  <ItemGroup>
     <PackageReference Include="NAudio" />
     <PackageReference Include="CommunityToolkit.Mvvm" />
   </ItemGroup>

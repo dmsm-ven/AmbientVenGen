@@ -10,7 +10,7 @@ public enum LayerType
     FieldRecord
 }
 
-/// <summary>Colour of a Noise layer: how the energy is spread over the frequencies.</summary>
+/// <summary>Kind of a Noise layer: a colour (how the energy is spread over the frequencies) or a texture.</summary>
 public enum NoiseType
 {
     White,
@@ -18,7 +18,14 @@ public enum NoiseType
     Brown,
     Blue,
     Violet,
-    Grey
+    Grey,
+
+    // Textures: noise with events and slow movement, made by TextureNoiseGenerator.
+    Crackle,
+    Vinyl,
+    RadioStatic,
+    Wind,
+    Rain
 }
 
 /// <summary>A parameter that moves from one value to another over the length of a layer.</summary>
