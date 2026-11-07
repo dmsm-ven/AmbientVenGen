@@ -1290,6 +1290,7 @@
                         SeekCommand="{Binding SeekCommand}"
                         SelectedLayer="{Binding SelectedLayer, Mode=TwoWay}"
                         ShowSpectrogram="{Binding ShowSpectrogram}"
+                        SpectrogramColor="{Binding Settings.SpectrogramColor}"
                         Spectrograms="{Binding Spectrograms}" />
                 </ScrollViewer>
             </Grid>

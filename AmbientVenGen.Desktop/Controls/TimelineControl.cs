@@ -70,6 +70,11 @@ public sealed partial class TimelineControl : FrameworkElement
         nameof(ShowSpectrogram), typeof(bool), typeof(TimelineControl),
         new PropertyMetadata(false, (d, _) => ((TimelineControl)d).InvalidateContent()));
 
+    /// <summary>Colour of the spectrogram bars.</summary>
+    public static readonly DependencyProperty SpectrogramColorProperty = DependencyProperty.Register(
+        nameof(SpectrogramColor), typeof(Color), typeof(TimelineControl),
+        new PropertyMetadata(Color.FromRgb(0x5B, 0x9B, 0xFF), (d, _) => ((TimelineControl)d).OnSpectrogramColorChanged()));
+
     private enum DragMode { None, Move, ResizeLeft, ResizeRight, FadeIn, FadeOut, Scrub }
 
     private enum HitZone { None, Body, LeftEdge, RightEdge, FadeInHandle, FadeOutHandle }
@@ -127,6 +132,12 @@ public sealed partial class TimelineControl : FrameworkElement
     {
         get => (SpectrogramService?)GetValue(SpectrogramsProperty);
         set => SetValue(SpectrogramsProperty, value);
+    }
+
+    public Color SpectrogramColor
+    {
+        get => (Color)GetValue(SpectrogramColorProperty);
+        set => SetValue(SpectrogramColorProperty, value);
     }
 
     public bool ShowSpectrogram
