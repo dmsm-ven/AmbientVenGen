@@ -824,7 +824,7 @@
                             </Border>
                         </Popup>
                         <ui:Button
-                            Margin="0,0,60,0"
+                            Margin="0,0,90,0"
                             HorizontalAlignment="Right"
                             Command="{Binding ClearSelectedLayerCommand}"
                             Style="{StaticResource ToolIconButton}"
