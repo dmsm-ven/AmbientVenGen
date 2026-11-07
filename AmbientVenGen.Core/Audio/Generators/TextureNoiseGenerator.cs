@@ -4,7 +4,7 @@ namespace AmbientVenGen.Core.Audio;
 
 /// <summary>
 /// Noise textures made of events (clicks, drops, dropouts) and slow movement (gusts, tuning drift) on top of filtered
-/// noise: Crackle, Vinyl, RadioStatic, Wind and Rain. Every channel has its own random stream, so the left and the right
+/// noise: Crackle, Vinyl, RadioStatic, Wind, Rain, Ocean, ElectricalHum, TapeHiss, SpaceRumble and Geiger. Every channel has its own random stream, so the left and the right
 /// side are different (wide). Brightness sets the tone, Modulation the density or the amount of movement.
 /// Everything is random-driven from the seed, so the sound is the same every time and can have any length.
 /// </summary>
@@ -41,6 +41,11 @@ internal sealed class TextureNoiseGenerator : LayerGenerator
         NoiseType.RadioStatic => new RadioChannel(seed),
         NoiseType.Wind => new WindChannel(seed),
         NoiseType.Rain => new RainChannel(seed),
+        NoiseType.Ocean => new OceanChannel(seed),
+        NoiseType.ElectricalHum => new HumChannel(seed),
+        NoiseType.TapeHiss => new TapeChannel(seed),
+        NoiseType.SpaceRumble => new RumbleChannel(seed),
+        NoiseType.Geiger => new GeigerChannel(seed),
         _ => new CrackleChannel(seed)
     };
 
@@ -397,6 +402,222 @@ internal sealed class TextureNoiseGenerator : LayerGenerator
 
             float drops = _drop0.Next(_rng.Signed()) + _drop1.Next(_rng.Signed()) + _drop2.Next(_rng.Signed());
             return _leveler.Next(bed) * 0.16f * intensity + drops * 1.8f;
+        }
+    }
+
+    /// <summary>Sea: brown noise swelling in waves (period 6-12 s, two waves of different length), foam hisses on the crests.</summary>
+    private sealed class OceanChannel : Channel
+    {
+        private Rng _rng;
+        private readonly NoiseColor _brown = new(NoiseType.Brown);
+        private Svf _body = new(500f, 0.7f);
+        private Svf _foam = new(1500f, 0.7f);
+        private Svf _foamLow = new(6000f, 0.7f);
+        private Wander _periodA, _periodB;
+        private float _phaseA, _phaseB;
+        private Leveler _leveler;
+        private int _tick;
+
+        public OceanChannel(uint seed)
+        {
+            _rng = new Rng(seed);
+            _periodA = new Wander(seed ^ 0x9E3779B9u);
+            _periodB = new Wander(seed ^ 0x85EBCA6Bu);
+            _phaseA = _rng.Next01();
+            _phaseB = _rng.Next01();
+        }
+
+        private static float Swell(float phase)
+        {
+            float w = 0.5f - 0.5f * MathF.Cos(phase * MathF.Tau);
+            return w * MathF.Sqrt(w);   // a longer calm, a sharper crest
+        }
+
+        public override float Next(float brightness, float modulation)
+        {
+            _phaseA = (_phaseA + 1f / ((6f + 6f * _periodA.Next(20f)) * Sr)) % 1f;
+            _phaseB = (_phaseB + 1f / ((4.5f + 4f * _periodB.Next(15f)) * Sr)) % 1f;
+
+            float wave = 0.7f * Swell(_phaseA) + 0.3f * Swell(_phaseB);
+
+            if ((_tick++ & 31) == 0)
+            {
+                _body.Set(250f + 1000f * brightness, 0.7f);
+                _foamLow.Set(3000f + 7000f * brightness, 0.7f);
+            }
+
+            float depth = 0.35f + 0.65f * modulation;
+            float gain = (1f - depth) + depth * wave;
+
+            _body.Process(_brown.Next(_rng.Signed()), out float lowBody, out _, out _);
+            float body = _leveler.Next(lowBody) * 0.33f * gain;
+
+            // Foam: bright hiss that comes with the top of the wave.
+            float crest = MathF.Pow(wave, 3f);
+            _foam.Process(_rng.Signed(), out _, out _, out float high);
+            _foamLow.Process(high, out float foam, out _, out _);
+
+            return body + foam * 0.5f * crest * (0.4f + 0.6f * brightness);
+        }
+    }
+
+    /// <summary>Mains hum: 50 Hz and its harmonics, a slow drift of the frequency and a light buzz.</summary>
+    private sealed class HumChannel : Channel
+    {
+        private const int Harmonics = 10;
+        private Rng _rng;
+        private double _phase;
+        private Wander _drift, _flicker;
+        private Svf _buzz = new(320f, 6f);
+
+        public HumChannel(uint seed)
+        {
+            _rng = new Rng(seed);
+            _drift = new Wander(seed ^ 0x9E3779B9u);
+            _flicker = new Wander(seed ^ 0x85EBCA6Bu);
+            _phase = _rng.Next01();
+        }
+
+        public override float Next(float brightness, float modulation)
+        {
+            // +-0.2 % of 50 Hz: slow beating against other hum layers
+            double hz = 50.0 * (1.0 + 0.004 * (_drift.Next(25f) - 0.5));
+            _phase = (_phase + hz / Sr) % 1.0;
+
+            // Brightness: from the fundamental with a soft second harmonic to a rich, harsh hum.
+            float rolloff = 2.2f - 1.5f * brightness;
+            float sum = 0f, norm = 0f;
+            for (int k = 1; k <= Harmonics; k++)
+            {
+                float amplitude = 1f / MathF.Pow(k, rolloff);
+                sum += amplitude * (float)Math.Sin(_phase * k * Math.PI * 2.0);
+                norm += amplitude;
+            }
+
+            // Buzz: a narrow band of noise around 300 Hz, flickering
+            _buzz.Process(_rng.Signed(), out _, out float band, out _);
+            float buzz = band * 0.5f * modulation * (0.4f + 0.6f * _flicker.Next(1.5f));
+
+            return sum / norm * 0.35f + buzz;
+        }
+    }
+
+    /// <summary>Tape: hiss (high-passed noise) whose level and tone float slowly, with a faint flutter.</summary>
+    private sealed class TapeChannel : Channel
+    {
+        private Rng _rng;
+        private Svf _hiss = new(3000f, 0.7f);
+        private Svf _bed = new(700f, 0.7f);
+        private Wander _wow;
+        private float _flutterPhase;
+        private int _tick;
+
+        public TapeChannel(uint seed)
+        {
+            _rng = new Rng(seed);
+            _wow = new Wander(seed ^ 0x9E3779B9u);
+            _flutterPhase = _rng.Next01();
+        }
+
+        public override float Next(float brightness, float modulation)
+        {
+            float wow = (_wow.Next(3f) - 0.5f) * 2f;                           // -1..1
+            _flutterPhase = (_flutterPhase + 6.3f / Sr) % 1f;
+            float flutter = MathF.Sin(_flutterPhase * MathF.Tau);
+
+            // The tone floats with the wow, like a tape sweep
+            if ((_tick++ & 31) == 0)
+                _hiss.Set((1500f + 5000f * brightness) * (1f + 0.35f * modulation * wow), 0.7f);
+
+            float level = Math.Max(0.15f, 1f + modulation * (0.55f * wow + 0.08f * flutter));
+
+            _hiss.Process(_rng.Signed(), out _, out _, out float high);
+            _bed.Process(_rng.Signed(), out float low, out _, out _);
+
+            return (high * 0.22f + low * 0.35f) * level;
+        }
+    }
+
+    /// <summary>Space rumble: very low brown noise (below 80 Hz) that shifts now and then, with a trace of saturation to be audible.</summary>
+    private sealed class RumbleChannel : Channel
+    {
+        private Rng _rng;
+        private readonly NoiseColor _brown = new(NoiseType.Brown);
+        private Svf _lowA = new(50f, 0.7f);
+        private Svf _lowB = new(50f, 0.7f);
+        private Wander _level;
+        private float _swell;
+        private float _swellTarget;
+        private int _swellLeft;
+        private Leveler _leveler;
+        private int _tick;
+
+        public RumbleChannel(uint seed)
+        {
+            _rng = new Rng(seed);
+            _level = new Wander(seed ^ 0x9E3779B9u);
+        }
+
+        public override float Next(float brightness, float modulation)
+        {
+            // A "shift": the rumble swells and climbs a little for a few seconds, then sinks back.
+            if (_swellLeft > 0)
+            {
+                if (--_swellLeft == 0)
+                    _swellTarget = 0f;
+            }
+            else if (_rng.Event(0.03f + 0.1f * modulation))
+            {
+                _swellLeft = (int)((3f + 4f * _rng.Next01()) * Sr);
+                _swellTarget = 0.6f + 0.4f * _rng.Next01();
+            }
+
+            _swell += (_swellTarget - _swell) * (1f - MathF.Exp(-1f / (2.5f * Sr)));
+
+            if ((_tick++ & 63) == 0)
+            {
+                float hz = (35f + 45f * brightness) * (1f + 0.3f * _swell);
+                _lowA.Set(hz, 0.7f);
+                _lowB.Set(hz, 0.7f);
+            }
+
+            _lowA.Process(_brown.Next(_rng.Signed()), out float a, out _, out _);
+            _lowB.Process(a, out float b, out _, out _);
+
+            float level = 0.45f + 0.35f * _level.Next(12f) + modulation * 0.7f * _swell;
+            return MathF.Tanh(_leveler.Next(b) * level * 1.2f) * 0.5f;
+        }
+    }
+
+    /// <summary>Geiger counter / sparks: rare hard clicks at random (exponentially spread) intervals, no background.</summary>
+    private sealed class GeigerChannel : Channel
+    {
+        private Rng _rng;
+        private Clicker _click, _spark;
+        private int _echoLeft;
+
+        public GeigerChannel(uint seed) => _rng = new Rng(seed);
+
+        public override float Next(float brightness, float modulation)
+        {
+            if (_rng.Event(0.5f + 14f * modulation))
+            {
+                _click.Trigger(0.7f + 0.3f * _rng.Next01(), (3000f + 5000f * brightness) * (0.8f + 0.4f * _rng.Next01()), 0.6f,
+                    0.0002f + 0.0004f * _rng.Next01());
+
+                // sometimes a quick double click
+                if (_rng.Next01() < 0.25f)
+                    _echoLeft = (int)((0.005f + 0.035f * _rng.Next01()) * Sr);
+            }
+
+            if (_echoLeft > 0 && --_echoLeft == 0)
+                _click.Trigger(0.6f, 4500f, 0.6f, 0.0003f);
+
+            // Sparks: a rarer, louder crack with a short tail
+            if (_rng.Event(0.1f + 1.2f * modulation))
+                _spark.Trigger(1f, 1500f + 3500f * brightness, 0.8f, 0.003f + 0.004f * _rng.Next01());
+
+            return (_click.Next(_rng.Signed()) * 3f + _spark.Next(_rng.Signed()) * 2.5f);
         }
     }
 }
