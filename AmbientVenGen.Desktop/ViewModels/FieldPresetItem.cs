@@ -3,7 +3,6 @@ using AmbientVenGen.Desktop.Services;
 using CommunityToolkit.Mvvm.ComponentModel;
 using System.Collections.ObjectModel;
 using System.Globalization;
-using System.Windows.Media;
 
 namespace AmbientVenGen.Desktop.ViewModels;
 
@@ -18,9 +17,10 @@ public sealed partial class FieldPresetItem : ObservableObject
     public TimeSpan Duration { get; }
     public long SizeBytes { get; }
 
-    /// <summary>Loaded in the background after the row appears.</summary>
+    /// <summary>Peaks of the waveform (loaded when the file is played the first time).</summary>
     [ObservableProperty]
-    private ImageSource? _thumbnail;
+    [NotifyPropertyChangedFor(nameof(WaveformHint))]
+    private float[]? _peaks;
 
     /// <summary>Tags of this preset (kept in the database).</summary>
     public ObservableCollection<string> Tags { get; } = [];
@@ -39,11 +39,7 @@ public sealed partial class FieldPresetItem : ObservableObject
 
     /// <summary>Preview position 0..1 (drawn as a vertical line over the waveform).</summary>
     [ObservableProperty]
-    [NotifyPropertyChangedFor(nameof(PlayX))]
     private double _playProgress;
-
-    /// <summary>The same position in pixels of the waveform image.</summary>
-    public double PlayX => Math.Round(PlayProgress * WaveformRenderer.Width);
 
     /// <summary>How many times the preset was put into a project.</summary>
     [ObservableProperty]
@@ -51,11 +47,19 @@ public sealed partial class FieldPresetItem : ObservableObject
 
     /// <summary>True when the file is gone or cannot be read any more.</summary>
     [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(WaveformHint))]
     private bool _isUnavailable;
 
     /// <summary>True while the waveform is being prepared (a spinner is shown instead).</summary>
     [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(WaveformHint))]
     private bool _isThumbnailLoading;
+
+    /// <summary>What the waveform panel says while there is no waveform to show (empty when there is one).</summary>
+    public string WaveformHint =>
+        IsUnavailable ? "The file was moved, deleted or cannot be read"
+        : Peaks is not null || IsThumbnailLoading ? string.Empty
+        : "Press play to see the waveform";
 
     private bool _thumbnailRequested;
 

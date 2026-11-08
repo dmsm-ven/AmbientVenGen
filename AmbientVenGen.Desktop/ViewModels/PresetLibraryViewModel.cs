@@ -43,6 +43,14 @@ public partial class PresetLibraryViewModel : ObservableObject
     [ObservableProperty]
     private bool _sortByUsage;
 
+    /// <summary>The recording shown in the waveform panel: the one being played, else the selected one.</summary>
+    [ObservableProperty]
+    private FieldPresetItem? _activeItem;
+
+    partial void OnSelectedPresetChanged(FieldPresetItem? value) => UpdateActiveItem();
+
+    private void UpdateActiveItem() => ActiveItem = _playingItem ?? SelectedPreset;
+
     /// <summary>Raised after a new record was added: the table must show its top (the newest record is the first row).</summary>
     public event Action? ScrollToTopRequested;
 
@@ -201,6 +209,7 @@ public partial class PresetLibraryViewModel : ObservableObject
         item.PlayProgress = 0;
         item.IsPlaying = true;
         _progressTimer.Start();
+        UpdateActiveItem();
     }
 
     private void StopPreview()
@@ -215,6 +224,7 @@ public partial class PresetLibraryViewModel : ObservableObject
         }
 
         _playingItem = null;
+        UpdateActiveItem();
     }
 
     private void OnPreviewEnded() => StopPreview();
@@ -569,6 +579,9 @@ public partial class PresetLibraryViewModel : ObservableObject
     }
 
     // Decoding happens on a background thread; the bitmap is drawn on the UI thread.
+    // Enough columns for a wide panel; the control makes the bars from them.
+    private const int PeakColumns = 800;
+
     private async Task LoadThumbnailAsync(FieldPresetItem item)
     {
         try
@@ -578,7 +591,7 @@ public partial class PresetLibraryViewModel : ObservableObject
             float[]? peaks;
             try
             {
-                peaks = await Task.Run(() => _analyzer.TryReadPeaks(item.FilePath, WaveformRenderer.ColumnCount));
+                peaks = await Task.Run(() => _analyzer.TryReadPeaks(item.FilePath, PeakColumns));
             }
             finally
             {
@@ -591,7 +604,7 @@ public partial class PresetLibraryViewModel : ObservableObject
                 return;
             }
 
-            item.Thumbnail = WaveformRenderer.Render(peaks);
+            item.Peaks = peaks;
         }
         finally
         {

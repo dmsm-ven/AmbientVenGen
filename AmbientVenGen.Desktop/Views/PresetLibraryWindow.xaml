@@ -101,6 +101,7 @@
             <RowDefinition Height="Auto" />
             <RowDefinition Height="Auto" />
             <RowDefinition Height="*" />
+            <RowDefinition Height="Auto" />
         </Grid.RowDefinitions>
         <!--  The table takes 4/6 of the width, the tag sidebar 2/6  -->
         <Grid.ColumnDefinitions>
@@ -210,7 +211,7 @@
         <!--  Tag sidebar: all tags, the most used first; the presets must have every switched-on tag  -->
         <Border
             Grid.Row="1"
-            Grid.RowSpan="2"
+            Grid.RowSpan="3"
             Grid.Column="1"
             Margin="0,2,10,10"
             Padding="8"
@@ -274,7 +275,7 @@
         <ui:DataGrid
             x:Name="PresetsGrid"
             Grid.Row="2"
-            Margin="10,6,6,10"
+            Margin="10,6,6,6"
             AutoGenerateColumns="False"
             Background="#252526"
             BorderBrush="#3F3F46"
@@ -297,7 +298,10 @@
             </ui:DataGrid.InputBindings>
             <ui:DataGrid.Columns>
                 <!--  Icon + preset name  -->
-                <DataGridTemplateColumn Width="200" Header="Preset">
+                <DataGridTemplateColumn
+                    Width="*"
+                    MinWidth="160"
+                    Header="Preset">
                     <DataGridTemplateColumn.CellTemplate>
                         <DataTemplate>
                             <StackPanel
@@ -345,55 +349,6 @@
                     Binding="{Binding ViewsCount}"
                     Header="Used" />
 
-
-                <!--  Waveform thumbnail (appears when it is ready)  -->
-                <DataGridTemplateColumn
-                    Width="*"
-                    MinWidth="262"
-                    Header="Preview">
-                    <DataGridTemplateColumn.CellTemplate>
-                        <DataTemplate>
-                            <Grid
-                                Width="250"
-                                Height="40"
-                                HorizontalAlignment="Left">
-                                <Image
-                                    RenderOptions.BitmapScalingMode="NearestNeighbor"
-                                    Source="{Binding Thumbnail}"
-                                    Stretch="Fill" />
-                                <!--  Preview position: a vertical line moving over the waveform  -->
-                                <Rectangle
-                                    Width="2"
-                                    HorizontalAlignment="Left"
-                                    Fill="#FFF2F2F8"
-                                    IsHitTestVisible="False"
-                                    Visibility="{Binding IsPlaying, Converter={StaticResource BoolToVisibility}}">
-                                    <Rectangle.RenderTransform>
-                                        <TranslateTransform X="{Binding PlayX}" />
-                                    </Rectangle.RenderTransform>
-                                </Rectangle>
-                                <!--  Shown while the waveform is being prepared  -->
-                                <ui:ProgressRing
-                                    Width="24"
-                                    Height="24"
-                                    HorizontalAlignment="Center"
-                                    VerticalAlignment="Center"
-                                    IsIndeterminate="True">
-                                    <ui:ProgressRing.Style>
-                                        <Style TargetType="ui:ProgressRing">
-                                            <Setter Property="Visibility" Value="Collapsed" />
-                                            <Style.Triggers>
-                                                <DataTrigger Binding="{Binding IsThumbnailLoading}" Value="True">
-                                                    <Setter Property="Visibility" Value="Visible" />
-                                                </DataTrigger>
-                                            </Style.Triggers>
-                                        </Style>
-                                    </ui:ProgressRing.Style>
-                                </ui:ProgressRing>
-                            </Grid>
-                        </DataTemplate>
-                    </DataGridTemplateColumn.CellTemplate>
-                </DataGridTemplateColumn>
 
                 <!--  Tags: chips + a box to add one (type a new tag or pick an existing one)  -->
                 <DataGridTemplateColumn Width="250" Header="Tags">
@@ -465,5 +420,35 @@
                 </DataGridTemplateColumn>
             </ui:DataGrid.Columns>
         </ui:DataGrid>
+
+        <!--  Waveform of the active recording (the one that plays, else the selected one); always there, so nothing jumps  -->
+        <Border
+            Grid.Row="3"
+            Height="56"
+            Margin="10,0,6,10"
+            Background="#661C1C24"
+            BorderBrush="#2EFFFFFF"
+            BorderThickness="1"
+            CornerRadius="8">
+            <Grid Margin="6,2">
+                <controls:WaveformBars
+                    IsPlaying="{Binding ActiveItem.IsPlaying}"
+                    Peaks="{Binding ActiveItem.Peaks}"
+                    Progress="{Binding ActiveItem.PlayProgress}" />
+                <TextBlock
+                    HorizontalAlignment="Center"
+                    VerticalAlignment="Center"
+                    FontSize="12"
+                    Foreground="#7C7B94"
+                    Text="{Binding ActiveItem.WaveformHint, FallbackValue='Select a recording'}" />
+                <ui:ProgressRing
+                    Width="24"
+                    Height="24"
+                    HorizontalAlignment="Center"
+                    VerticalAlignment="Center"
+                    IsIndeterminate="True"
+                    Visibility="{Binding ActiveItem.IsThumbnailLoading, Converter={StaticResource BoolToVisibility}, FallbackValue=Collapsed}" />
+            </Grid>
+        </Border>
     </Grid>
 </ui:FluentWindow>
