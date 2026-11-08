@@ -39,6 +39,10 @@ public partial class PresetLibraryViewModel : ObservableObject
     [ObservableProperty]
     private bool _hasTagFilter;
 
+    /// <summary>Sort the table by how often the presets were used (the most used first) instead of the order of adding.</summary>
+    [ObservableProperty]
+    private bool _sortByUsage;
+
     /// <summary>Raised after a new record was added: the table must show its top (the newest record is the first row).</summary>
     public event Action? ScrollToTopRequested;
 
@@ -132,6 +136,24 @@ public partial class PresetLibraryViewModel : ObservableObject
             TagFilters.Add(new TagFilterItem(name, count, selected.Contains(name), OnTagFilterChanged));
 
         OnTagFilterChanged();
+    }
+
+    partial void OnSortByUsageChanged(bool value)
+    {
+        ICollectionView view = CollectionViewSource.GetDefaultView(Presets);
+
+        using (view.DeferRefresh())
+        {
+            view.SortDescriptions.Clear();
+
+            if (value)
+            {
+                view.SortDescriptions.Add(new SortDescription(nameof(FieldPresetItem.ViewsCount), ListSortDirection.Descending));
+                view.SortDescriptions.Add(new SortDescription(nameof(FieldPresetItem.Id), ListSortDirection.Descending));
+            }
+        }
+
+        ScrollToTopRequested?.Invoke();
     }
 
     private void OnTagFilterChanged()
@@ -482,8 +504,27 @@ public partial class PresetLibraryViewModel : ObservableObject
     [RelayCommand(CanExecute = nameof(CanUsePreset))]
     private void UsePreset()
     {
-        if (SelectedPreset is { } item)
-            WeakReferenceMessenger.Default.Send(new UseFieldPresetMessage(item.FilePath, item.Name));
+        if (SelectedPreset is not { } item)
+            return;
+
+        WeakReferenceMessenger.Default.Send(new UseFieldPresetMessage(item.FilePath, item.Name));
+        _ = CountUseAsync(item);
+    }
+
+    // One more use: the counter grows in the table at once and in the database in the background.
+    // The sorting by usage is not redone here, so the rows do not jump under the mouse; it follows on the next sort.
+    private async Task CountUseAsync(FieldPresetItem item)
+    {
+        item.ViewsCount++;
+
+        try
+        {
+            await _repository.IncrementViewsAsync(item.Id);
+        }
+        catch
+        {
+            // the counter is a convenience: a failure must not disturb the work
+        }
     }
 
     private bool CanReplace() => HasReplaceTarget && SelectedPreset is { IsUnavailable: false };
@@ -492,8 +533,11 @@ public partial class PresetLibraryViewModel : ObservableObject
     [RelayCommand(CanExecute = nameof(CanReplace))]
     private void ReplaceInLayer()
     {
-        if (SelectedPreset is { } item)
-            WeakReferenceMessenger.Default.Send(new UseFieldPresetMessage(item.FilePath, item.Name, ReplaceCurrent: true));
+        if (SelectedPreset is not { } item)
+            return;
+
+        WeakReferenceMessenger.Default.Send(new UseFieldPresetMessage(item.FilePath, item.Name, ReplaceCurrent: true));
+        _ = CountUseAsync(item);
     }
 
     private bool CanDeletePreset() => SelectedPreset is not null;

@@ -18,4 +18,7 @@ public sealed class FieldPreset
 
     /// <summary>Lower-case extension with a dot, e.g. ".flac".</summary>
     public string Extension { get; set; } = string.Empty;
+
+    /// <summary>How many times the preset was put into a project (Add new Layer / Replace in current Layer).</summary>
+    public long ViewsCount { get; set; }
 }

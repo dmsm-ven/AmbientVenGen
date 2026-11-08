@@ -35,7 +35,7 @@ public sealed class FieldPresetRepository
         await using SqliteConnection connection = await OpenAsync();
 
         IEnumerable<FieldPreset> presets = await connection.QueryAsync<FieldPreset>(
-            "SELECT Id, Name, FilePath, AddedAtUnix, DurationSeconds, SizeBytes, Extension " +
+            "SELECT Id, Name, FilePath, AddedAtUnix, DurationSeconds, SizeBytes, Extension, ViewsCount " +
             "FROM FieldPresets ORDER BY Id DESC");
 
         return presets.ToList();
@@ -53,6 +53,14 @@ public sealed class FieldPresetRepository
             SELECT last_insert_rowid();
             """,
             preset);
+    }
+
+    /// <summary>Counts one more use of the preset.</summary>
+    public async Task IncrementViewsAsync(long id)
+    {
+        await using SqliteConnection connection = await OpenAsync();
+
+        await connection.ExecuteAsync("UPDATE FieldPresets SET ViewsCount = ViewsCount + 1 WHERE Id = @Id", new { Id = id });
     }
 
     public async Task DeleteAsync(long id)
@@ -116,7 +124,8 @@ public sealed class FieldPresetRepository
                 AddedAtUnix     INTEGER NOT NULL,
                 DurationSeconds REAL    NOT NULL,
                 SizeBytes       INTEGER NOT NULL,
-                Extension       TEXT    NOT NULL
+                Extension       TEXT    NOT NULL,
+                ViewsCount      INTEGER NOT NULL DEFAULT 0
             );
 
             CREATE TABLE IF NOT EXISTS PresetTags (
@@ -125,5 +134,10 @@ public sealed class FieldPresetRepository
                 PRIMARY KEY (PresetId, Tag)
             );
             """);
+
+        // A database made by an earlier version has no counter yet.
+        IEnumerable<string> columns = await connection.QueryAsync<string>("SELECT name FROM pragma_table_info('FieldPresets')");
+        if (!columns.Contains("ViewsCount", StringComparer.OrdinalIgnoreCase))
+            await connection.ExecuteAsync("ALTER TABLE FieldPresets ADD COLUMN ViewsCount INTEGER NOT NULL DEFAULT 0");
     }
 }

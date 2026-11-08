@@ -102,10 +102,10 @@
             <RowDefinition Height="Auto" />
             <RowDefinition Height="*" />
         </Grid.RowDefinitions>
-        <!--  The table takes 5/6 of the width, the tag sidebar 1/6  -->
+        <!--  The table takes 4/6 of the width, the tag sidebar 2/6  -->
         <Grid.ColumnDefinitions>
-            <ColumnDefinition Width="5*" />
-            <ColumnDefinition Width="*" />
+            <ColumnDefinition Width="4*" />
+            <ColumnDefinition Width="2*" />
         </Grid.ColumnDefinitions>
 
         <ui:TitleBar
@@ -226,6 +226,15 @@
                 </Grid.RowDefinitions>
 
                 <DockPanel Margin="0,0,0,6">
+                    <ToggleButton
+                        Margin="6,0,0,0"
+                        VerticalAlignment="Center"
+                        DockPanel.Dock="Right"
+                        IsChecked="{Binding SortByUsage, Mode=TwoWay}"
+                        Style="{StaticResource ToolIconToggleButton}"
+                        ToolTip="Sort the table by use: the recordings that were added to the project most often come first">
+                        <ui:SymbolIcon Symbol="ArrowSortDown24" />
+                    </ToggleButton>
                     <ui:Button
                         Padding="8,2"
                         VerticalAlignment="Center"
@@ -331,6 +340,10 @@
                     Width="60"
                     Binding="{Binding Extension}"
                     Header="Format" />
+                <DataGridTextColumn
+                    Width="60"
+                    Binding="{Binding ViewsCount}"
+                    Header="Used" />
 
 
                 <!--  Waveform thumbnail (appears when it is ready)  -->

@@ -45,6 +45,10 @@ public sealed partial class FieldPresetItem : ObservableObject
     /// <summary>The same position in pixels of the waveform image.</summary>
     public double PlayX => Math.Round(PlayProgress * WaveformRenderer.Width);
 
+    /// <summary>How many times the preset was put into a project.</summary>
+    [ObservableProperty]
+    private long _viewsCount;
+
     /// <summary>True when the file is gone or cannot be read any more.</summary>
     [ObservableProperty]
     private bool _isUnavailable;
@@ -91,5 +95,6 @@ public sealed partial class FieldPresetItem : ObservableObject
         AddedAt = DateTimeOffset.FromUnixTimeSeconds(preset.AddedAtUnix).LocalDateTime;
         Duration = TimeSpan.FromSeconds(preset.DurationSeconds);
         SizeBytes = preset.SizeBytes;
+        _viewsCount = preset.ViewsCount;
     }
 }
