@@ -337,19 +337,57 @@ public partial class PresetLibraryViewModel : ObservableObject
         // Waveforms are built only for files that were played (see TogglePreview).
     }
 
+    /// <summary>Adds one or several files: each is read, saved and gets the existing tags that its name mentions.</summary>
     [RelayCommand]
     private async Task AddPresetAsync()
     {
-        string? path = _fileDialogService.ChooseFieldPresetFile();
-        if (path is null)
+        IReadOnlyList<string> paths = _fileDialogService.ChooseFieldPresetFiles();
+        if (paths.Count == 0)
             return;
 
+        var failed = new List<string>();
+        FieldPresetItem? last = null;
+        int added = 0;
+
+        foreach (string path in paths)
+        {
+            (FieldPresetItem? item, string? error) = await AddFileAsync(path);
+
+            if (item is null)
+            {
+                failed.Add($"{Path.GetFileName(path)}: {error}");
+                continue;
+            }
+
+            last = item;
+            added++;
+        }
+
+        if (last is not null)
+        {
+            SelectedPreset = last;
+
+            // The new records are on top, and they must not be hidden by a tag filter.
+            if (HasTagFilter)
+                ClearTagFilter();
+
+            ScrollToTopRequested?.Invoke();
+
+            // One new record: the tag box is open at once. A batch gets its tags from the names only.
+            if (added == 1)
+                last.IsTagEditing = true;
+        }
+
+        if (failed.Count > 0)
+            _messageService.ShowError($"{failed.Count} of {paths.Count} files were not added:\n{string.Join("\n", failed)}");
+    }
+
+    // Reads, saves and tags one file; the record goes to the top of the table.
+    private async Task<(FieldPresetItem? Item, string? Error)> AddFileAsync(string path)
+    {
         AudioFileInfo? info = await Task.Run(() => _analyzer.TryReadInfo(path));
         if (info is null)
-        {
-            _messageService.ShowError("This file cannot be read as audio.");
-            return;
-        }
+            return (null, "cannot be read as audio");
 
         var preset = new FieldPreset
         {
@@ -367,25 +405,16 @@ public partial class PresetLibraryViewModel : ObservableObject
         }
         catch (Exception ex)
         {
-            _messageService.ShowError($"Cannot save the preset:\n{ex.Message}");
-            return;
+            return (null, $"cannot be saved ({ex.Message})");
         }
 
         FieldPresetItem item = CreateItem(preset);
         Presets.Insert(0, item);
-        SelectedPreset = item;
 
         // Tags that already exist and are named in the file name are put on at once ("123_wind_howl.wav": Wind, Howl).
         await AddTagsFromNameAsync(item);
 
-        // The new record is on top, and it must not be hidden by a tag filter.
-        if (!MatchesTagFilter(item))
-            ClearTagFilter();
-
-        ScrollToTopRequested?.Invoke();
-
-        // A new record: the tag box is open at once.
-        item.IsTagEditing = true;
+        return (item, null);
     }
 
     // Puts on every existing tag whose words are found in the name of the file (whole words, any case).

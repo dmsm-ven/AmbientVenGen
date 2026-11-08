@@ -24,17 +24,17 @@ public sealed class FileDialogService
         return dialog.ShowDialog() == true ? dialog.FileName : null;
     }
 
-    public string? ChooseFieldPresetFile()
+    public IReadOnlyList<string> ChooseFieldPresetFiles()
     {
         var dialog = new OpenFileDialog
         {
-            Title = "Add field recording",
+            Title = "Add field recordings",
             Filter = "Audio and video (*.flac;*.mp3;*.wav;*.m4a;*.mp4)|*.flac;*.mp3;*.wav;*.m4a;*.mp4|All files (*.*)|*.*",
             CheckFileExists = true,
-            Multiselect = false
+            Multiselect = true
         };
 
-        return dialog.ShowDialog() == true ? dialog.FileName : null;
+        return dialog.ShowDialog() == true ? dialog.FileNames : [];
     }
 
     public string? ChooseProjectToOpen()
