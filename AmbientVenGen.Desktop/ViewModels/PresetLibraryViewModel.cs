@@ -346,11 +346,19 @@ public partial class PresetLibraryViewModel : ObservableObject
             return;
 
         var failed = new List<string>();
+        var duplicates = new List<string>();
         FieldPresetItem? last = null;
         int added = 0;
 
         foreach (string path in paths)
         {
+            // A file that is already in the library (or is chosen twice) is skipped.
+            if (IsInLibrary(path))
+            {
+                duplicates.Add(Path.GetFileName(path));
+                continue;
+            }
+
             (FieldPresetItem? item, string? error) = await AddFileAsync(path);
 
             if (item is null)
@@ -378,8 +386,17 @@ public partial class PresetLibraryViewModel : ObservableObject
                 last.IsTagEditing = true;
         }
 
+        if (added == 0 && failed.Count == 0 && duplicates.Count > 0)
+            _messageService.ShowError($"Already in the library:\n{string.Join("\n", duplicates)}");
+
         if (failed.Count > 0)
             _messageService.ShowError($"{failed.Count} of {paths.Count} files were not added:\n{string.Join("\n", failed)}");
+    }
+
+    private bool IsInLibrary(string path)
+    {
+        string full = Path.GetFullPath(path);
+        return Presets.Any(p => string.Equals(Path.GetFullPath(p.FilePath), full, StringComparison.OrdinalIgnoreCase));
     }
 
     // Reads, saves and tags one file; the record goes to the top of the table.
