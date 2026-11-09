@@ -181,7 +181,7 @@ public partial class MainViewModel : ObservableObject, IDisposable
                 if (message.ReplaceCurrent)
                     viewModel.ReplaceFieldRecordSource(message.Path, message.Name);
                 else
-                    viewModel.AddFieldRecordLayer(message.Path, message.Name);
+                    viewModel.AddFieldRecordLayer(message.Path, message.Name, message.DurationSeconds);
             });
         WeakReferenceMessenger.Default.Register<MainViewModel, FieldRecordTargetRequest>(
             this,

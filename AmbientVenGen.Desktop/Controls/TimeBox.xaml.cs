@@ -87,6 +87,10 @@ public partial class TimeBox : UserControl
     {
         InitializeComponent();
         Sync();
+
+        // A box created for a new layer must show the value it was bound to at once.
+        Loaded += (_, _) => Sync();
+        DataContextChanged += (_, _) => Dispatcher.BeginInvoke(new Action(Sync), System.Windows.Threading.DispatcherPriority.Loaded);
     }
 
     private static void OnPropertyChanged(DependencyObject d, DependencyPropertyChangedEventArgs e) =>

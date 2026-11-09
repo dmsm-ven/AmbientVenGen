@@ -574,7 +574,7 @@ public partial class PresetLibraryViewModel : ObservableObject
         if (SelectedPreset is not { } item)
             return;
 
-        WeakReferenceMessenger.Default.Send(new UseFieldPresetMessage(item.FilePath, item.Name));
+        WeakReferenceMessenger.Default.Send(new UseFieldPresetMessage(item.FilePath, item.Name, DurationSeconds: item.Duration.TotalSeconds));
         _ = CountUseAsync(item);
     }
 

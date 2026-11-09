@@ -113,13 +113,16 @@ public partial class MainViewModel
     }
 
     /// <summary>Adds a recording (from the preset library) as a new Field record layer.</summary>
-    private void AddFieldRecordLayer(string path, string name)
+    private void AddFieldRecordLayer(string path, string name, double fileSeconds)
     {
         double total = Project.DurationSeconds;
 
         Layer layer = LayerDefaults.Create(LayerType.FieldRecord, name);
         layer.SourcePath = path;
-        layer.DurationSeconds = Math.Clamp(180, MinLayerSeconds, total);
+
+        // The layer is as long as the recording itself (not longer than the project).
+        double length = fileSeconds > 0 ? fileSeconds : 180;
+        layer.DurationSeconds = Math.Clamp(length, MinLayerSeconds, total);
         layer.FadeInSeconds = layer.FadeOutSeconds = Math.Min(30, layer.DurationSeconds / 2);
 
         Project.Layers.Add(layer);
