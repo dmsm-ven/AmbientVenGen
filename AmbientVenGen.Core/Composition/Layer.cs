@@ -55,6 +55,17 @@ public sealed partial class Layer : ObservableObject
     /// <summary>Distance between the starts of two neighbouring plays.</summary>
     public double PeriodSeconds => DurationSeconds + Math.Max(0, RepeatGapSeconds);
 
+    // The fades keep their share of the layer: 60 s with fades 10 / 12 s cut to 30 s gives fades 5 / 6 s.
+    partial void OnDurationSecondsChanged(double oldValue, double newValue)
+    {
+        if (oldValue <= 0 || newValue <= 0 || Math.Abs(oldValue - newValue) < 1e-9)
+            return;
+
+        double ratio = newValue / oldValue;
+        FadeInSeconds = Math.Min(FadeInSeconds * ratio, newValue);
+        FadeOutSeconds = Math.Min(FadeOutSeconds * ratio, newValue);
+    }
+
     partial void OnRepeatsChanged(int value)
     {
         int clamped = Math.Clamp(value, 1, MaxRepeats);
