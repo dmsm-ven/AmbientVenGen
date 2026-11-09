@@ -71,9 +71,6 @@ public static class HintTexts
     public const string Reverb =
         "Amount of long reverb on the whole mix. More makes the sound vaster and more distant.";
 
-    public const string Template =
-        "A ready-made starting point. Applying it replaces all current layers.";
-
     public const string TrackLength =
         "Total length of the track. Layers can be placed anywhere inside it.";
 

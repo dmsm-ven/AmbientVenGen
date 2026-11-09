@@ -91,7 +91,8 @@ public sealed partial class TimelineControl
     protected override Size MeasureOverride(Size availableSize)
     {
         double width = double.IsInfinity(availableSize.Width) ? 900 : availableSize.Width;
-        int lanes = Math.Max(Project?.Layers.Count ?? 0, MinVisibleLanes);
+        // one free lane under the layers holds the "add layer" slot
+        int lanes = Math.Max((Project?.Layers.Count ?? 0) + 1, MinVisibleLanes);
 
         return new Size(width, RulerHeight + lanes * LaneHeight + 6);
     }

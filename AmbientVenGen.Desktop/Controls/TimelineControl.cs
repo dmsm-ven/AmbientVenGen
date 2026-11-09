@@ -150,6 +150,7 @@ public sealed partial class TimelineControl : FrameworkElement
     {
         AddVisualChild(_contentVisual);
         AddVisualChild(_playheadVisual);
+        InitAddSlot();
 
         Focusable = true;
         FocusVisualStyle = null;
@@ -159,9 +160,14 @@ public sealed partial class TimelineControl : FrameworkElement
                   + "Hover a layer name and use the arrows (or Alt+Up/Down) to change the order of layers.";
     }
 
-    protected override int VisualChildrenCount => 2;
+    protected override int VisualChildrenCount => 3;
 
-    protected override Visual GetVisualChild(int index) => index == 0 ? _contentVisual : _playheadVisual;
+    protected override Visual GetVisualChild(int index) => index switch
+    {
+        0 => _contentVisual,
+        1 => _addVisual,
+        _ => _playheadVisual
+    };
 
     // ---------------------------------------------------------------- dependency property callbacks
 
@@ -219,5 +225,6 @@ public sealed partial class TimelineControl : FrameworkElement
         ClampView();
         InvalidateContent();
         RenderPlayhead();
+        RenderAddSlot();
     }
 }

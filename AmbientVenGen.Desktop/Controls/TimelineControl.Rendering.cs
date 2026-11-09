@@ -44,7 +44,7 @@ public sealed partial class TimelineControl
             return;
 
         int layerCount = project.Layers.Count;
-        int laneCount = Math.Max(layerCount, (int)Math.Ceiling((height - RulerHeight) / LaneHeight));
+        int laneCount = Math.Max(layerCount + 1, (int)Math.Ceiling((height - RulerHeight) / LaneHeight));
         var trackArea = new Rect(HeaderWidth, RulerHeight, width - HeaderWidth, Math.Max(0, height - RulerHeight));
 
         DrawLaneBackgrounds(dc, project, laneCount, width, height);
@@ -64,7 +64,7 @@ public sealed partial class TimelineControl
         if (layerCount == 0)
         {
             FormattedText hint = MakeText(
-                "Add a layer above to start building your track",
+                "Add a layer with the + button on the left to start building your track",
                 14,
                 Color.FromArgb(0x90, 0xC9, 0xC8, 0xD6));
 
@@ -74,6 +74,7 @@ public sealed partial class TimelineControl
         }
 
         DrawRuler(dc, width);
+        RenderAddSlot();
     }
 
     private void DrawLaneBackgrounds(DrawingContext dc, ProjectModel project, int laneCount, double width, double height)

@@ -76,11 +76,7 @@ public partial class MainViewModel : ObservableObject, IDisposable
     /// <summary>User settings (slider or knob controls).</summary>
     public AppSettings Settings { get; }
     public NewLayerFormViewModel NewLayer { get; } = new();
-    public IReadOnlyList<ProjectTemplate> Templates { get; }
     public ObservableCollection<Choice<double>> LengthOptions { get; }
-
-    [ObservableProperty]
-    private ProjectTemplate? _selectedTemplate;
 
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(HasSelectedLayer))]
@@ -166,8 +162,6 @@ public partial class MainViewModel : ObservableObject, IDisposable
         ArgumentNullException.ThrowIfNull(templateService);
         _presetLibraryWindowService = presetLibraryWindowService ?? throw new ArgumentNullException(nameof(presetLibraryWindowService));
 
-        Templates = templateService.Templates;
-        SelectedTemplate = templateService.Default;
 
         LengthOptions = new ObservableCollection<Choice<double>>(
             new[] { 3, 5, 10, 15, 20, 30, 45, 60 }

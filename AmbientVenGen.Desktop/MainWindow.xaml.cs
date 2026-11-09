@@ -22,8 +22,36 @@ public partial class MainWindow : FluentWindow
             return [new CustomPopupPlacement(new System.Windows.Point(x, targetSize.Height + 4), PopupPrimaryAxis.Horizontal)];
         };
 
+        Timeline.AddLayerRequested += () => viewModel.AddLayerCommand.Execute(null);
+        Timeline.NewLayerTypeMenuRequested += rect => ShowLayerTypeMenu(viewModel, rect);
+
         PreviewKeyDown += OnPreviewKeyDown;
         Closing += OnClosing;
+    }
+
+    // The type of the layer that "+" adds is chosen here (a list under the chooser in the free row of the timeline).
+    private void ShowLayerTypeMenu(MainViewModel viewModel, System.Windows.Rect rect)
+    {
+        var menu = new System.Windows.Controls.ContextMenu
+        {
+            PlacementTarget = Timeline,
+            PlacementRectangle = rect,
+            Placement = PlacementMode.Bottom
+        };
+
+        foreach (Choice<Core.Composition.LayerType> choice in Choices.LayerTypes)
+        {
+            Core.Composition.LayerType type = choice.Value;
+            var item = new System.Windows.Controls.MenuItem
+            {
+                Header = choice.Label,
+                IsChecked = viewModel.NewLayer.Type == type
+            };
+            item.Click += (_, _) => viewModel.NewLayer.Type = type;
+            menu.Items.Add(item);
+        }
+
+        menu.IsOpen = true;
     }
 
     // "New / Open": New Project on top, then the recent projects, and below a separator "Open file..." (the file dialog).

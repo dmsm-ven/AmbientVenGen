@@ -89,6 +89,12 @@ public sealed partial class TimelineControl
         {
             int lane = (int)Math.Floor((point.Y - RulerHeight) / LaneHeight);
 
+            if (HandleAddSlotClick(point))
+            {
+                e.Handled = true;
+                return;
+            }
+
             if (point.Y >= RulerHeight && lane >= 0 && lane < project.Layers.Count)
             {
                 Layer layer = project.Layers[lane];
@@ -226,6 +232,7 @@ public sealed partial class TimelineControl
     protected override void OnMouseLeave(MouseEventArgs e)
     {
         base.OnMouseLeave(e);
+        SetAddHover(false);
 
         if (_hoverLane != -1 || _hoverArrow != 0 || _hoverMute)
         {
@@ -238,6 +245,8 @@ public sealed partial class TimelineControl
 
     private void UpdateHover(Point point)
     {
+        SetAddHover(InAddHeader(point));
+
         int lane = -1;
         int arrow = 0;
         bool mute = false;
@@ -297,7 +306,7 @@ public sealed partial class TimelineControl
 
         if (point.X < HeaderWidth)
         {
-            Cursor = _hoverArrow != 0 || _hoverMute ? Cursors.Hand : Cursors.Arrow;
+            Cursor = _hoverArrow != 0 || _hoverMute || IsOverAddControl(point) ? Cursors.Hand : Cursors.Arrow;
             return;
         }
 
