@@ -1,4 +1,4 @@
-namespace AmbientVenGen.Core.Audio;
+﻿namespace AmbientVenGen.Core.Audio;
 
 /// <summary>
 /// Extreme time stretching (the "Paulstretch" method): the recording is cut into long overlapping windows, only the
@@ -61,7 +61,7 @@ public static class PaulStretch
         return new DecodedSample(left, right);
     }
 
-    private static void Run(float[] source, int used, float[] output, int window, double stretch, uint seed, CancellationToken token, Action step)
+    private static void Run(float[] source, int used, float[] output, int window, double stretch, uint seed, CancellationToken token, Action stepAction)
     {
         int half = window / 2;
         var fft = new Fft(window);
@@ -84,7 +84,7 @@ public static class PaulStretch
             if ((frame & 7) == 0)
                 token.ThrowIfCancellationRequested();
 
-            step();
+            stepAction();
 
             int start = (int)(frame * step);
 
