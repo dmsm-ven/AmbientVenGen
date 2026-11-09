@@ -164,34 +164,6 @@ public partial class MainViewModel
         StatusMessage = "Choose a recording in the library and press \"Replace in current Layer\"";
     }
 
-    [RelayCommand]
-    private void ApplyTemplate()
-    {
-        ProjectTemplate? template = SelectedTemplate;
-        if (template is null)
-            return;
-
-        if (Project.Layers.Count > 0
-            && !_messageService.Confirm(
-                $"Replace the current layers with the \"{template.Name}\" template?",
-                "Replace",
-                "Cancel"))
-        {
-            return;
-        }
-
-        ProjectSpec spec = template.Build();
-
-        StopPlaybackSilently();
-        SelectedLayer = null;
-        ClearDeleted();
-        EnsureLengthOption(spec.DurationSeconds);
-        Project.Load(spec);
-        PlayheadSeconds = 0;
-
-        StatusMessage = $"Template applied: {template.Name}";
-    }
-
     // Layers of a replaced project cannot be restored into the new one.
     private void ClearDeleted()
     {

@@ -339,7 +339,7 @@
                 <StackPanel Grid.Column="0" Orientation="Horizontal">
                     <ui:Button
                         Click="OnOpenMenuClick"
-                        Style="{StaticResource ToolIconButton}"
+                        Style="{StaticResource TopToolButton}"
                         ToolTip="New / open project (Ctrl+N: new, Ctrl+O: open file)">
                         <ui:Button.Icon>
                             <ui:SymbolIcon Symbol="FolderOpen24" />
@@ -347,7 +347,7 @@
                     </ui:Button>
                     <ui:Button
                         Command="{Binding SaveProjectCommand}"
-                        Style="{StaticResource ToolIconButton}"
+                        Style="{StaticResource TopToolButton}"
                         ToolTip="Save project (Ctrl+S, Ctrl+Shift+S: Save as)">
                         <ui:Button.Icon>
                             <ui:SymbolIcon Symbol="Save24" />
@@ -359,8 +359,24 @@
                         Margin="6,0,10,0"
                         Fill="#3A3945" />
                     <ui:Button
+                        Command="{Binding AddLayerCommand}"
+                        Style="{StaticResource TopToolButton}"
+                        ToolTip="Add layer (the type is chosen in the free row of the timeline)">
+                        <ui:Button.Icon>
+                            <ui:SymbolIcon Symbol="Add24" />
+                        </ui:Button.Icon>
+                    </ui:Button>
+                    <ui:Button
+                        Command="{Binding UndoDeleteCommand}"
+                        Style="{StaticResource TopToolButton}"
+                        ToolTip="Restore the last removed layer">
+                        <ui:Button.Icon>
+                            <ui:SymbolIcon Symbol="ArrowUndo24" />
+                        </ui:Button.Icon>
+                    </ui:Button>
+                    <ui:Button
                         Command="{Binding OpenPresetLibraryCommand}"
-                        Style="{StaticResource ToolIconButton}"
+                        Style="{StaticResource TopToolButton}"
                         ToolTip="Preset library">
                         <ui:Button.Icon>
                             <ui:SymbolIcon Symbol="Library24" />
@@ -368,7 +384,7 @@
                     </ui:Button>
                     <ui:Button
                         Command="{Binding ExportCommand}"
-                        Style="{StaticResource ToolIconButton}"
+                        Style="{StaticResource TopToolButton}"
                         ToolTip="Export... (Ctrl+E)">
                         <ui:Button.Icon>
                             <ui:SymbolIcon Symbol="ArrowDownload24" />
@@ -381,7 +397,7 @@
                         Fill="#3A3945" />
                     <ui:Button
                         Command="{Binding OpenSettingsCommand}"
-                        Style="{StaticResource ToolIconButton}"
+                        Style="{StaticResource TopToolButton}"
                         ToolTip="Settings">
                         <ui:Button.Icon>
                             <ui:SymbolIcon Symbol="Settings24" />
@@ -389,7 +405,7 @@
                     </ui:Button>
                     <ToggleButton
                         IsChecked="{Binding ShowHints, Mode=TwoWay}"
-                        Style="{StaticResource ToolIconToggleButton}"
+                        Style="{StaticResource TopToolToggleButton}"
                         ToolTip="Show hints: a '?' appears next to each parameter">
                         <ui:SymbolIcon Symbol="QuestionCircle24" />
                     </ToggleButton>
@@ -423,95 +439,10 @@
             </Grid>
         </Border>
 
-        <!--  Top row: new layer form + selected layer inspector  -->
+        <!--  Top row: selected layer inspector (the whole width)  -->
         <Grid Grid.Row="2" Margin="12,10,12,0">
-            <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="224" />
-                <ColumnDefinition Width="10" />
-                <ColumnDefinition Width="*" />
-            </Grid.ColumnDefinitions>
-
-            <!--  New layer: only the type; start, length and fades are edited after adding  -->
-            <Grid Grid.Column="0">
-                <Grid.RowDefinitions>
-                    <RowDefinition Height="*" />
-                    <RowDefinition Height="10" />
-                    <RowDefinition Height="*" />
-                </Grid.RowDefinitions>
-                <Border Grid.Row="0" Style="{StaticResource SectionCard}">
-                    <StackPanel>
-                        <Grid Margin="0,0,0,8">
-                            <ui:TextBlock
-                                Margin="0"
-                                VerticalAlignment="Center"
-                                FontSize="14"
-                                FontWeight="SemiBold"
-                                Text="New layer" />
-                            <ui:Button
-                                Margin="0,0,30,0"
-                                HorizontalAlignment="Right"
-                                Command="{Binding UndoDeleteCommand}"
-                                Style="{StaticResource ToolIconButton}"
-                                ToolTip="Restore the last removed layer">
-                                <ui:Button.Icon>
-                                    <ui:SymbolIcon Symbol="ArrowUndo24" />
-                                </ui:Button.Icon>
-                            </ui:Button>
-                            <ui:Button
-                                Margin="0"
-                                HorizontalAlignment="Right"
-                                Command="{Binding AddLayerCommand}"
-                                Style="{StaticResource ToolIconButton}"
-                                ToolTip="Add layer">
-                                <ui:Button.Icon>
-                                    <ui:SymbolIcon Symbol="Add24" />
-                                </ui:Button.Icon>
-                            </ui:Button>
-                        </Grid>
-
-                        <StackPanel Orientation="Horizontal">
-                            <ui:TextBlock
-                                Margin="0"
-                                FontSize="12"
-                                Foreground="#C9C8D6"
-                                Text="Type" />
-                            <controls:HintIcon Margin="5,0,0,0" Text="{x:Static vm:HintTexts.LayerType}" />
-                        </StackPanel>
-                        <ComboBox
-                            ItemsSource="{x:Static vm:Choices.LayerTypes}"
-                            SelectedValue="{Binding NewLayer.Type, Mode=TwoWay}"
-                            Style="{StaticResource ChoiceCombo}" />
-                    </StackPanel>
-                </Border>
-
-                <!--  Templates: a ready-made set of layers  -->
-                <Border Grid.Row="2" Style="{StaticResource SectionCard}">
-                    <StackPanel>
-                        <StackPanel Margin="0,0,0,4" Orientation="Horizontal">
-                            <ui:TextBlock
-                                Margin="0"
-                                FontSize="14"
-                                FontWeight="SemiBold"
-                                Text="Template" />
-                            <controls:HintIcon Margin="5,0,0,0" Text="{x:Static vm:HintTexts.Template}" />
-                        </StackPanel>
-                        <ComboBox
-                            DisplayMemberPath="Name"
-                            ItemsSource="{Binding Templates}"
-                            SelectedItem="{Binding SelectedTemplate, Mode=TwoWay}" />
-                        <ui:Button
-                            Margin="0,8,0,0"
-                            HorizontalAlignment="Stretch"
-                            Command="{Binding ApplyTemplateCommand}"
-                            Content="Apply template"
-                            ToolTip="Replaces all layers of the project with the template" />
-                    </StackPanel>
-                </Border>
-            </Grid>
-
             <!--  Selected layer inspector  -->
             <Border
-                Grid.Column="2"
                 IsEnabled="{Binding HasSelectedLayer}"
                 Style="{StaticResource SectionCard}">
                 <Grid>
@@ -1360,6 +1291,8 @@
                     HorizontalScrollBarVisibility="Disabled"
                     VerticalScrollBarVisibility="Auto">
                     <controls:TimelineControl
+                        x:Name="Timeline"
+                        NewLayerType="{Binding NewLayer.Type, Mode=OneWay}"
                         DeleteCommand="{Binding DeleteSelectedLayerCommand}"
                         PlayheadSeconds="{Binding PlayheadSeconds}"
                         Project="{Binding Project}"
