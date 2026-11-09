@@ -75,17 +75,6 @@
         <Setter Property="FontSize" Value="17" />
     </Style>
 
-    <Style
-        x:Key="TopToolToggleButton"
-        BasedOn="{StaticResource ToolIconToggleButton}"
-        TargetType="ToggleButton">
-        <Setter Property="Width" Value="29" />
-        <Setter Property="Height" Value="29" />
-        <Setter Property="MinWidth" Value="29" />
-        <Setter Property="MinHeight" Value="29" />
-        <Setter Property="FontSize" Value="17" />
-    </Style>
-
     <!--  30x30 icon button (25% larger) for the Play / Seed buttons in the Timeline section.  -->
     <Style
         x:Key="TimelineIconButton"
@@ -112,6 +101,18 @@
         <Setter Property="FontSize" Value="14" />
         <Setter Property="HorizontalContentAlignment" Value="Center" />
         <Setter Property="VerticalContentAlignment" Value="Center" />
+    </Style>
+
+    <!--  Toggle button of the top tool panel (20% larger).  -->
+    <Style
+        x:Key="TopToolToggleButton"
+        BasedOn="{StaticResource ToolIconToggleButton}"
+        TargetType="ToggleButton">
+        <Setter Property="Width" Value="29" />
+        <Setter Property="Height" Value="29" />
+        <Setter Property="MinWidth" Value="29" />
+        <Setter Property="MinHeight" Value="29" />
+        <Setter Property="FontSize" Value="17" />
     </Style>
 
     <!--  Square toggle button with an icon (mute). Checked = accent background.  -->
