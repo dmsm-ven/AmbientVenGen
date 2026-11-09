@@ -1,4 +1,4 @@
-<ui:FluentWindow
+﻿<ui:FluentWindow
     x:Class="AmbientVenGen.Desktop.Views.CommonTagWindow"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
@@ -7,6 +7,7 @@
     Title="Common tag"
     MinWidth="380"
     MaxWidth="520"
+    MaxHeight="200"
     Background="#E617171D"
     ExtendsContentIntoTitleBar="True"
     FocusManager.FocusedElement="{Binding ElementName=TagBox}"
@@ -17,7 +18,7 @@
     ShowInTaskbar="False"
     SizeToContent="WidthAndHeight"
     WindowBackdropType="Mica"
-    WindowStartupLocation="CenterOwner">
+    WindowStartupLocation="CenterScreen">
 
     <Grid>
         <Grid.RowDefinitions>
@@ -49,10 +50,7 @@
                 FontSize="14"
                 TextWrapping="Wrap" />
             <!--  Type a new tag or pick an existing one  -->
-            <ComboBox
-                x:Name="TagBox"
-                IsEditable="True"
-                MaxLength="24" />
+            <ComboBox x:Name="TagBox" IsEditable="True" />
         </StackPanel>
 
         <StackPanel
