@@ -338,17 +338,9 @@
 
                 <StackPanel Grid.Column="0" Orientation="Horizontal">
                     <ui:Button
-                        Command="{Binding NewProjectCommand}"
-                        Style="{StaticResource ToolIconButton}"
-                        ToolTip="New project (Ctrl+N)">
-                        <ui:Button.Icon>
-                            <ui:SymbolIcon Symbol="Document24" />
-                        </ui:Button.Icon>
-                    </ui:Button>
-                    <ui:Button
                         Click="OnOpenMenuClick"
                         Style="{StaticResource ToolIconButton}"
-                        ToolTip="Open project (Ctrl+O opens a file directly)">
+                        ToolTip="New / open project (Ctrl+N: new, Ctrl+O: open file)">
                         <ui:Button.Icon>
                             <ui:SymbolIcon Symbol="FolderOpen24" />
                         </ui:Button.Icon>

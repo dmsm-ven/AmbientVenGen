@@ -26,7 +26,7 @@ public partial class MainWindow : FluentWindow
         Closing += OnClosing;
     }
 
-    // "Open": the list of recent projects, and below a separator "Open file..." (the file dialog).
+    // "New / Open": New Project on top, then the recent projects, and below a separator "Open file..." (the file dialog).
     private void OnOpenMenuClick(object sender, System.Windows.RoutedEventArgs e)
     {
         if (DataContext is not MainViewModel viewModel || sender is not System.Windows.FrameworkElement button)
@@ -37,6 +37,9 @@ public partial class MainWindow : FluentWindow
             PlacementTarget = button,
             Placement = PlacementMode.Bottom
         };
+
+        menu.Items.Add(new System.Windows.Controls.MenuItem { Header = "New Project", Command = viewModel.NewProjectCommand });
+        menu.Items.Add(new System.Windows.Controls.Separator());
 
         foreach (string path in viewModel.Settings.RecentProjects)
         {
