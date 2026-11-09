@@ -367,14 +367,6 @@
                         </ui:Button.Icon>
                     </ui:Button>
                     <ui:Button
-                        Command="{Binding UndoDeleteCommand}"
-                        Style="{StaticResource TopToolButton}"
-                        ToolTip="Restore the last removed layer">
-                        <ui:Button.Icon>
-                            <ui:SymbolIcon Symbol="ArrowUndo24" />
-                        </ui:Button.Icon>
-                    </ui:Button>
-                    <ui:Button
                         Command="{Binding OpenPresetLibraryCommand}"
                         Style="{StaticResource TopToolButton}"
                         ToolTip="Preset library">

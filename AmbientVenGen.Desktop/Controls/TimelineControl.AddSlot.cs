@@ -9,12 +9,12 @@ namespace AmbientVenGen.Desktop.Controls;
 
 /// <summary>
 /// The "add layer" slot: the first free lane under the layers. Its header holds a big "+" and a type chooser.
-/// The slot is 60% opaque; it becomes fully opaque while the mouse is over its header and fades back in 0.5 s.
+/// The slot is 25% opaque and only the "+" is shown; while the mouse is over its header it is fully opaque with the type chooser, and fades back in 0.15 s.
 /// </summary>
 public sealed partial class TimelineControl
 {
-    private const double RestOpacity = 0.6;
-    private const double FadeBackSeconds = 0.5;
+    private const double RestOpacity = 0.25;
+    private const double FadeBackSeconds = 0.15;
 
     /// <summary>The type of the layer that "+" adds.</summary>
     public static readonly DependencyProperty NewLayerTypeProperty = DependencyProperty.Register(
@@ -128,16 +128,20 @@ public sealed partial class TimelineControl
 
         dc.PushOpacity(_addOpacity);
 
-        // Big "+" in a soft rounded square.
-        dc.DrawRoundedRectangle(
-            BrushOf(Color.FromArgb(0x26, 0xFF, 0xFF, 0xFF)),
-            new Pen(BrushOf(Color.FromArgb(0x55, 0xB7, 0xAF, 0xE9)), 1),
-            plus, 8, 8);
-
-        var pen = new Pen(BrushOf(Color.FromRgb(0xE6, 0xE4, 0xFA)), 2.6) { StartLineCap = PenLineCap.Round, EndLineCap = PenLineCap.Round };
+        // A big "+" without a frame.
+        var pen = new Pen(BrushOf(Color.FromRgb(0xE6, 0xE4, 0xFA)), 3) { StartLineCap = PenLineCap.Round, EndLineCap = PenLineCap.Round };
         Point c = new(plus.X + plus.Width / 2, plus.Y + plus.Height / 2);
-        dc.DrawLine(pen, new Point(c.X - 10, c.Y), new Point(c.X + 10, c.Y));
-        dc.DrawLine(pen, new Point(c.X, c.Y - 10), new Point(c.X, c.Y + 10));
+        dc.DrawLine(pen, new Point(c.X - 14, c.Y), new Point(c.X + 14, c.Y));
+        dc.DrawLine(pen, new Point(c.X, c.Y - 14), new Point(c.X, c.Y + 14));
+        dc.Pop();
+
+        // The type chooser is hidden at rest and appears (with the opacity) while the mouse is over the slot.
+        double shown = (_addOpacity - RestOpacity) / (1.0 - RestOpacity);
+
+        if (shown <= 0.01)
+            return;
+
+        dc.PushOpacity(shown);
 
         // Combobox-like type chooser.
         dc.DrawRoundedRectangle(
