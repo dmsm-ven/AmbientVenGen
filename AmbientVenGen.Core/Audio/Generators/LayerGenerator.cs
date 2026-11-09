@@ -39,9 +39,10 @@ internal abstract class LayerGenerator
 
     public abstract void Render(in BlockParams p, Span<float> left, Span<float> right);
 
-    public static LayerGenerator Create(LayerType type, int seed, string? sourcePath = null, NoiseType noiseType = NoiseType.White) => type switch
+    public static LayerGenerator Create(LayerType type, int seed, string? sourcePath = null, NoiseType noiseType = NoiseType.White,
+        SampleTransform transform = default) => type switch
     {
-        LayerType.FieldRecord => new FieldRecordGenerator(seed, sourcePath),
+        LayerType.FieldRecord => new FieldRecordGenerator(seed, sourcePath, transform),
         LayerType.Noise when noiseType >= NoiseType.Crackle => new TextureNoiseGenerator(seed, noiseType),
         LayerType.Noise => new NoiseGenerator(seed, noiseType),
         LayerType.Pad => new PadGenerator(seed),

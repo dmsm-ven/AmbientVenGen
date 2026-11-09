@@ -111,14 +111,16 @@ public sealed class ProjectMixer : ISampleProvider
         if (!_runtimes.TryGetValue(layer.Id, out LayerRuntime? runtime)
             || runtime.Type != layer.Type
             || runtime.SourcePath != layer.SourcePath
-            || runtime.NoiseType != layer.NoiseType)
+            || runtime.NoiseType != layer.NoiseType
+            || runtime.Transform != layer.Transform)
         {
             runtime = new LayerRuntime(
                 layer.Type,
                 layer.SourcePath,
-                LayerGenerator.Create(layer.Type, MixSeed(projectSeed, layer.Seed), layer.SourcePath, layer.NoiseType),
+                LayerGenerator.Create(layer.Type, MixSeed(projectSeed, layer.Seed), layer.SourcePath, layer.NoiseType, layer.Transform),
                 layer.NoiseType,
-                MixSeed(projectSeed, layer.Seed));
+                MixSeed(projectSeed, layer.Seed),
+                layer.Transform);
             _runtimes[layer.Id] = runtime;
         }
 
@@ -127,7 +129,11 @@ public sealed class ProjectMixer : ISampleProvider
         // Repeats: time inside the current play (curves, fades and recordings restart with every play); a gap is silent.
         bool inPlay = layer.TryGetPlayTime(local, out double within, out _);
         bool active = !layer.Muted && inPlay;
-        float target = active ? (float)layer.GainAt(within) : 0f;
+
+        // The modulators move the level, the filter, the pan, the reverb send and the generator knobs around their set values.
+        ModOffsets mod = ModOffsets.Evaluate(layer, runtime.Seed, blockTime);
+
+        float target = active ? (float)(layer.GainAt(within) * mod.LevelMultiplier) : 0f;
 
         bool silent = target <= 0f && runtime.Gain < 1e-5f;
 
@@ -151,8 +157,8 @@ public sealed class ProjectMixer : ISampleProvider
             float pitchFactor = (float)Math.Pow(2.0, drift / 12.0);
 
             var block = new BlockParams(
-                (float)layer.BrightnessAt(curveTime),
-                (float)layer.ModulationAt(curveTime),
+                (float)Math.Clamp(layer.BrightnessAt(curveTime) + mod.Brightness, 0.0, 1.0),
+                (float)Math.Clamp(layer.ModulationAt(curveTime) + mod.Modulation, 0.0, 1.0),
                 (float)layer.PitchHz * pitchFactor,
                 Math.Max(0.0, (inPlay ? within : local) - count * 0.5 / SampleRate),
                 (float)layer.Speed * pitchFactor);
@@ -177,17 +183,17 @@ public sealed class ProjectMixer : ISampleProvider
             _scratchLeft,
             _scratchRight,
             count,
-            layer.FilterCutoffHz,
+            Math.Clamp(layer.FilterCutoffHz * mod.CutoffFactor, Layer.MinCutoffHz, Layer.MaxCutoffHz),
             layer.FilterResonance,
             layer.DelaySeconds,
             layer.DelayFeedback);
 
         // Constant-power pan (with a slow random wandering); the centre position keeps unity gain.
-        double pan = Math.Clamp(layer.Pan + layer.PanDrift * 0.6 * runtime.PanWander.At(blockTime), -1.0, 1.0);
+        double pan = Math.Clamp(layer.Pan + mod.Pan + layer.PanDrift * 0.6 * runtime.PanWander.At(blockTime), -1.0, 1.0);
         float angle = (float)((pan + 1.0) * Math.PI / 4.0);
         float panLeft = MathF.Cos(angle) * 1.4142f;
         float panRight = MathF.Sin(angle) * 1.4142f;
-        float send = (float)Math.Clamp(layer.ReverbSend, 0.0, 1.0);
+        float send = (float)Math.Clamp(layer.ReverbSend + mod.ReverbSend, 0.0, 1.0);
 
         for (int i = 0; i < count; i++)
         {
@@ -236,6 +242,8 @@ public sealed class ProjectMixer : ISampleProvider
     private sealed class LayerRuntime
     {
         public LayerType Type { get; }
+        public int Seed { get; }
+        public SampleTransform Transform { get; }
         public string? SourcePath { get; }
         public LayerGenerator Generator { get; }
         public float Gain { get; set; }
@@ -245,8 +253,10 @@ public sealed class ProjectMixer : ISampleProvider
         public Wander PitchWander { get; }
         public Wander PanWander { get; }
 
-        public LayerRuntime(LayerType type, string? sourcePath, LayerGenerator generator, NoiseType noiseType, int seed)
+        public LayerRuntime(LayerType type, string? sourcePath, LayerGenerator generator, NoiseType noiseType, int seed, SampleTransform transform)
         {
+            Seed = seed;
+            Transform = transform;
             var random = new Random(seed ^ 0x5bd1e995);
             PitchWander = new Wander(random);
             PanWander = new Wander(random);
@@ -254,6 +264,64 @@ public sealed class ProjectMixer : ISampleProvider
             Type = type;
             SourcePath = sourcePath;
             Generator = generator;
+        }
+    }
+
+    /// <summary>What the two modulators of a layer add to its parameters in one block.</summary>
+    private readonly struct ModOffsets
+    {
+        public double LevelMultiplier { get; init; }
+        public double CutoffFactor { get; init; }
+        public double Pan { get; init; }
+        public double ReverbSend { get; init; }
+        public double Brightness { get; init; }
+        public double Modulation { get; init; }
+
+        public static ModOffsets Evaluate(LayerSpec layer, int seed, double seconds)
+        {
+            double level = 1.0, octaves = 0, pan = 0, send = 0, brightness = 0, modulation = 0;
+
+            for (int i = 0; i < 2; i++)
+            {
+                ModulatorSpec? spec = i == 0 ? layer.Mod1 : layer.Mod2;
+                if (spec is null || spec.Target == ModTarget.None || spec.Depth <= 0)
+                    continue;
+
+                double depth = Math.Clamp(spec.Depth, 0.0, 1.0);
+                double value = spec.ValueAt(seconds, unchecked(seed + i * 7919));
+
+                switch (spec.Target)
+                {
+                    case ModTarget.Level:
+                        level *= 1.0 - depth * (1.0 - value) * 0.5;   // from the set level down: never louder than set
+                        break;
+                    case ModTarget.Cutoff:
+                        octaves += depth * value * 3.0;               // up to +-3 octaves
+                        break;
+                    case ModTarget.Pan:
+                        pan += depth * value;
+                        break;
+                    case ModTarget.ReverbSend:
+                        send += depth * value * 0.5;
+                        break;
+                    case ModTarget.Brightness:
+                        brightness += depth * value * 0.5;
+                        break;
+                    case ModTarget.Modulation:
+                        modulation += depth * value * 0.5;
+                        break;
+                }
+            }
+
+            return new ModOffsets
+            {
+                LevelMultiplier = level,
+                CutoffFactor = Math.Pow(2.0, octaves),
+                Pan = pan,
+                ReverbSend = send,
+                Brightness = brightness,
+                Modulation = modulation
+            };
         }
     }
 }

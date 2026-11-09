@@ -111,6 +111,11 @@ public static class LayerDefaults
         layer.DelayFeedback = fresh.DelayFeedback;
         layer.ReverbSend = fresh.ReverbSend;
         layer.NoiseType = fresh.NoiseType;
+        layer.Mod1.Reset();
+        layer.Mod2.Reset();
+        layer.Reverse = false;
+        layer.Stretch = 1.0;
+        layer.PitchShift = 0.0;
 
         // The fades of a new layer (30 s, sine), as long as the layer is long enough for them.
         double fade = Math.Min(30, layer.DurationSeconds / 2.0);
