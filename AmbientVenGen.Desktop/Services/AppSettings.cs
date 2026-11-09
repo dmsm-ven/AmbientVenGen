@@ -1,4 +1,4 @@
-﻿using CommunityToolkit.Mvvm.ComponentModel;
+using CommunityToolkit.Mvvm.ComponentModel;
 using System.IO;
 using System.Text.Json;
 using System.Text.Json.Serialization;
@@ -114,6 +114,34 @@ public sealed partial class AppSettings : ObservableObject
 
     private string? _lastProjectPath;
 
+    /// <summary>Project files opened or saved lately, the newest first.</summary>
+    public IReadOnlyList<string> RecentProjects => _recentProjects;
+
+    private List<string> _recentProjects = [];
+
+    private const int MaxRecent = 10;
+
+    public void AddRecentProject(string path)
+    {
+        _recentProjects.RemoveAll(p => string.Equals(p, path, StringComparison.OrdinalIgnoreCase));
+        _recentProjects.Insert(0, path);
+
+        if (_recentProjects.Count > MaxRecent)
+            _recentProjects.RemoveRange(MaxRecent, _recentProjects.Count - MaxRecent);
+
+        OnPropertyChanged(nameof(RecentProjects));
+        Save();
+    }
+
+    public void RemoveRecentProject(string path)
+    {
+        if (_recentProjects.RemoveAll(p => string.Equals(p, path, StringComparison.OrdinalIgnoreCase)) > 0)
+        {
+            OnPropertyChanged(nameof(RecentProjects));
+            Save();
+        }
+    }
+
     public bool UseKnobs => ControlStyle == ControlStyle.Knob;
 
     // Two-way properties for the radio buttons of the settings window.
@@ -163,6 +191,7 @@ public sealed partial class AppSettings : ObservableObject
                 _lastProjectPath = file.LastProjectPath;
                 _intervalMathExpanded = file.IntervalMathExpanded;
                 _showSpectrogram = file.ShowSpectrogram;
+                _recentProjects = (file.RecentProjects ?? []).Where(p => !string.IsNullOrWhiteSpace(p)).Take(MaxRecent).ToList();
 
                 if (!string.IsNullOrWhiteSpace(file.SpectrogramColor))
                     _spectrogramColor = (Color)ColorConverter.ConvertFromString(file.SpectrogramColor);
@@ -179,7 +208,7 @@ public sealed partial class AppSettings : ObservableObject
         try
         {
             Directory.CreateDirectory(Path.GetDirectoryName(_path)!);
-            File.WriteAllText(_path, JsonSerializer.Serialize(new SettingsFile { ControlStyle = ControlStyle, LastProjectPath = LastProjectPath, IntervalMathExpanded = IntervalMathExpanded, ShowSpectrogram = ShowSpectrogram, SpectrogramColor = SpectrogramColor.ToString() }, Options));
+            File.WriteAllText(_path, JsonSerializer.Serialize(new SettingsFile { ControlStyle = ControlStyle, LastProjectPath = LastProjectPath, IntervalMathExpanded = IntervalMathExpanded, ShowSpectrogram = ShowSpectrogram, SpectrogramColor = SpectrogramColor.ToString(), RecentProjects = _recentProjects }, Options));
         }
         catch (Exception)
         {
@@ -194,5 +223,6 @@ public sealed partial class AppSettings : ObservableObject
         public bool IntervalMathExpanded { get; set; } = true;
         public bool ShowSpectrogram { get; set; }
         public string? SpectrogramColor { get; set; }
+        public List<string>? RecentProjects { get; set; }
     }
 }

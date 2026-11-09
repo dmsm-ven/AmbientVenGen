@@ -1,4 +1,4 @@
-﻿<ui:FluentWindow
+<ui:FluentWindow
     x:Class="AmbientVenGen.Desktop.MainWindow"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
@@ -346,9 +346,9 @@
                         </ui:Button.Icon>
                     </ui:Button>
                     <ui:Button
-                        Command="{Binding OpenProjectCommand}"
+                        Click="OnOpenMenuClick"
                         Style="{StaticResource ToolIconButton}"
-                        ToolTip="Open project... (Ctrl+O)">
+                        ToolTip="Open project (Ctrl+O opens a file directly)">
                         <ui:Button.Icon>
                             <ui:SymbolIcon Symbol="FolderOpen24" />
                         </ui:Button.Icon>

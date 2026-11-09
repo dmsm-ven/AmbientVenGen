@@ -39,6 +39,28 @@ public partial class MainViewModel
         if (path is null)
             return;
 
+        LoadFromPath(path);
+    }
+
+    /// <summary>Opens a project from the "Open recent" list.</summary>
+    [RelayCommand]
+    private void OpenRecent(string? path)
+    {
+        if (string.IsNullOrEmpty(path) || !ConfirmDiscardChanges())
+            return;
+
+        if (!File.Exists(path))
+        {
+            Settings.RemoveRecentProject(path);
+            _messageService.ShowError($"The project file does not exist any more:\n{path}");
+            return;
+        }
+
+        LoadFromPath(path);
+    }
+
+    private void LoadFromPath(string path)
+    {
         try
         {
             ProjectSpec spec = _projectFileService.Load(path);
@@ -73,6 +95,7 @@ public partial class MainViewModel
             _projectFileService.Save(path, Project.ToSpec());
             CurrentFilePath = path;
             Settings.LastProjectPath = path;
+            Settings.AddRecentProject(path);
             _savedSnapshot = TakeSnapshot();
             IsDirty = false;
             StatusMessage = $"Saved {Path.GetFileName(path)}";
@@ -154,7 +177,11 @@ public partial class MainViewModel
         _savedSnapshot = TakeSnapshot();
         IsDirty = false;
         if (path is not null)
+        {
             Settings.LastProjectPath = path;
+            Settings.AddRecentProject(path);
+        }
+
         OnPropertyChanged(nameof(TimeText));
     }
 }
