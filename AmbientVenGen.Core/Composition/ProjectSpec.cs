@@ -84,6 +84,7 @@ public sealed record LayerSpec(
     double PitchShift = 0.0)
 {
     /// <summary>What is done to the recording of a Field record layer (nothing for the other types).</summary>
+    [System.Text.Json.Serialization.JsonIgnore]
     public SampleTransform Transform => Type == LayerType.FieldRecord
         ? new SampleTransform(Reverse, Math.Clamp(Stretch < 1 ? 1 : Stretch, 1, SampleTransform.MaxStretch),
             Math.Clamp(PitchShift, -SampleTransform.MaxPitchSemitones, SampleTransform.MaxPitchSemitones))

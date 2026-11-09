@@ -199,6 +199,14 @@ public partial class MainViewModel
         UndoDeleteCommand.NotifyCanExecuteChanged();
     }
 
+    /// <summary>True while the stretched / transposed sound of the selected Field record layer is being calculated.</summary>
+    [ObservableProperty]
+    private bool _isSelectedSourceProcessing;
+
+    private void RefreshProcessing() =>
+        IsSelectedSourceProcessing = SelectedLayer is { Type: LayerType.FieldRecord, SourcePath: { Length: > 0 } path } layer
+            && SampleLibrary.IsPending(path, layer.Transform);
+
     private void OnProjectChanged()
     {
         OpenIntervalPanelCommand.NotifyCanExecuteChanged();
@@ -210,8 +218,10 @@ public partial class MainViewModel
         foreach (Layer layer in Project.Layers)
         {
             if (layer.Type == LayerType.FieldRecord && !layer.Muted && !string.IsNullOrEmpty(layer.SourcePath))
-                SampleLibrary.Request(layer.SourcePath);
+                SampleLibrary.Request(layer.SourcePath, layer.Transform);
         }
+
+        RefreshProcessing();
 
         // Spectrograms: only layers whose sound changed are analysed again, 1.5 s after the last change.
         if (ShowSpectrogram)
