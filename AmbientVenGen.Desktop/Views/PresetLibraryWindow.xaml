@@ -227,6 +227,16 @@
                 </Grid.RowDefinitions>
 
                 <DockPanel Margin="0,0,0,6">
+                    <ComboBox
+                        MinWidth="104"
+                        Margin="6,0,0,0"
+                        VerticalAlignment="Center"
+                        DisplayMemberPath="Label"
+                        DockPanel.Dock="Right"
+                        ItemsSource="{Binding DateFilters}"
+                        SelectedValue="{Binding DateFilterDays, Mode=TwoWay}"
+                        SelectedValuePath="Value"
+                        ToolTip="Show only the recordings added within this period" />
                     <ToggleButton
                         Margin="6,0,0,0"
                         VerticalAlignment="Center"

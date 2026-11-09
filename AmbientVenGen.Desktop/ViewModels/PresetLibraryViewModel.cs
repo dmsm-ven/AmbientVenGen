@@ -2,6 +2,7 @@ using AmbientVenGen.Desktop.Audio;
 using AmbientVenGen.Desktop.DataAccess.Models;
 using AmbientVenGen.Desktop.DataAccess.Repositories;
 using AmbientVenGen.Desktop.Services;
+using AmbientVenGen.Desktop.Views;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using CommunityToolkit.Mvvm.Messaging;
@@ -42,6 +43,22 @@ public partial class PresetLibraryViewModel : ObservableObject
     /// <summary>Sort the table by how often the presets were used (the most used first) instead of the order of adding.</summary>
     [ObservableProperty]
     private bool _sortByUsage;
+
+    /// <summary>Choices of the filter by the date of adding.</summary>
+    public IReadOnlyList<Choice<int>> DateFilters { get; } =
+    [
+        new("Any date", 0),
+        new("Today", 1),
+        new("Last 7 days", 7),
+        new("Last 30 days", 30),
+        new("Last year", 365)
+    ];
+
+    /// <summary>Only presets added within this many days are shown (0 = all).</summary>
+    [ObservableProperty]
+    private int _dateFilterDays;
+
+    partial void OnDateFilterDaysChanged(int value) => CollectionViewSource.GetDefaultView(Presets).Refresh();
 
     /// <summary>The recording shown in the waveform panel: the one being played, else the selected one.</summary>
     [ObservableProperty]
@@ -116,6 +133,15 @@ public partial class PresetLibraryViewModel : ObservableObject
     {
         if (row is not FieldPresetItem item)
             return false;
+
+        if (DateFilterDays > 0)
+        {
+            // "Today" = since local midnight; N days = the last N*24 hours
+            DateTime from = DateFilterDays == 1 ? DateTime.Today : DateTime.Now.AddDays(-DateFilterDays);
+
+            if (item.AddedAt < from)
+                return false;
+        }
 
         foreach (TagFilterItem filter in TagFilters)
         {
@@ -380,6 +406,7 @@ public partial class PresetLibraryViewModel : ObservableObject
         var failed = new List<string>();
         var duplicates = new List<string>();
         FieldPresetItem? last = null;
+        var newItems = new List<FieldPresetItem>();
         int added = 0;
 
         foreach (string path in paths)
@@ -400,6 +427,7 @@ public partial class PresetLibraryViewModel : ObservableObject
             }
 
             last = item;
+            newItems.Add(item);
             added++;
         }
 
@@ -416,6 +444,15 @@ public partial class PresetLibraryViewModel : ObservableObject
             // One new record: the tag box is open at once. A batch gets its tags from the names only.
             if (added == 1)
                 last.IsTagEditing = true;
+        }
+
+        // Several files: one tag for all of them may be chosen in a small window.
+        if (added > 1)
+        {
+            string common = CommonTagWindow.Ask(added, AllTags);
+
+            foreach (FieldPresetItem item in newItems)
+                await AddTagAsync(item, common);
         }
 
         if (added == 0 && failed.Count == 0 && duplicates.Count > 0)
@@ -482,24 +519,44 @@ public partial class PresetLibraryViewModel : ObservableObject
         }
     }
 
-    // Letters and digits only, one space between the words, lower case: "123_Wind-howl" -> "123 wind howl".
+    // Letters and digits only, one space between the words, lower case. Words written together are split
+    // at capitals and between letters and digits: "123_Wind-howl" -> "123 wind howl", "FrostArrow1Hist" -> "frost arrow 1 hist".
     private static string Words(string text)
     {
-        var builder = new System.Text.StringBuilder(text.Length);
+        var builder = new System.Text.StringBuilder(text.Length + 8);
         bool space = true;
 
-        foreach (char c in text)
+        for (int i = 0; i < text.Length; i++)
         {
-            if (char.IsLetterOrDigit(c))
+            char c = text[i];
+
+            if (!char.IsLetterOrDigit(c))
             {
-                builder.Append(char.ToLowerInvariant(c));
-                space = false;
+                if (!space)
+                {
+                    builder.Append(' ');
+                    space = true;
+                }
+
+                continue;
             }
-            else if (!space)
+
+            if (!space && i > 0)
             {
-                builder.Append(' ');
-                space = true;
+                char prev = text[i - 1];
+                bool next = i + 1 < text.Length && char.IsLower(text[i + 1]);
+
+                bool boundary =
+                    (char.IsUpper(c) && (char.IsLower(prev) || char.IsDigit(prev)))
+                    || (char.IsUpper(c) && char.IsUpper(prev) && next)            // "HTTPServer" -> "http server"
+                    || (char.IsDigit(c) != char.IsDigit(prev) && char.IsLetterOrDigit(prev));
+
+                if (boundary)
+                    builder.Append(' ');
             }
+
+            builder.Append(char.ToLowerInvariant(c));
+            space = false;
         }
 
         return builder.ToString().TrimEnd();
