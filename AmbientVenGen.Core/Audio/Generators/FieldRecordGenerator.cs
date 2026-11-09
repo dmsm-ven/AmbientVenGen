@@ -13,6 +13,7 @@ internal sealed class FieldRecordGenerator : LayerGenerator
     private const double MaxCrossfadeSeconds = 2.0;
 
     private readonly string? _path;
+    private readonly SampleTransform _transform;
     private readonly double _breathRate;
     private double _breathPhase;
     private float _lowL;
@@ -21,8 +22,9 @@ internal sealed class FieldRecordGenerator : LayerGenerator
     private double _position;
     private double _expectedLocalSeconds = double.NaN;
 
-    public FieldRecordGenerator(int seed, string? path)
+    public FieldRecordGenerator(int seed, string? path, SampleTransform transform = default)
     {
+        _transform = transform.Stretch < 1 ? SampleTransform.None with { Reverse = transform.Reverse } : transform;
         var random = new Random(seed);
 
         _path = path;
@@ -34,11 +36,11 @@ internal sealed class FieldRecordGenerator : LayerGenerator
     {
         if (_sample is null && !string.IsNullOrEmpty(_path))
         {
-            // The file is decoded on a background thread; until it is ready the layer is silent.
-            _sample = SampleLibrary.TryGet(_path);
+            // The file is decoded (and stretched / transposed) on a background thread; until it is ready the layer is silent.
+            _sample = SampleLibrary.TryGet(_path, _transform);
 
             if (_sample is null)
-                SampleLibrary.Request(_path);
+                SampleLibrary.Request(_path, _transform);
         }
 
         DecodedSample? sample = _sample;

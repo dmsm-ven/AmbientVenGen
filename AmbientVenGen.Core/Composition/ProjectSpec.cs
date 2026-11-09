@@ -76,8 +76,20 @@ public sealed record LayerSpec(
     double ReverbSend = 1.0,
     double PitchDrift = 0,
     double PanDrift = 0,
-    Easing? FadeOutEasing = null)
+    Easing? FadeOutEasing = null,
+    ModulatorSpec? Mod1 = null,
+    ModulatorSpec? Mod2 = null,
+    bool Reverse = false,
+    double Stretch = 1.0,
+    double PitchShift = 0.0)
 {
+    /// <summary>What is done to the recording of a Field record layer (nothing for the other types).</summary>
+    [System.Text.Json.Serialization.JsonIgnore]
+    public SampleTransform Transform => Type == LayerType.FieldRecord
+        ? new SampleTransform(Reverse, Math.Clamp(Stretch < 1 ? 1 : Stretch, 1, SampleTransform.MaxStretch),
+            Math.Clamp(PitchShift, -SampleTransform.MaxPitchSemitones, SampleTransform.MaxPitchSemitones))
+        : SampleTransform.None;
+
     /// <summary>Curve of the fade-out; projects saved before it was separate use the fade-in curve for both.</summary>
     public Easing FadeOutCurve => FadeOutEasing ?? FadeEasing;
 

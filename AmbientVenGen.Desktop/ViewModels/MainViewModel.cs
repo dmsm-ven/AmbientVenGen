@@ -151,6 +151,9 @@ public partial class MainViewModel : ObservableObject, IDisposable
         SpectrogramService spectrograms)
     {
         Spectrograms = spectrograms ?? throw new ArgumentNullException(nameof(spectrograms));
+
+        // The stretched / transposed sounds are calculated in the background: the layer panel shows when it is done.
+        SampleLibrary.StateChanged += () => Application.Current?.Dispatcher.InvokeAsync(RefreshProcessing);
         _showSpectrogram = settings.ShowSpectrogram;
         Settings = settings ?? throw new ArgumentNullException(nameof(settings));
         _settingsWindowService = settingsWindowService ?? throw new ArgumentNullException(nameof(settingsWindowService));

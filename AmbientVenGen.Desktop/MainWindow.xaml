@@ -1206,6 +1206,80 @@
                                             Step="0.01"
                                             Value="{Binding ReverbSend, Mode=TwoWay}" />
                                     </WrapPanel>
+
+                                    <!--  Field record: reverse, stretch (Paulstretch) and pitch shift; and two modulators for every layer  -->
+                                    <WrapPanel HorizontalAlignment="Center" Orientation="Horizontal">
+                                        <Border
+                                            Margin="12.5,0,12.5,8"
+                                            Padding="12,8"
+                                            Background="#26FFFFFF"
+                                            BorderBrush="#33FFFFFF"
+                                            BorderThickness="1"
+                                            CornerRadius="8">
+                                            <Border.Style>
+                                                <Style TargetType="Border">
+                                                    <Setter Property="Visibility" Value="Collapsed" />
+                                                    <Style.Triggers>
+                                                        <DataTrigger Binding="{Binding Type}" Value="FieldRecord">
+                                                            <Setter Property="Visibility" Value="Visible" />
+                                                        </DataTrigger>
+                                                    </Style.Triggers>
+                                                </Style>
+                                            </Border.Style>
+                                            <StackPanel>
+                                                <StackPanel Margin="0,0,0,6" Orientation="Horizontal">
+                                                    <TextBlock
+                                                        VerticalAlignment="Center"
+                                                        FontSize="12"
+                                                        FontWeight="SemiBold"
+                                                        Foreground="#C9C8D6"
+                                                        Text="Recording" />
+                                                    <TextBlock
+                                                        Margin="10,0,0,0"
+                                                        VerticalAlignment="Center"
+                                                        FontSize="11"
+                                                        Foreground="#E6D25A"
+                                                        Text="processing..."
+                                                        Visibility="{Binding DataContext.IsSelectedSourceProcessing, RelativeSource={RelativeSource AncestorType=Window}, Converter={StaticResource BoolToVisibility}}" />
+                                                </StackPanel>
+                                                <StackPanel Orientation="Horizontal">
+                                                    <StackPanel Margin="0,0,10,0" VerticalAlignment="Center">
+                                                        <StackPanel Orientation="Horizontal">
+                                                            <ui:ToggleSwitch Content="Reverse" IsChecked="{Binding Reverse, Mode=TwoWay}" />
+                                                            <controls:HintIcon Margin="5,0,0,0" Text="{x:Static vm:HintTexts.Reverse}" />
+                                                        </StackPanel>
+                                                    </StackPanel>
+                                                    <controls:LabeledSlider
+                                                        Margin="6,0"
+                                                        Format="{}{0:0.0}x"
+                                                        Header="Stretch"
+                                                        Hint="{x:Static vm:HintTexts.Stretch}"
+                                                        IsLogarithmic="True"
+                                                        Maximum="50"
+                                                        Minimum="1"
+                                                        Step="0.1"
+                                                        Value="{Binding Stretch, Mode=TwoWay}" />
+                                                    <controls:LabeledSlider
+                                                        Margin="6,0"
+                                                        Format="{}{0:+0.0;-0.0;0} st"
+                                                        Header="Pitch shift"
+                                                        Hint="{x:Static vm:HintTexts.PitchShift}"
+                                                        Maximum="24"
+                                                        Minimum="-24"
+                                                        Step="0.5"
+                                                        Value="{Binding PitchShift, Mode=TwoWay}" />
+                                                </StackPanel>
+                                            </StackPanel>
+                                        </Border>
+                                        <controls:ModulatorEditor
+                                            Margin="12.5,0,12.5,8"
+                                            DataContext="{Binding Mod1}"
+                                            Header="Modulator 1" />
+                                        <controls:ModulatorEditor
+                                            Margin="12.5,0,12.5,8"
+                                            DataContext="{Binding Mod2}"
+                                            Header="Modulator 2" />
+                                    </WrapPanel>
 </StackPanel>
                                 </Grid>
                             </DataTemplate>

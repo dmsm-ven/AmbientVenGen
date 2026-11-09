@@ -33,37 +33,177 @@ public static class SampleLibrary
     private static readonly ConcurrentDictionary<string, Task<DecodedSample?>> Cache =
         new(StringComparer.OrdinalIgnoreCase);
 
-    /// <summary>The decoded recording, or null while it is still loading (or cannot be read).</summary>
+    // Results of the processing (reverse / stretch / pitch), by recording and settings.
+    private static readonly ConcurrentDictionary<string, Task<DecodedSample?>> Processed =
+        new(StringComparer.OrdinalIgnoreCase);
+
+    // The heavy part (stretch / pitch) is calculated one at a time: it uses all the cores.
+    private static readonly SemaphoreSlim HeavySlot = new(1, 1);
+
+    // The newest heavy request for every recording. While a knob is dragged many settings are asked for in a row;
+    // after a short wait only the last of them is calculated.
+    private static readonly ConcurrentDictionary<string, string> LatestHeavy = new(StringComparer.OrdinalIgnoreCase);
+
+    private const int SettleMilliseconds = 700;
+
+    /// <summary>Raised (on any thread) when a processed recording became ready or failed.</summary>
+    public static event Action? StateChanged;
+
+    /// <summary>The decoded recording as it is, or null while it is still loading (or cannot be read).</summary>
     public static DecodedSample? TryGet(string path) =>
         Cache.TryGetValue(path, out Task<DecodedSample?>? task) && task.IsCompletedSuccessfully
             ? task.Result
             : null;
 
+    /// <summary>The recording with the transform applied, or null while it is being prepared (or cannot be).</summary>
+    public static DecodedSample? TryGet(string path, SampleTransform transform)
+    {
+        if (transform.IsIdentity)
+            return TryGet(path);
+
+        return Processed.TryGetValue(ProcessedKey(path, transform), out Task<DecodedSample?>? task) && task.IsCompletedSuccessfully
+            ? task.Result
+            : null;
+    }
+
     /// <summary>Starts decoding in the background if it has not been started yet.</summary>
     public static void Request(string path) =>
         Cache.GetOrAdd(path, static p => Task.Run(() => Decode(p)));
 
-    /// <summary>Starts decoding of every recording used by the project.</summary>
+    /// <summary>Starts decoding and processing in the background if it has not been started yet.</summary>
+    public static Task<DecodedSample?> Request(string path, SampleTransform transform, bool force = false)
+    {
+        if (transform.IsIdentity)
+            return Cache.GetOrAdd(path, static p => Task.Run(() => Decode(p)));
+
+        string key = ProcessedKey(path, transform);
+
+        return Processed.GetOrAdd(key, _ =>
+        {
+            if (transform.IsHeavy)
+                LatestHeavy[path] = key;
+
+            return Task.Run(() => Process(path, transform, key, force));
+        });
+    }
+
+    /// <summary>True while the stretch / pitch result of the recording is being calculated.</summary>
+    public static bool IsPending(string path, SampleTransform transform) =>
+        transform.IsHeavy
+        && Processed.TryGetValue(ProcessedKey(path, transform), out Task<DecodedSample?>? task)
+        && !task.IsCompleted;
+
+    /// <summary>Starts decoding (and processing) of every recording used by the project.</summary>
     public static void RequestAll(ProjectSpec spec)
     {
-        foreach (string path in PathsOf(spec))
-            Request(path);
+        foreach ((string path, SampleTransform transform) in SourcesOf(spec))
+            Request(path, transform);
     }
 
-    /// <summary>Decodes every recording used by the project and waits for the result.</summary>
+    /// <summary>Decodes and processes every recording used by the project and waits for the result.</summary>
     public static void Preload(ProjectSpec spec)
     {
-        Task[] tasks = PathsOf(spec)
-            .Select(path => (Task)Cache.GetOrAdd(path, static p => Task.Run(() => Decode(p))))
-            .ToArray();
+        var sources = SourcesOf(spec).ToList();
 
-        Task.WaitAll(tasks);
+        // Start everything at once (decoding runs in parallel), then wait; a result that was replaced by a newer
+        // request in the meantime is asked for again, this time for sure.
+        foreach ((string path, SampleTransform transform) in sources)
+            Request(path, transform, force: true);
+
+        foreach ((string path, SampleTransform transform) in sources)
+        {
+            for (int attempt = 0; attempt < 3; attempt++)
+            {
+                Task<DecodedSample?> task = Request(path, transform, force: true);
+                task.Wait();
+
+                if (task.Result is not null || !transform.IsHeavy)
+                    break;
+            }
+        }
     }
 
-    private static IEnumerable<string> PathsOf(ProjectSpec spec) => spec.Layers
+    private static IEnumerable<(string Path, SampleTransform Transform)> SourcesOf(ProjectSpec spec) => spec.Layers
         .Where(layer => layer.Type == LayerType.FieldRecord && !layer.Muted && !string.IsNullOrEmpty(layer.SourcePath))
-        .Select(layer => layer.SourcePath!)
-        .Distinct(StringComparer.OrdinalIgnoreCase);
+        .Select(layer => (layer.SourcePath!, layer.Transform))
+        .Distinct();
+
+    private static string ProcessedKey(string path, SampleTransform t) =>
+        FormattableString.Invariant($"{path}|{(t.Reverse ? 1 : 0)}|{t.Stretch:0.####}|{t.PitchSemitones:0.####}");
+
+    private static DecodedSample? Process(string path, SampleTransform transform, string processedKey, bool force)
+    {
+        DecodedSample? result = null;
+
+        try
+        {
+            DecodedSample? source = Request(path, SampleTransform.None).GetAwaiter().GetResult();
+
+            if (source is not null)
+            {
+                DecodedSample stretched = source;
+
+                if (transform.IsHeavy)
+                {
+                    string key = ProcessedSampleCache.KeyFor(path, transform.Stretch, transform.PitchSemitones);
+
+                    DecodedSample? stored = ProcessedSampleCache.TryLoad(key);
+
+                    if (stored is null)
+                    {
+                        // wait for the settings to settle; a newer request for this recording replaces this one
+                        Thread.Sleep(SettleMilliseconds);
+
+                        if (!force && (!LatestHeavy.TryGetValue(path, out string? latest) || latest != processedKey))
+                        {
+                            Processed.TryRemove(processedKey, out _);
+                            StateChanged?.Invoke();
+                            return null;
+                        }
+
+                        stored = Calculate(source, transform, key);
+                    }
+
+                    stretched = stored;
+                }
+
+                result = transform.Reverse ? Reversed(stretched) : stretched;
+            }
+        }
+        catch (Exception)
+        {
+            // out of memory, a failed calculation: the layer stays silent
+            result = null;
+        }
+
+        StateChanged?.Invoke();
+        return result;
+    }
+
+    private static DecodedSample Calculate(DecodedSample source, SampleTransform transform, string key)
+    {
+        HeavySlot.Wait();
+
+        try
+        {
+            DecodedSample result = PaulStretch.Process(source, transform.Stretch, transform.PitchSemitones);
+            ProcessedSampleCache.Save(key, result);
+            return result;
+        }
+        finally
+        {
+            HeavySlot.Release();
+        }
+    }
+
+    private static DecodedSample Reversed(DecodedSample sample)
+    {
+        float[] left = (float[])sample.Left.Clone();
+        float[] right = (float[])sample.Right.Clone();
+        Array.Reverse(left);
+        Array.Reverse(right);
+        return new DecodedSample(left, right);
+    }
 
     private static DecodedSample? Decode(string path)
     {

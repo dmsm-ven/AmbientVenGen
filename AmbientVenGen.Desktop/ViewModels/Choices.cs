@@ -123,6 +123,24 @@ public static class Choices
     /// <summary>Three-layer relations (the arithmetic lives in Core: <see cref="PitchRelations"/>).</summary>
     public static IReadOnlyList<ChordPreset> ChordPresets => PitchRelations.Chords;
 
+    public static IReadOnlyList<Choice<ModShape>> ModShapes { get; } =
+    [
+        new("Sine", ModShape.Sine),
+        new("Triangle", ModShape.Triangle),
+        new("Random", ModShape.Random)
+    ];
+
+    public static IReadOnlyList<Choice<ModTarget>> ModTargets { get; } =
+    [
+        new("(off)", ModTarget.None),
+        new("Level", ModTarget.Level),
+        new("Cutoff", ModTarget.Cutoff),
+        new("Pan", ModTarget.Pan),
+        new("Reverb send", ModTarget.ReverbSend),
+        new("Brightness", ModTarget.Brightness),
+        new("Modulation", ModTarget.Modulation)
+    ];
+
     public static IReadOnlyList<Choice<LayerType>> LayerTypes { get; } =
     [
         new("Drone", LayerType.Drone),

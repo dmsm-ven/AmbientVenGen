@@ -15,6 +15,29 @@ public static class HintTexts
     public const string Modulation =
         "Depth of the slow movement: gentle pitch drift, volume 'breathing' and stereo width. Low is still, high is alive and shifting.";
 
+    public const string Modulator =
+        "A slow oscillator that moves one parameter of the layer around the value you set, for a sound that breathes by itself. "
+        + "Level only goes down from the set value, Cutoff moves up to 3 octaves each way, Pan swings across the stereo field, "
+        + "Reverb send, Brightness and Modulation move up and down. Two modulators can work together.";
+
+    public const string ModRate =
+        "Speed of the movement in cycles per second. 0.01 Hz is one slow swell every 100 seconds, 0.5 Hz is a gentle tremolo.";
+
+    public const string ModDepth =
+        "How far the parameter moves. 0 is nothing, 100% is the widest swing.";
+
+    public const string Reverse =
+        "Plays the recording backwards: swells that build up to the start of every sound, ghostly reversed tails.";
+
+    public const string Stretch =
+        "Makes the recording many times longer without changing its pitch (the Paulstretch method): it melts into a smooth, endless drone. "
+        + "The result is calculated in the background (up to a minute for 10x or more) and saved, so it opens fast next time. "
+        + "The result is never longer than 10 minutes, so with a high stretch only the beginning of a long recording is used.";
+
+    public const string PitchShift =
+        "Transposes the recording in semitones (12 = one octave) without changing its length. Together with Stretch it makes deep, slow textures. "
+        + "Calculated in the background and saved.";
+
     public const string Pitch =
         "Base note of the layer in Hz. Lower is deeper and heavier (41 Hz is a low E); higher is lighter. Click the value to type an exact frequency (20-1000 Hz).";
 

@@ -45,7 +45,13 @@ public static class LayerSpectrogram
         double seconds = Math.Max(1, one.DurationSeconds);
         int columns = ColumnsFor(seconds);
 
-        var mixer = new ProjectMixer(new ProjectSpec(ProjectSpec.CurrentVersion, seconds, projectSeed, 0.0, [one]));
+        var spec = new ProjectSpec(ProjectSpec.CurrentVersion, seconds, projectSeed, 0.0, [one]);
+
+        // A recording (and its stretched / transposed version) must be ready, or the bars would be empty.
+        SampleLibrary.Preload(spec);
+        token.ThrowIfCancellationRequested();
+
+        var mixer = new ProjectMixer(spec);
         long totalFrames = (long)(seconds * ProjectMixer.SampleRate);
 
         float[] peaks = new float[columns];

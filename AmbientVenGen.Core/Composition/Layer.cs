@@ -159,6 +159,36 @@ public sealed partial class Layer : ObservableObject
     [ObservableProperty]
     private NoiseType _noiseType = NoiseType.White;
 
+    /// <summary>Two slow modulators that move parameters of the layer around their set values.</summary>
+    public Modulator Mod1 { get; } = new();
+
+    public Modulator Mod2 { get; } = new();
+
+    /// <summary>Field record: play the recording backwards.</summary>
+    [ObservableProperty]
+    private bool _reverse;
+
+    /// <summary>Field record: stretch the recording without changing its pitch (Paulstretch), 1 = as is.</summary>
+    [ObservableProperty]
+    private double _stretch = 1.0;
+
+    /// <summary>Field record: transpose the recording without changing its length, in semitones.</summary>
+    [ObservableProperty]
+    private double _pitchShift;
+
+    /// <summary>What is done to the recording before it is played.</summary>
+    public SampleTransform Transform => Type == LayerType.FieldRecord
+        ? new SampleTransform(Reverse, Math.Clamp(Stretch, 1, SampleTransform.MaxStretch),
+            Math.Clamp(PitchShift, -SampleTransform.MaxPitchSemitones, SampleTransform.MaxPitchSemitones))
+        : SampleTransform.None;
+
+    public Layer()
+    {
+        // A change of a modulator is a change of the layer (the project is told, the engine gets the new spec).
+        Mod1.PropertyChanged += (_, _) => OnPropertyChanged(nameof(Mod1));
+        Mod2.PropertyChanged += (_, _) => OnPropertyChanged(nameof(Mod2));
+    }
+
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(SourceName))]
     private string? _sourcePath;
@@ -244,7 +274,12 @@ public sealed partial class Layer : ObservableObject
         ReverbSend,
         PitchDrift,
         PanDrift,
-        FadeOutEasing);
+        FadeOutEasing,
+        Mod1.ToSpec(),
+        Mod2.ToSpec(),
+        Reverse,
+        Stretch,
+        PitchShift);
 
     /// <summary>Creates a layer from a spec, clamping values read from a file to sane ranges.</summary>
     public static Layer FromSpec(LayerSpec spec)
@@ -285,8 +320,13 @@ public sealed partial class Layer : ObservableObject
             DelayFeedback = Math.Clamp(spec.DelayFeedback, 0, MaxFeedback),
             ReverbSend = Unit(spec.ReverbSend),
             PitchDrift = Unit(spec.PitchDrift),
-            PanDrift = Unit(spec.PanDrift)
+            PanDrift = Unit(spec.PanDrift),
+            Reverse = spec.Reverse,
+            Stretch = Math.Clamp(spec.Stretch < 1 ? 1 : spec.Stretch, 1, SampleTransform.MaxStretch),
+            PitchShift = Math.Clamp(spec.PitchShift, -SampleTransform.MaxPitchSemitones, SampleTransform.MaxPitchSemitones)
         };
+        layer.Mod1.Apply(spec.Mod1);
+        layer.Mod2.Apply(spec.Mod2);
         layer.View = LayerViewState.For(layer);
         return layer;
     }
