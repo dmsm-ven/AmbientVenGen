@@ -1212,8 +1212,8 @@
                                         <Border
                                             Margin="12.5,0,12.5,8"
                                             Padding="12,8"
-                                            Background="#26FFFFFF"
-                                            BorderBrush="#33FFFFFF"
+                                            Background="#0DFFFFFF"
+                                            BorderBrush="#1FFFFFFF"
                                             BorderThickness="1"
                                             CornerRadius="8">
                                             <Border.Style>
@@ -1391,6 +1391,7 @@
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="*" />
                     <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="Auto" />
                 </Grid.ColumnDefinitions>
 
                 <ui:TextBlock
@@ -1400,8 +1401,28 @@
                     Text="{Binding StatusMessage}"
                     TextTrimming="CharacterEllipsis" />
 
+                <!--  Recordings are being stretched / transposed (e.g. after opening a project)  -->
                 <StackPanel
                     Grid.Column="1"
+                    Margin="0,0,16,0"
+                    Orientation="Horizontal"
+                    Visibility="{Binding IsRebuilding, Converter={StaticResource BoolToVisibility}}">
+                    <TextBlock
+                        Margin="0,0,10,0"
+                        VerticalAlignment="Center"
+                        Foreground="#E6D25A"
+                        Text="{Binding RebuildText}" />
+                    <ProgressBar
+                        Width="200"
+                        Height="6"
+                        VerticalAlignment="Center"
+                        Maximum="1"
+                        Minimum="0"
+                        Value="{Binding RebuildProgress, Mode=OneWay}" />
+                </StackPanel>
+
+                <StackPanel
+                    Grid.Column="2"
                     Orientation="Horizontal"
                     Visibility="{Binding IsExporting, Converter={StaticResource BoolToVisibility}}">
                     <ProgressBar

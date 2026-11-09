@@ -6,44 +6,90 @@
     xmlns:vm="clr-namespace:AmbientVenGen.Desktop.ViewModels"
     x:Name="Root">
     <!--  DataContext: a Modulator (shape, rate, depth, target)  -->
+    <UserControl.Resources>
+        <ControlTemplate x:Key="MuteTemplate" TargetType="ToggleButton">
+            <Border
+                x:Name="Frame"
+                Background="#1AFFFFFF"
+                BorderBrush="#2EFFFFFF"
+                BorderThickness="1"
+                CornerRadius="6">
+                <controls:ModGlyph
+                    x:Name="Icon"
+                    Width="20"
+                    Height="20"
+                    Key="Mute" />
+            </Border>
+            <ControlTemplate.Triggers>
+                <Trigger Property="IsMouseOver" Value="True">
+                    <Setter TargetName="Frame" Property="Background" Value="#33FFFFFF" />
+                </Trigger>
+                <Trigger Property="IsChecked" Value="True">
+                    <Setter TargetName="Frame" Property="Background" Value="#33E5737F" />
+                    <Setter TargetName="Frame" Property="BorderBrush" Value="#AAE5737F" />
+                    <Setter TargetName="Icon" Property="Stroke" Value="#F08A94" />
+                </Trigger>
+            </ControlTemplate.Triggers>
+        </ControlTemplate>
+    </UserControl.Resources>
+    <!--  DataContext: a Modulator. The group is kept close to the background colour.  -->
     <Border
-        Padding="12,8"
-        Background="#26FFFFFF"
-        BorderBrush="#33FFFFFF"
+        Padding="10,8"
+        Background="#0DFFFFFF"
+        BorderBrush="#1FFFFFFF"
         BorderThickness="1"
         CornerRadius="8">
         <StackPanel>
-            <StackPanel Margin="0,0,0,6" Orientation="Horizontal">
-                <TextBlock
-                    VerticalAlignment="Center"
-                    FontSize="12"
-                    FontWeight="SemiBold"
-                    Foreground="#C9C8D6"
-                    Text="{Binding Header, ElementName=Root}" />
-                <controls:HintIcon Margin="5,0,0,0" Text="{x:Static vm:HintTexts.Modulator}" />
-            </StackPanel>
-
-            <StackPanel Margin="0,0,0,6" Orientation="Horizontal">
-                <ComboBox
-                    Width="120"
-                    ItemsSource="{x:Static vm:Choices.ModTargets}"
-                    SelectedValue="{Binding Target, Mode=TwoWay}"
-                    Style="{StaticResource ChoiceCombo}"
-                    ToolTip="What the modulator moves" />
-                <ComboBox
-                    Width="100"
-                    Margin="6,0,0,0"
-                    ItemsSource="{x:Static vm:Choices.ModShapes}"
-                    SelectedValue="{Binding Shape, Mode=TwoWay}"
-                    Style="{StaticResource ChoiceCombo}"
-                    ToolTip="How it moves: sine, triangle or smooth random" />
-            </StackPanel>
+            <Grid Margin="0,0,0,8">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+                <StackPanel Orientation="Horizontal">
+                    <TextBlock
+                        VerticalAlignment="Center"
+                        FontSize="12"
+                        FontWeight="SemiBold"
+                        Text="{Binding Title}">
+                        <TextBlock.Style>
+                            <Style TargetType="TextBlock">
+                                <Setter Property="Foreground" Value="#C9C8D6" />
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding Muted}" Value="True">
+                                        <Setter Property="Foreground" Value="#77808090" />
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </TextBlock.Style>
+                    </TextBlock>
+                    <controls:HintIcon Margin="5,0,0,0" Text="{x:Static vm:HintTexts.Modulator}" />
+                </StackPanel>
+                <StackPanel Grid.Column="1" Margin="12,0,0,0" Orientation="Horizontal">
+                    <controls:IconDropdown
+                        ItemsSource="{x:Static vm:Choices.ModTargets}"
+                        ToolTip="What the modulator moves"
+                        Value="{Binding Target, Mode=TwoWay}" />
+                    <controls:IconDropdown
+                        Margin="6,0,0,0"
+                        ItemsSource="{x:Static vm:Choices.ModShapes}"
+                        ToolTip="How it moves: sine, triangle or smooth random"
+                        Value="{Binding Shape, Mode=TwoWay}" />
+                    <ToggleButton
+                        Width="32"
+                        Height="32"
+                        Margin="6,0,0,0"
+                        Cursor="Hand"
+                        IsChecked="{Binding Muted, Mode=TwoWay}"
+                        Template="{StaticResource MuteTemplate}"
+                        ToolTip="Mute: switch this modulator off" />
+                </StackPanel>
+            </Grid>
 
             <StackPanel HorizontalAlignment="Center" Orientation="Horizontal">
                 <StackPanel.Style>
                     <Style TargetType="StackPanel">
                         <Style.Triggers>
-                            <DataTrigger Binding="{Binding Target}" Value="None">
+                            <DataTrigger Binding="{Binding Muted}" Value="True">
                                 <Setter Property="Opacity" Value="0.4" />
                             </DataTrigger>
                         </Style.Triggers>

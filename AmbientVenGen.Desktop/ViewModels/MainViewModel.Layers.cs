@@ -203,7 +203,46 @@ public partial class MainViewModel
     [ObservableProperty]
     private bool _isSelectedSourceProcessing;
 
-    private void RefreshProcessing() =>
+    /// <summary>Stretch / pitch results are being calculated: shown as a progress bar in the status bar.</summary>
+    [ObservableProperty]
+    private bool _isRebuilding;
+
+    [ObservableProperty]
+    private double _rebuildProgress;
+
+    [ObservableProperty]
+    private string _rebuildText = "";
+
+    private System.Windows.Threading.DispatcherTimer? _rebuildTimer;
+
+    private void UpdateRebuild()
+    {
+        (int jobs, double progress) = SampleLibrary.GetProcessing();
+        IsRebuilding = jobs > 0;
+        RebuildProgress = progress;
+        RebuildText = jobs > 1 ? $"Processing recordings ({jobs})  {progress:P0}" : $"Processing recording  {progress:P0}";
+
+        // The progress changes inside the calculation, so it is polled while there is work.
+        if (jobs > 0 && _rebuildTimer is null)
+        {
+            _rebuildTimer = new System.Windows.Threading.DispatcherTimer { Interval = TimeSpan.FromMilliseconds(250) };
+            _rebuildTimer.Tick += (_, _) => UpdateRebuild();
+            _rebuildTimer.Start();
+        }
+        else if (jobs == 0 && _rebuildTimer is not null)
+        {
+            _rebuildTimer.Stop();
+            _rebuildTimer = null;
+        }
+    }
+
+    private void RefreshProcessing()
+    {
+        UpdateRebuild();
+        RefreshSelectedProcessing();
+    }
+
+    private void RefreshSelectedProcessing() =>
         IsSelectedSourceProcessing = SelectedLayer is { Type: LayerType.FieldRecord, SourcePath: { Length: > 0 } path } layer
             && SampleLibrary.IsPending(path, layer.Transform);
 

@@ -14,7 +14,8 @@ public static class PaulStretch
     private const int MinWindow = 1 << 10;
 
     /// <summary>Stretch 1..50, pitch in semitones. The result is never longer than <see cref="SampleLibrary.MaxSeconds"/>.</summary>
-    public static DecodedSample Process(DecodedSample input, double stretch, double pitchSemitones, CancellationToken token = default)
+    public static DecodedSample Process(DecodedSample input, double stretch, double pitchSemitones, CancellationToken token = default,
+        Action<double>? progress = null)
     {
         stretch = Math.Max(1.0, stretch);
         double ratio = Math.Pow(2.0, pitchSemitones / 12.0);
@@ -32,9 +33,21 @@ public static class PaulStretch
         var left = new float[outFrames];
         var right = new float[outFrames];
 
+        // progress: all the windows of both channels
+        long total = 2L * (outFrames / (window / 2) + 1);
+        long done = 0;
+
+        void Step()
+        {
+            long now = Interlocked.Increment(ref done);
+
+            if ((now & 3) == 0)
+                progress?.Invoke(Math.Min(1.0, (double)now / total));
+        }
+
         Parallel.Invoke(
-            () => Run(input.Left, used, left, window, effective, 0x1234567u, token),
-            () => Run(input.Right, used, right, window, effective, 0x7654321u, token));
+            () => Run(input.Left, used, left, window, effective, 0x1234567u, token, Step),
+            () => Run(input.Right, used, right, window, effective, 0x7654321u, token, Step));
 
         token.ThrowIfCancellationRequested();
 
@@ -48,7 +61,7 @@ public static class PaulStretch
         return new DecodedSample(left, right);
     }
 
-    private static void Run(float[] source, int used, float[] output, int window, double stretch, uint seed, CancellationToken token)
+    private static void Run(float[] source, int used, float[] output, int window, double stretch, uint seed, CancellationToken token, Action step)
     {
         int half = window / 2;
         var fft = new Fft(window);
@@ -70,6 +83,8 @@ public static class PaulStretch
         {
             if ((frame & 7) == 0)
                 token.ThrowIfCancellationRequested();
+
+            step();
 
             int start = (int)(frame * step);
 

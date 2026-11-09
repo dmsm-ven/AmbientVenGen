@@ -284,7 +284,7 @@ public sealed class ProjectMixer : ISampleProvider
             for (int i = 0; i < 2; i++)
             {
                 ModulatorSpec? spec = i == 0 ? layer.Mod1 : layer.Mod2;
-                if (spec is null || spec.Target == ModTarget.None || spec.Depth <= 0)
+                if (spec is null || spec.Muted || spec.Target == ModTarget.None || spec.Depth <= 0)
                     continue;
 
                 double depth = Math.Clamp(spec.Depth, 0.0, 1.0);

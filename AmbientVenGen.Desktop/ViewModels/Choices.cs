@@ -132,7 +132,6 @@ public static class Choices
 
     public static IReadOnlyList<Choice<ModTarget>> ModTargets { get; } =
     [
-        new("(off)", ModTarget.None),
         new("Level", ModTarget.Level),
         new("Cutoff", ModTarget.Cutoff),
         new("Pan", ModTarget.Pan),

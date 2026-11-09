@@ -26,7 +26,7 @@ public enum ModTarget
 /// A slow oscillator that moves one parameter of a layer around its set value. The value depends only on time (and the
 /// seed), so playback, seeking and export all give the same result.
 /// </summary>
-public sealed record ModulatorSpec(ModShape Shape, double RateHz, double Depth, ModTarget Target)
+public sealed record ModulatorSpec(ModShape Shape, double RateHz, double Depth, ModTarget Target, bool Muted = false)
 {
     public const double MinRateHz = 0.005;
     public const double MaxRateHz = 2.0;

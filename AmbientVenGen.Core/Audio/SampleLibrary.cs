@@ -46,6 +46,24 @@ public static class SampleLibrary
 
     private const int SettleMilliseconds = 700;
 
+    // Progress (0..1) of every heavy job that has not finished yet; a job that waits has 0.
+    private static readonly ConcurrentDictionary<string, double> HeavyProgress = new(StringComparer.OrdinalIgnoreCase);
+
+    /// <summary>How many stretch / pitch results are being calculated (or wait for it) and how far they are, 0..1 on average.</summary>
+    public static (int Jobs, double Progress) GetProcessing()
+    {
+        int jobs = 0;
+        double sum = 0;
+
+        foreach (double value in HeavyProgress.Values)
+        {
+            jobs++;
+            sum += value;
+        }
+
+        return (jobs, jobs == 0 ? 0 : sum / jobs);
+    }
+
     /// <summary>Raised (on any thread) when a processed recording became ready or failed.</summary>
     public static event Action? StateChanged;
 
@@ -81,7 +99,10 @@ public static class SampleLibrary
         return Processed.GetOrAdd(key, _ =>
         {
             if (transform.IsHeavy)
+            {
                 LatestHeavy[path] = key;
+                HeavyProgress[key] = 0;
+            }
 
             return Task.Run(() => Process(path, transform, key, force));
         });
@@ -134,6 +155,7 @@ public static class SampleLibrary
     private static DecodedSample? Process(string path, SampleTransform transform, string processedKey, bool force)
     {
         DecodedSample? result = null;
+        CleanLegacyCache();
 
         try
         {
@@ -145,24 +167,17 @@ public static class SampleLibrary
 
                 if (transform.IsHeavy)
                 {
-                    string key = ProcessedSampleCache.KeyFor(path, transform.Stretch, transform.PitchSemitones);
+                    // wait for the settings to settle; a newer request for this recording replaces this one
+                    Thread.Sleep(SettleMilliseconds);
 
-                    DecodedSample? stored = ProcessedSampleCache.TryLoad(key);
-
-                    if (stored is null)
+                    if (!force && (!LatestHeavy.TryGetValue(path, out string? latest) || latest != processedKey))
                     {
-                        // wait for the settings to settle; a newer request for this recording replaces this one
-                        Thread.Sleep(SettleMilliseconds);
-
-                        if (!force && (!LatestHeavy.TryGetValue(path, out string? latest) || latest != processedKey))
-                        {
-                            Processed.TryRemove(processedKey, out _);
-                            StateChanged?.Invoke();
-                            return null;
-                        }
-
-                        stored = Calculate(source, transform, key);
+                        Processed.TryRemove(processedKey, out _);
+                        StateChanged?.Invoke();
+                        return null;
                     }
+
+                    DecodedSample stored = Calculate(source, transform, processedKey);
 
                     stretched = stored;
                 }
@@ -175,6 +190,10 @@ public static class SampleLibrary
             // out of memory, a failed calculation: the layer stays silent
             result = null;
         }
+        finally
+        {
+            HeavyProgress.TryRemove(processedKey, out _);
+        }
 
         StateChanged?.Invoke();
         return result;
@@ -186,13 +205,34 @@ public static class SampleLibrary
 
         try
         {
-            DecodedSample result = PaulStretch.Process(source, transform.Stretch, transform.PitchSemitones);
-            ProcessedSampleCache.Save(key, result);
-            return result;
+            return PaulStretch.Process(source, transform.Stretch, transform.PitchSemitones,
+                progress: value => HeavyProgress[key] = value);
         }
         finally
         {
             HeavySlot.Release();
+        }
+    }
+
+    // The first version kept the results on disk; they are not kept any more, the old folder is removed once.
+    private static int _legacyCleaned;
+
+    private static void CleanLegacyCache()
+    {
+        if (Interlocked.Exchange(ref _legacyCleaned, 1) != 0)
+            return;
+
+        try
+        {
+            string folder = Path.Combine(
+                Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "AmbientForge", "cache");
+
+            if (Directory.Exists(folder))
+                Directory.Delete(folder, recursive: true);
+        }
+        catch
+        {
+            // nothing to do about it
         }
     }
 
