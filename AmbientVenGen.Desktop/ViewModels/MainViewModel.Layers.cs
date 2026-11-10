@@ -213,6 +213,7 @@ public partial class MainViewModel
 
     private void RefreshProcessing()
     {
+        OnPropertyChanged(nameof(SelectedLayerTimeText));
         UpdateRebuild();
         RefreshSelectedProcessing();
     }

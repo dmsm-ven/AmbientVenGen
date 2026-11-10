@@ -122,10 +122,10 @@ public partial class TimeBox : UserControl
         DisplayBox.Margin = boxMargin;
         EditGrid.Margin = boxMargin;
 
-        double width = IsInteger ? 68 : 104;
+        double width = IsInteger ? 68 : 116;
         DisplayBox.Width = inline ? width : double.NaN;
         EditGrid.Width = inline ? width : double.NaN;
-        Input.MaxLength = IsInteger ? 3 : 9;
+        Input.MaxLength = IsInteger ? 3 : 12;
     }
 
     private void OnDisplayClick(object sender, MouseButtonEventArgs e)
@@ -166,7 +166,7 @@ public partial class TimeBox : UserControl
     private void SetSeconds(double seconds)
     {
         // SetCurrentValue keeps (and pushes through) a two-way binding.
-        SetCurrentValue(ValueProperty, Clamp(Math.Round(seconds)));
+        SetCurrentValue(ValueProperty, Clamp(IsInteger ? Math.Round(seconds) : Math.Round(seconds, 3)));
         Sync();
     }
 
@@ -240,16 +240,17 @@ public partial class TimeBox : UserControl
         e.Handled = true;
     }
 
+    /// <summary>"mm:ss.fff": minutes (may exceed 59), seconds and milliseconds.</summary>
     private static string Format(double seconds)
     {
-        var total = (long)Math.Max(0, Math.Round(seconds));
+        long ms = (long)Math.Max(0, Math.Round(seconds * 1000));
 
         return string.Create(
             CultureInfo.InvariantCulture,
-            $"{total / 3600:00}:{total / 60 % 60:00}:{total % 60:00}");
+            $"{ms / 60000:00}:{ms / 1000 % 60:00}.{ms % 1000:000}");
     }
 
-    /// <summary>Accepts "ss", "mm:ss" and "hh:mm:ss" (minutes and seconds may exceed 59).</summary>
+    /// <summary>Accepts "ss", "ss.fff", "mm:ss", "mm:ss.fff" and "hh:mm:ss.fff" (minutes and seconds may exceed 59).</summary>
     private static bool TryParse(string? text, out double seconds)
     {
         seconds = 0;
@@ -257,18 +258,31 @@ public partial class TimeBox : UserControl
         if (string.IsNullOrWhiteSpace(text))
             return false;
 
-        string[] parts = text.Trim().Split(':');
+        string[] parts = text.Trim().Replace(',', '.').Split(':');
         if (parts.Length > 3)
             return false;
 
         double total = 0;
 
-        foreach (string part in parts)
+        for (int i = 0; i < parts.Length; i++)
         {
-            if (!int.TryParse(part, NumberStyles.None, CultureInfo.InvariantCulture, out int number))
-                return false;
+            bool last = i == parts.Length - 1;
 
-            total = total * 60 + number;
+            if (last)
+            {
+                // the last part may have milliseconds after a dot
+                if (!double.TryParse(parts[i], NumberStyles.AllowDecimalPoint, CultureInfo.InvariantCulture, out double part) || part < 0)
+                    return false;
+
+                total = total * 60 + part;
+            }
+            else
+            {
+                if (!int.TryParse(parts[i], NumberStyles.None, CultureInfo.InvariantCulture, out int number))
+                    return false;
+
+                total = total * 60 + number;
+            }
         }
 
         seconds = total;

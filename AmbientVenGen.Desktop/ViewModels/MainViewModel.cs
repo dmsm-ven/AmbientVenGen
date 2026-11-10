@@ -200,7 +200,26 @@ public partial class MainViewModel : ObservableObject, IDisposable
         OnPropertyChanged(nameof(WindowTitle));
     }
 
-    partial void OnPlayheadSecondsChanged(double value) => OnPropertyChanged(nameof(TimeText));
+    partial void OnPlayheadSecondsChanged(double value)
+    {
+        OnPropertyChanged(nameof(TimeText));
+        OnPropertyChanged(nameof(SelectedLayerTimeText));
+    }
+
+    /// <summary>The playback position inside the selected layer, "00:05.428" (seconds and milliseconds from its start).</summary>
+    public string SelectedLayerTimeText
+    {
+        get
+        {
+            if (SelectedLayer is not { } layer)
+                return "";
+
+            double inside = Math.Clamp(PlayheadSeconds - layer.StartSeconds, 0, layer.TotalSeconds);
+            long ms = (long)Math.Round(inside * 1000);
+
+            return $"{ms / 60000:00}:{ms / 1000 % 60:00}.{ms % 1000:000}";
+        }
+    }
 
 
     public void Dispose()
