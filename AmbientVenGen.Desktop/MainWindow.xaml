@@ -543,20 +543,20 @@
                             Grid.Row="2"
                             Grid.Column="1"
                             Margin="6,6,0,0"
-                            Header="Start offset"
-                            Hint="{x:Static vm:HintTexts.TrimStart}"
+                            Header="Loop start"
+                            Hint="{x:Static vm:HintTexts.LoopStart}"
                             Maximum="{Binding DataContext.SelectedSourceSeconds, RelativeSource={RelativeSource AncestorType=Window}}"
                             Minimum="0"
-                            Value="{Binding TrimStart, Mode=TwoWay}" />
+                            Value="{Binding LoopStart, Mode=TwoWay}" />
                         <controls:TimeBox
                             Grid.Row="3"
                             Grid.Column="1"
                             Margin="6,6,0,0"
-                            Header="End offset"
-                            Hint="{x:Static vm:HintTexts.TrimEnd}"
+                            Header="Loop duration"
+                            Hint="{x:Static vm:HintTexts.LoopDuration}"
                             Maximum="{Binding DataContext.SelectedSourceSeconds, RelativeSource={RelativeSource AncestorType=Window}}"
-                            Minimum="0"
-                            Value="{Binding TrimEnd, Mode=TwoWay}" />
+                            Minimum="0.5"
+                            Value="{Binding LoopDuration, Mode=TwoWay}" />
                     </Grid>
                     <TextBlock
                         Margin="0,8,0,0"

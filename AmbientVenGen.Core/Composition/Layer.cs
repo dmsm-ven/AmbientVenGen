@@ -187,13 +187,13 @@ public sealed partial class Layer : ObservableObject
     [ObservableProperty]
     private double _pitchShift;
 
-    /// <summary>Field record: seconds cut from the start of the recording; only the rest is played (and looped).</summary>
+    /// <summary>Field record: where the looped piece starts, seconds from the beginning of the file.</summary>
     [ObservableProperty]
-    private double _trimStart;
+    private double _loopStart;
 
-    /// <summary>Field record: seconds cut from the end of the recording.</summary>
+    /// <summary>Field record: length of the looped piece, seconds (0 = up to the end of the file).</summary>
     [ObservableProperty]
-    private double _trimEnd;
+    private double _loopDuration;
 
     /// <summary>Field record: length of the cross-fade at the loop point, seconds.</summary>
     [ObservableProperty]
@@ -203,7 +203,7 @@ public sealed partial class Layer : ObservableObject
     public SampleTransform Transform => Type == LayerType.FieldRecord
         ? new SampleTransform(Reverse, Math.Clamp(Stretch, 1, SampleTransform.MaxStretch),
             Math.Clamp(PitchShift, -SampleTransform.MaxPitchSemitones, SampleTransform.MaxPitchSemitones),
-            Math.Max(0, TrimStart), Math.Max(0, TrimEnd), Math.Clamp(LoopCrossfade, 0, SampleTransform.MaxCrossfade))
+            Math.Max(0, LoopStart), Math.Max(0, LoopDuration), Math.Clamp(LoopCrossfade, 0, SampleTransform.MaxCrossfade))
         : SampleTransform.None;
 
     public Layer()
@@ -304,8 +304,8 @@ public sealed partial class Layer : ObservableObject
         Reverse,
         Stretch,
         PitchShift,
-        TrimStart,
-        TrimEnd,
+        LoopStart,
+        LoopDuration,
         LoopCrossfade);
 
     /// <summary>Creates a layer from a spec, clamping values read from a file to sane ranges.</summary>
@@ -351,8 +351,8 @@ public sealed partial class Layer : ObservableObject
             Reverse = spec.Reverse,
             Stretch = Math.Clamp(spec.Stretch < 1 ? 1 : spec.Stretch, 1, SampleTransform.MaxStretch),
             PitchShift = Math.Clamp(spec.PitchShift, -SampleTransform.MaxPitchSemitones, SampleTransform.MaxPitchSemitones),
-            TrimStart = Math.Max(0, spec.TrimStart),
-            TrimEnd = Math.Max(0, spec.TrimEnd),
+            LoopStart = Math.Max(0, spec.LoopStart),
+            LoopDuration = Math.Max(0, spec.LoopDuration),
             LoopCrossfade = Math.Clamp(spec.LoopCrossfade, 0, SampleTransform.MaxCrossfade)
         };
         layer.Mod1.Apply(spec.Mod1);

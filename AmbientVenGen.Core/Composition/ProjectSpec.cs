@@ -82,8 +82,8 @@ public sealed record LayerSpec(
     bool Reverse = false,
     double Stretch = 1.0,
     double PitchShift = 0.0,
-    double TrimStart = 0.0,
-    double TrimEnd = 0.0,
+    double LoopStart = 0.0,
+    double LoopDuration = 0.0,
     double LoopCrossfade = SampleTransform.DefaultCrossfade)
 {
     /// <summary>What is done to the recording of a Field record layer (nothing for the other types).</summary>
@@ -91,7 +91,7 @@ public sealed record LayerSpec(
     public SampleTransform Transform => Type == LayerType.FieldRecord
         ? new SampleTransform(Reverse, Math.Clamp(Stretch < 1 ? 1 : Stretch, 1, SampleTransform.MaxStretch),
             Math.Clamp(PitchShift, -SampleTransform.MaxPitchSemitones, SampleTransform.MaxPitchSemitones),
-            Math.Max(0, TrimStart), Math.Max(0, TrimEnd), Math.Clamp(LoopCrossfade, 0, SampleTransform.MaxCrossfade))
+            Math.Max(0, LoopStart), Math.Max(0, LoopDuration), Math.Clamp(LoopCrossfade, 0, SampleTransform.MaxCrossfade))
         : SampleTransform.None;
 
     /// <summary>Curve of the fade-out; projects saved before it was separate use the fade-in curve for both.</summary>

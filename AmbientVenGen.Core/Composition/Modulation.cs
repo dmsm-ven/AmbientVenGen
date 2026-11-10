@@ -82,8 +82,8 @@ public readonly record struct SampleTransform(
     bool Reverse,
     double Stretch,
     double PitchSemitones,
-    double TrimStart = 0.0,
-    double TrimEnd = 0.0,
+    double LoopStart = 0.0,
+    double LoopDuration = 0.0,
     double Crossfade = SampleTransform.DefaultCrossfade)
 {
     public const double MaxStretch = 50;
@@ -111,14 +111,18 @@ public readonly record struct SampleTransform(
     /// </summary>
     public SampleTransform ForProcessing() => IsHeavy
         ? this with { Crossfade = DefaultCrossfade }
-        : this with { TrimStart = 0.0, TrimEnd = 0.0, Crossfade = DefaultCrossfade };
+        : this with { LoopStart = 0.0, LoopDuration = 0.0, Crossfade = DefaultCrossfade };
 
-    /// <summary>The piece of a recording of <paramref name="frames"/> frames: seconds cut from the start and from the end.</summary>
-    public static (int Begin, int End) PieceOf(int frames, double trimStart, double trimEnd, int sampleRate)
+    /// <summary>
+    /// The piece of a recording of <paramref name="frames"/> frames that is looped: it starts at
+    /// <paramref name="loopStart"/> seconds and lasts <paramref name="loopDuration"/> seconds (0 = up to the end of the file).
+    /// </summary>
+    public static (int Begin, int End) PieceOf(int frames, double loopStart, double loopDuration, int sampleRate)
     {
         int minimum = Math.Min(frames, (int)(MinPieceSeconds * sampleRate));
-        int begin = (int)Math.Clamp(Math.Max(0, trimStart) * sampleRate, 0, Math.Max(0, frames - minimum));
-        int end = (int)Math.Clamp(frames - Math.Max(0, trimEnd) * sampleRate, begin + minimum, frames);
+        int begin = (int)Math.Clamp(Math.Max(0, loopStart) * sampleRate, 0, Math.Max(0, frames - minimum));
+        double wanted = loopDuration > 0 ? begin + loopDuration * sampleRate : frames;
+        int end = (int)Math.Clamp(wanted, begin + minimum, frames);
 
         return (begin, end);
     }

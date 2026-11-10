@@ -154,7 +154,7 @@ public static class SampleLibrary
         .Distinct();
 
     private static string ProcessedKey(string path, SampleTransform t) =>
-        FormattableString.Invariant($"{path}|{(t.Reverse ? 1 : 0)}|{t.Stretch:0.####}|{t.PitchSemitones:0.####}|{t.TrimStart:0.###}|{t.TrimEnd:0.###}");
+        FormattableString.Invariant($"{path}|{(t.Reverse ? 1 : 0)}|{t.Stretch:0.####}|{t.PitchSemitones:0.####}|{t.LoopStart:0.###}|{t.LoopDuration:0.###}");
 
     private static DecodedSample? Process(string path, SampleTransform transform, string processedKey, bool force)
     {
@@ -245,7 +245,7 @@ public static class SampleLibrary
 
     private static DecodedSample Trimmed(DecodedSample sample, SampleTransform transform)
     {
-        (int begin, int end) = SampleTransform.PieceOf(sample.Frames, transform.TrimStart, transform.TrimEnd, SampleRate);
+        (int begin, int end) = SampleTransform.PieceOf(sample.Frames, transform.LoopStart, transform.LoopDuration, SampleRate);
 
         if (begin == 0 && end == sample.Frames)
             return sample;

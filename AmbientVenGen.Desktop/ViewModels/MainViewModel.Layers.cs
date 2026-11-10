@@ -120,8 +120,9 @@ public partial class MainViewModel
         Layer layer = LayerDefaults.Create(LayerType.FieldRecord, name);
         layer.SourcePath = path;
 
-        // The layer is as long as the recording itself (not longer than the project).
+        // The layer is as long as the recording itself (not longer than the project); the whole file is looped.
         double length = fileSeconds > 0 ? fileSeconds : 180;
+        layer.LoopDuration = fileSeconds > 0 ? fileSeconds : 0;
         layer.DurationSeconds = Math.Clamp(length, MinLayerSeconds, total);
         layer.FadeInSeconds = layer.FadeOutSeconds = Math.Min(30, layer.DurationSeconds / 2);
 
@@ -150,6 +151,8 @@ public partial class MainViewModel
                 || string.Equals(layer.Name, Path.GetFileName(oldPath), StringComparison.OrdinalIgnoreCase));
 
         layer.SourcePath = path;
+        layer.LoopStart = 0;
+        layer.LoopDuration = 0; // the whole new file; the real length is filled in when it is known
         if (autoNamed)
             layer.Name = name;
 
@@ -254,10 +257,24 @@ public partial class MainViewModel
             return;
         }
 
-        (int begin, int end) = SampleTransform.PieceOf(sample.Frames, layer.TrimStart, layer.TrimEnd, ProjectMixer.SampleRate);
         double total = sample.Frames / (double)ProjectMixer.SampleRate;
         SelectedSourceSeconds = Math.Max(1, total);
-        SelectedPieceText = $"Piece {FormatClock((end - begin) / (double)ProjectMixer.SampleRate)} of {FormatClock(total)}";
+
+        // "0" means "up to the end of the file": show (and keep) the real length, without making the project "changed".
+        if (layer.LoopDuration <= 0)
+        {
+            bool wasDirty = IsDirty;
+            layer.LoopDuration = Math.Round(Math.Max(SampleTransform.MinPieceSeconds, total - layer.LoopStart), 3);
+
+            if (!wasDirty)
+            {
+                _savedSnapshot = TakeSnapshot();
+                IsDirty = false;
+            }
+        }
+
+        (int begin, int end) = SampleTransform.PieceOf(sample.Frames, layer.LoopStart, layer.LoopDuration, ProjectMixer.SampleRate);
+        SelectedPieceText = $"Loop {FormatClock(begin / (double)ProjectMixer.SampleRate)} - {FormatClock(end / (double)ProjectMixer.SampleRate)} of {FormatClock(total)}";
     }
 
     private static string FormatClock(double seconds)

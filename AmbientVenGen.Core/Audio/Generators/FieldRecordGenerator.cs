@@ -57,11 +57,12 @@ internal sealed class FieldRecordGenerator : LayerGenerator
 
         if (!_transform.IsHeavy)
         {
-            (int pieceBegin, int pieceEnd) = SampleTransform.PieceOf(sample.Frames,
-                _transform.Reverse ? _transform.TrimEnd : _transform.TrimStart,
-                _transform.Reverse ? _transform.TrimStart : _transform.TrimEnd, SampleRate);
-            begin = pieceBegin;
-            end = pieceEnd;
+            (int pieceBegin, int pieceEnd) = SampleTransform.PieceOf(
+                sample.Frames, _transform.LoopStart, _transform.LoopDuration, SampleRate);
+
+            // The piece is chosen in the file as it is; a reversed file is played from its end.
+            begin = _transform.Reverse ? sample.Frames - pieceEnd : pieceBegin;
+            end = _transform.Reverse ? sample.Frames - pieceBegin : pieceEnd;
         }
 
         int frames = end - begin;

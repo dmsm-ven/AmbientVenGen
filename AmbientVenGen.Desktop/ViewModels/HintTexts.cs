@@ -29,11 +29,11 @@ public static class HintTexts
     public const string Reverse =
         "Plays the recording backwards: swells that build up to the start of every sound, ghostly reversed tails.";
 
-    public const string TrimStart =
-        "Cuts this many seconds off the beginning of the recording. Only the rest is played and looped - use it to pick the best part of a long file.";
+    public const string LoopStart =
+        "Where the looped piece of the recording starts (seconds from the beginning of the file). Together with Loop duration it picks the best part of a long file.";
 
-    public const string TrimEnd =
-        "Cuts this many seconds off the end of the recording. The piece between the two offsets is what plays and loops.";
+    public const string LoopDuration =
+        "Length of the looped piece. The piece from Loop start to Loop start + Loop duration is what plays, over and over.";
 
     public const string LoopCrossfade =
         "Length of the cross-fade where the end of the piece melts into its beginning, so the loop has no seam. Longer is smoother; 0 is a hard cut.";
