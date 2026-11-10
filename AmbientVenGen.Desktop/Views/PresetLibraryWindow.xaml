@@ -69,7 +69,12 @@
             x:Key="PreviewButton"
             BasedOn="{StaticResource ToolIconButton}"
             TargetType="ui:Button">
-            <Setter Property="Margin" Value="0,0,8,0" />
+            <Setter Property="Margin" Value="0,0,6,0" />
+            <Setter Property="Width" Value="20" />
+            <Setter Property="Height" Value="20" />
+            <Setter Property="MinWidth" Value="20" />
+            <Setter Property="MinHeight" Value="20" />
+            <Setter Property="FontSize" Value="12" />
             <Setter Property="VerticalAlignment" Value="Center" />
             <Setter Property="ToolTip" Value="Play preview" />
             <Setter Property="Icon">
@@ -148,6 +153,15 @@
 
                 <!--  Left: what to do with the selected recording  -->
                 <StackPanel Orientation="Horizontal">
+                    <!--  Search by a part of the file name or of a tag  -->
+                    <ui:TextBox
+                        Width="210"
+                        Margin="0,0,12,0"
+                        VerticalAlignment="Center"
+                        ClearButtonEnabled="True"
+                        PlaceholderText="Search by name or tag"
+                        Text="{Binding SearchText, UpdateSourceTrigger=PropertyChanged}"
+                        ToolTip="Words are looked for in the file name and in the tags; every word must be found" />
                     <ui:Button
                         VerticalAlignment="Center"
                         Command="{Binding ReplaceInLayerCommand}"
@@ -292,8 +306,10 @@
             CanUserAddRows="False"
             CanUserDeleteRows="False"
             EnableRowVirtualization="True"
+            FontSize="12"
             Foreground="White"
             GridLinesVisibility="Horizontal"
+            MinRowHeight="26"
             HeadersVisibility="Column"
             IsReadOnly="True"
             ItemsSource="{Binding Presets}"
@@ -315,7 +331,7 @@
                     <DataGridTemplateColumn.CellTemplate>
                         <DataTemplate>
                             <StackPanel
-                                Margin="4"
+                                Margin="2,1"
                                 VerticalAlignment="Center"
                                 Orientation="Horizontal">
                                 <StackPanel.Style>
@@ -345,18 +361,22 @@
                 <DataGridTextColumn
                     Width="80"
                     Binding="{Binding DurationText}"
+                    FontSize="12"
                     Header="Duration" />
                 <DataGridTextColumn
                     Width="80"
                     Binding="{Binding SizeText}"
+                    FontSize="12"
                     Header="Size" />
                 <DataGridTextColumn
                     Width="60"
                     Binding="{Binding Extension}"
+                    FontSize="12"
                     Header="Format" />
                 <DataGridTextColumn
                     Width="60"
                     Binding="{Binding ViewsCount}"
+                    FontSize="12"
                     Header="Used" />
 
 
@@ -365,7 +385,7 @@
                     <DataGridTemplateColumn.CellTemplate>
                         <DataTemplate>
                             <Grid
-                                Margin="2"
+                                Margin="2,0"
                                 Background="Transparent"
                                 MouseLeftButtonDown="OnTagCellMouseDown">
                                 <Grid.ColumnDefinitions>
@@ -388,13 +408,13 @@
                                         <DataTemplate>
                                             <Border
                                                 Margin="0,1,4,1"
-                                                Padding="7,1,4,1"
+                                                Padding="6,0,4,0"
                                                 Background="#33B7AFE9"
                                                 CornerRadius="9">
                                                 <StackPanel Orientation="Horizontal">
                                                     <TextBlock
                                                         VerticalAlignment="Center"
-                                                        FontSize="11"
+                                                        FontSize="10.5"
                                                         Foreground="#ECECF2"
                                                         Text="{Binding}" />
                                                     <TextBlock
@@ -415,7 +435,9 @@
                                 <ComboBox
                                     Grid.Column="1"
                                     Width="92"
-                                    Margin="4,2,4,2"
+                                    Height="24"
+                                    Margin="4,0,4,0"
+                                    FontSize="11"
                                     VerticalAlignment="Center"
                                     IsEditable="True"
                                     IsTextSearchEnabled="False"
