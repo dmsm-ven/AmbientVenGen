@@ -402,14 +402,28 @@
                     </ToggleButton>
                 </StackPanel>
 
-                <ui:TextBlock
+                <StackPanel
                     Grid.Column="2"
                     Margin="0,0,16,0"
                     VerticalAlignment="Center"
-                    FontFamily="Consolas"
-                    FontSize="14"
-                    Foreground="#B7AFE9"
-                    Text="{Binding TimeText}" />
+                    Orientation="Horizontal">
+                    <!--  Whole project: position / length  -->
+                    <ui:TextBlock
+                        VerticalAlignment="Center"
+                        FontFamily="Consolas"
+                        FontSize="14"
+                        Foreground="#B7AFE9"
+                        Text="{Binding TimeText}" />
+                    <!--  The playback position inside the selected layer, with milliseconds  -->
+                    <ui:TextBlock
+                        Margin="12,0,0,0"
+                        VerticalAlignment="Center"
+                        FontFamily="Consolas"
+                        FontSize="14"
+                        Foreground="#E6D25A"
+                        Text="{Binding SelectedLayerTimeText}"
+                        ToolTip="Playback position inside the selected layer (minutes:seconds.milliseconds)" />
+                </StackPanel>
 
                 <controls:SpectrumControl
                     Grid.Column="3"

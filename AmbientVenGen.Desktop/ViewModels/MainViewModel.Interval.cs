@@ -99,6 +99,7 @@ public partial class MainViewModel
     {
         WeakReferenceMessenger.Default.Send(new FieldRecordTargetMessage(FieldRecordTargetName));
         RefreshProcessing();
+        OnPropertyChanged(nameof(SelectedLayerTimeText));
 
         // The panel is built for one selected layer.
         if (IsIntervalPanelOpen)
