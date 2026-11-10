@@ -59,6 +59,27 @@
             </Setter>
         </Style>
 
+        <!--  A text box without the theme frame (the frame is drawn around it).  -->
+        <ControlTemplate x:Key="PlainTextBox" TargetType="TextBox">
+            <ScrollViewer x:Name="PART_ContentHost" Focusable="False" />
+        </ControlTemplate>
+
+        <!--  A table cell without padding: the row is as high as its content.  -->
+        <Style x:Key="PresetCell" TargetType="DataGridCell">
+            <Setter Property="Padding" Value="4,0" />
+            <Setter Property="BorderThickness" Value="0" />
+            <Setter Property="Focusable" Value="False" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="DataGridCell">
+                        <Border Padding="{TemplateBinding Padding}" Background="Transparent">
+                            <ContentPresenter VerticalAlignment="Center" />
+                        </Border>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
         <!--  The global TextBlock margin (see Styles.xaml) would shift the text inside table cells.  -->
         <Style TargetType="TextBlock">
             <Setter Property="Margin" Value="0" />
@@ -69,7 +90,7 @@
             x:Key="PreviewButton"
             BasedOn="{StaticResource ToolIconButton}"
             TargetType="ui:Button">
-            <Setter Property="Margin" Value="0,0,6,0" />
+            <Setter Property="Margin" Value="0,2,6,2" />
             <Setter Property="Width" Value="20" />
             <Setter Property="Height" Value="20" />
             <Setter Property="MinWidth" Value="20" />
@@ -153,15 +174,49 @@
 
                 <!--  Left: what to do with the selected recording  -->
                 <StackPanel Orientation="Horizontal">
-                    <!--  Search by a part of the file name or of a tag  -->
-                    <ui:TextBox
+                    <!--  Search by a part of the file name or of a tag; looks like an input field all the time  -->
+                    <Border
                         Width="210"
+                        Height="28"
                         Margin="0,0,12,0"
                         VerticalAlignment="Center"
-                        ClearButtonEnabled="True"
-                        PlaceholderText="Search by name or tag"
-                        Text="{Binding SearchText, UpdateSourceTrigger=PropertyChanged}"
-                        ToolTip="Words are looked for in the file name and in the tags; every word must be found" />
+                        Background="#1AFFFFFF"
+                        BorderBrush="#88B7AFE9"
+                        BorderThickness="1"
+                        CornerRadius="6"
+                        ToolTip="Words are looked for in the file name and in the tags; every word must be found (the table updates when you stop typing)">
+                        <Grid>
+                            <TextBox
+                                x:Name="SearchBox"
+                                Padding="8,0,24,0"
+                                VerticalContentAlignment="Center"
+                                Background="Transparent"
+                                BorderThickness="0"
+                                CaretBrush="#ECECF2"
+                                FontSize="12"
+                                Foreground="#ECECF2"
+                                Template="{StaticResource PlainTextBox}"
+                                Text="{Binding SearchText, UpdateSourceTrigger=PropertyChanged}" />
+                            <TextBlock
+                                Margin="9,0,0,0"
+                                VerticalAlignment="Center"
+                                FontSize="12"
+                                Foreground="#7C7B94"
+                                IsHitTestVisible="False"
+                                Text="Search by name or tag">
+                                <TextBlock.Style>
+                                    <Style TargetType="TextBlock">
+                                        <Setter Property="Visibility" Value="Collapsed" />
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding Text, ElementName=SearchBox}" Value="">
+                                                <Setter Property="Visibility" Value="Visible" />
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </TextBlock.Style>
+                            </TextBlock>
+                        </Grid>
+                    </Border>
                     <ui:Button
                         VerticalAlignment="Center"
                         Command="{Binding ReplaceInLayerCommand}"
@@ -173,31 +228,6 @@
                         Command="{Binding UsePresetCommand}"
                         Content="Add new Layer"
                         ToolTip="Add the selected recording to the project as a new Field record layer" />
-                </StackPanel>
-
-                <!--  Centre: one Loop switch for all previews  -->
-                <StackPanel
-                    Grid.Column="1"
-                    Margin="14,0,0,0"
-                    VerticalAlignment="Center"
-                    Orientation="Horizontal">
-                    <Rectangle
-                        Width="1"
-                        Height="22"
-                        Margin="0,0,14,0"
-                        Fill="#3A3945" />
-                    <ToggleButton
-                        VerticalAlignment="Center"
-                        IsChecked="{Binding Loop, Mode=TwoWay}"
-                        Style="{StaticResource ToolIconToggleButton}"
-                        ToolTip="Loop: repeat the previewed file (off: play it once)">
-                        <ui:SymbolIcon Symbol="ArrowRepeatAll24" />
-                    </ToggleButton>
-                    <TextBlock
-                        Margin="4,0,0,0"
-                        VerticalAlignment="Center"
-                        Foreground="#C9C8D6"
-                        Text="Loop preview" />
                 </StackPanel>
 
                 <!--  Right: the library itself  -->
@@ -309,7 +339,8 @@
             FontSize="12"
             Foreground="White"
             GridLinesVisibility="Horizontal"
-            MinRowHeight="26"
+            CellStyle="{StaticResource PresetCell}"
+            MinRowHeight="24"
             HeadersVisibility="Column"
             IsReadOnly="True"
             ItemsSource="{Binding Presets}"
@@ -331,7 +362,7 @@
                     <DataGridTemplateColumn.CellTemplate>
                         <DataTemplate>
                             <StackPanel
-                                Margin="2,1"
+                                Margin="0"
                                 VerticalAlignment="Center"
                                 Orientation="Horizontal">
                                 <StackPanel.Style>
@@ -463,7 +494,18 @@
             BorderThickness="1"
             CornerRadius="8">
             <Grid Margin="6,2">
+                <!--  Loop: repeat the previewed file (off: play it once)  -->
+                <ToggleButton
+                    HorizontalAlignment="Left"
+                    VerticalAlignment="Center"
+                    IsChecked="{Binding Loop, Mode=TwoWay}"
+                    Panel.ZIndex="1"
+                    Style="{StaticResource ToolIconToggleButton}"
+                    ToolTip="Loop preview: repeat the previewed file (off: play it once)">
+                    <ui:SymbolIcon Symbol="ArrowRepeatAll24" />
+                </ToggleButton>
                 <controls:WaveformBars
+                    Margin="36,0,0,0"
                     IsPlaying="{Binding ActiveItem.IsPlaying}"
                     Peaks="{Binding ActiveItem.Peaks}"
                     Progress="{Binding ActiveItem.PlayProgress}" />

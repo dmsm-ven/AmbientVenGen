@@ -133,7 +133,23 @@ public partial class PresetLibraryViewModel : ObservableObject
     [ObservableProperty]
     private string _searchText = "";
 
-    partial void OnSearchTextChanged(string value) => CollectionViewSource.GetDefaultView(Presets).Refresh();
+    // The table is filtered when the typing stops (half a second), not after every letter.
+    private DispatcherTimer? _searchTimer;
+
+    partial void OnSearchTextChanged(string value)
+    {
+        _searchTimer ??= new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(500) };
+        _searchTimer.Stop();
+        _searchTimer.Tick -= OnSearchTimer;
+        _searchTimer.Tick += OnSearchTimer;
+        _searchTimer.Start();
+    }
+
+    private void OnSearchTimer(object? sender, EventArgs e)
+    {
+        _searchTimer?.Stop();
+        CollectionViewSource.GetDefaultView(Presets).Refresh();
+    }
 
     private bool MatchesTagFilter(object row)
     {
