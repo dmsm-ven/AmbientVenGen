@@ -432,8 +432,110 @@
 
         <!--  Top row: selected layer inspector (the whole width)  -->
         <Grid Grid.Row="2" Margin="12,10,12,0">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="Auto" />
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="Auto" />
+            </Grid.ColumnDefinitions>
+
+            <!--  Recording group (Field record layers only): belongs to the selected layer, but is a group of its own  -->
+            <Border
+                Margin="0,0,10,0"
+                DataContext="{Binding SelectedLayer}"
+                >
+                <Border.Style>
+                    <Style BasedOn="{StaticResource SectionCard}" TargetType="Border">
+                        <Setter Property="Visibility" Value="Collapsed" />
+                        <Style.Triggers>
+                            <DataTrigger Binding="{Binding Type}" Value="FieldRecord">
+                                <Setter Property="Visibility" Value="Visible" />
+                            </DataTrigger>
+                        </Style.Triggers>
+                    </Style>
+                </Border.Style>
+                <StackPanel>
+                    <StackPanel Margin="0,0,0,6" Orientation="Horizontal">
+                        <TextBlock
+                            VerticalAlignment="Center"
+                            FontSize="14"
+                            FontWeight="SemiBold"
+                            Text="Recording" />
+                        <TextBlock
+                            Margin="10,0,0,0"
+                            VerticalAlignment="Center"
+                            FontSize="11"
+                            Foreground="#E6D25A"
+                            Text="processing..."
+                            Visibility="{Binding DataContext.IsSelectedSourceProcessing, RelativeSource={RelativeSource AncestorType=Window}, Converter={StaticResource BoolToVisibility}}" />
+                    </StackPanel>
+                    <StackPanel Orientation="Vertical">
+                        <StackPanel Margin="6,0,0,4" HorizontalAlignment="Left">
+                            <StackPanel Orientation="Horizontal">
+                                <ui:ToggleSwitch Content="Reverse" IsChecked="{Binding Reverse, Mode=TwoWay}" />
+                                <controls:HintIcon Margin="5,0,0,0" Text="{x:Static vm:HintTexts.Reverse}" />
+                            </StackPanel>
+                        </StackPanel>
+                        <controls:LabeledSlider
+                            Margin="0,0"
+                            Format="{}{0:0.0}x"
+                            Header="Stretch"
+                            Hint="{x:Static vm:HintTexts.Stretch}"
+                            IsLogarithmic="True"
+                            Maximum="50"
+                            Minimum="1"
+                            Step="0.1"
+                            Value="{Binding Stretch, Mode=TwoWay}" />
+                        <controls:LabeledSlider
+                            Margin="0,0"
+                            Format="{}{0:+0.0;-0.0;0} st"
+                            Header="Pitch shift"
+                            Hint="{x:Static vm:HintTexts.PitchShift}"
+                            Maximum="24"
+                            Minimum="-24"
+                            Step="0.5"
+                            Value="{Binding PitchShift, Mode=TwoWay}" />
+                        <!--  The piece of the file that is played and looped (cross-fade at the loop point)  -->
+                        <TextBlock
+                            Margin="6,6,6,2"
+                            FontSize="11"
+                            Foreground="#8F8DB0"
+                            Text="{Binding DataContext.SelectedPieceText, RelativeSource={RelativeSource AncestorType=Window}}" />
+                        <controls:LabeledSlider
+                            Margin="0,0"
+                            Format="{}{0:0.0} s"
+                            Header="Start offset"
+                            Hint="{x:Static vm:HintTexts.TrimStart}"
+                            Maximum="{Binding DataContext.SelectedSourceSeconds, RelativeSource={RelativeSource AncestorType=Window}}"
+                            Minimum="0"
+                            Step="0.1"
+                            Value="{Binding TrimStart, Mode=TwoWay}" />
+                        <controls:LabeledSlider
+                            Margin="0,0"
+                            Format="{}{0:0.0} s"
+                            Header="End offset"
+                            Hint="{x:Static vm:HintTexts.TrimEnd}"
+                            Maximum="{Binding DataContext.SelectedSourceSeconds, RelativeSource={RelativeSource AncestorType=Window}}"
+                            Minimum="0"
+                            Step="0.1"
+                            Value="{Binding TrimEnd, Mode=TwoWay}" />
+                        <controls:LabeledSlider
+                            Margin="0,0"
+                            Format="{}{0:0.0} s"
+                            Header="Loop crossfade"
+                            Hint="{x:Static vm:HintTexts.LoopCrossfade}"
+                            Maximum="10"
+                            Minimum="0"
+                            Step="0.1"
+                            Value="{Binding LoopCrossfade, Mode=TwoWay}" />
+                    </StackPanel>
+                </StackPanel>
+                </Border>
+
             <!--  Selected layer inspector  -->
-            <Border IsEnabled="{Binding HasSelectedLayer}" Style="{StaticResource SectionCard}">
+            <Border
+                Grid.Column="1"
+                IsEnabled="{Binding HasSelectedLayer}"
+                Style="{StaticResource SectionCard}">
                 <Grid>
                     <Grid.RowDefinitions>
                         <RowDefinition Height="Auto" />
@@ -1119,126 +1221,34 @@
                                                 Value="{Binding ReverbSend, Mode=TwoWay}" />
                                         </WrapPanel>
 
-                                        <!--  Field record: the Recording group on the left (vertical), the two modulators on the right  -->
-                                        <Grid>
-                                            <Grid.ColumnDefinitions>
-                                                <ColumnDefinition Width="Auto" />
-                                                <ColumnDefinition Width="*" />
-                                            </Grid.ColumnDefinitions>
-                                            <Border
-                                                Margin="12.5,0,0,8"
-                                                Padding="12,8"
-                                                Background="#0DFFFFFF"
-                                                BorderBrush="#1FFFFFFF"
-                                                BorderThickness="1"
-                                                CornerRadius="8">
-                                                <Border.Style>
-                                                    <Style TargetType="Border">
-                                                        <Setter Property="Visibility" Value="Collapsed" />
-                                                        <Style.Triggers>
-                                                            <DataTrigger Binding="{Binding Type}" Value="FieldRecord">
-                                                                <Setter Property="Visibility" Value="Visible" />
-                                                            </DataTrigger>
-                                                        </Style.Triggers>
-                                                    </Style>
-                                                </Border.Style>
-                                                <StackPanel>
-                                                    <StackPanel Margin="0,0,0,6" Orientation="Horizontal">
-                                                        <TextBlock
-                                                            VerticalAlignment="Center"
-                                                            FontSize="14"
-                                                            FontWeight="SemiBold"
-                                                            Text="Recording" />
-                                                        <TextBlock
-                                                            Margin="10,0,0,0"
-                                                            VerticalAlignment="Center"
-                                                            FontSize="11"
-                                                            Foreground="#E6D25A"
-                                                            Text="processing..."
-                                                            Visibility="{Binding DataContext.IsSelectedSourceProcessing, RelativeSource={RelativeSource AncestorType=Window}, Converter={StaticResource BoolToVisibility}}" />
-                                                    </StackPanel>
-                                                    <StackPanel Orientation="Vertical">
-                                                        <StackPanel Margin="6,0,0,4" HorizontalAlignment="Left">
-                                                            <StackPanel Orientation="Horizontal">
-                                                                <ui:ToggleSwitch Content="Reverse" IsChecked="{Binding Reverse, Mode=TwoWay}" />
-                                                                <controls:HintIcon Margin="5,0,0,0" Text="{x:Static vm:HintTexts.Reverse}" />
-                                                            </StackPanel>
-                                                        </StackPanel>
-                                                        <controls:LabeledSlider
-                                                            Margin="0,0"
-                                                            Format="{}{0:0.0}x"
-                                                            Header="Stretch"
-                                                            Hint="{x:Static vm:HintTexts.Stretch}"
-                                                            IsLogarithmic="True"
-                                                            Maximum="50"
-                                                            Minimum="1"
-                                                            Step="0.1"
-                                                            Value="{Binding Stretch, Mode=TwoWay}" />
-                                                        <controls:LabeledSlider
-                                                            Margin="0,0"
-                                                            Format="{}{0:+0.0;-0.0;0} st"
-                                                            Header="Pitch shift"
-                                                            Hint="{x:Static vm:HintTexts.PitchShift}"
-                                                            Maximum="24"
-                                                            Minimum="-24"
-                                                            Step="0.5"
-                                                            Value="{Binding PitchShift, Mode=TwoWay}" />
-                                                        <!--  The piece of the file that is played and looped (cross-fade at the loop point)  -->
-                                                        <TextBlock
-                                                            Margin="6,6,6,2"
-                                                            FontSize="11"
-                                                            Foreground="#8F8DB0"
-                                                            Text="{Binding DataContext.SelectedPieceText, RelativeSource={RelativeSource AncestorType=Window}}" />
-                                                        <controls:LabeledSlider
-                                                            Margin="0,0"
-                                                            Format="{}{0:0.0} s"
-                                                            Header="Start offset"
-                                                            Hint="{x:Static vm:HintTexts.TrimStart}"
-                                                            Maximum="{Binding DataContext.SelectedSourceSeconds, RelativeSource={RelativeSource AncestorType=Window}}"
-                                                            Minimum="0"
-                                                            Step="0.1"
-                                                            Value="{Binding TrimStart, Mode=TwoWay}" />
-                                                        <controls:LabeledSlider
-                                                            Margin="0,0"
-                                                            Format="{}{0:0.0} s"
-                                                            Header="End offset"
-                                                            Hint="{x:Static vm:HintTexts.TrimEnd}"
-                                                            Maximum="{Binding DataContext.SelectedSourceSeconds, RelativeSource={RelativeSource AncestorType=Window}}"
-                                                            Minimum="0"
-                                                            Step="0.1"
-                                                            Value="{Binding TrimEnd, Mode=TwoWay}" />
-                                                        <controls:LabeledSlider
-                                                            Margin="0,0"
-                                                            Format="{}{0:0.0} s"
-                                                            Header="Loop crossfade"
-                                                            Hint="{x:Static vm:HintTexts.LoopCrossfade}"
-                                                            Maximum="10"
-                                                            Minimum="0"
-                                                            Step="0.1"
-                                                            Value="{Binding LoopCrossfade, Mode=TwoWay}" />
-                                                    </StackPanel>
-                                                </StackPanel>
-                                            </Border>
-                                            <WrapPanel
-                                                Grid.Column="1"
-                                                HorizontalAlignment="Center"
-                                                Orientation="Horizontal">
-                                            <controls:ModulatorEditor
-                                                Margin="12.5,0,12.5,8"
-                                                DataContext="{Binding Mod1}"
-                                                Header="Modulator 1" />
-                                            <controls:ModulatorEditor
-                                                Margin="12.5,0,12.5,8"
-                                                DataContext="{Binding Mod2}"
-                                                Header="Modulator 2" />
-                                            </WrapPanel>
-                                        </Grid>
                                     </StackPanel>
                                 </Grid>
                             </DataTemplate>
                         </ContentControl.ContentTemplate>
                     </ContentControl>
                 </Grid>
+            </Border>
+
+            <!--  The two modulators of the selected layer  -->
+            <Border
+                Grid.Column="2"
+                Margin="10,0,0,0"
+                IsEnabled="{Binding HasSelectedLayer}"
+                Style="{StaticResource SectionCard}">
+                <StackPanel>
+                    <ui:TextBlock
+                        Margin="0,0,0,8"
+                        FontSize="14"
+                        FontWeight="SemiBold"
+                        Text="Modulators" />
+                    <controls:ModulatorEditor
+                    Margin="0,0,0,8"
+                    DataContext="{Binding SelectedLayer.Mod1}"
+                    Header="Modulator 1" />
+                    <controls:ModulatorEditor
+                    DataContext="{Binding SelectedLayer.Mod2}"
+                    Header="Modulator 2" />
+                </StackPanel>
             </Border>
         </Grid>
 
