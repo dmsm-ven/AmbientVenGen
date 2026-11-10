@@ -67,9 +67,17 @@
         <!--  A table row without the theme's minimum height and padding: it is as high as its cells.  -->
         <Style x:Key="PresetRow" TargetType="DataGridRow">
             <Setter Property="MinHeight" Value="0" />
+            <Setter Property="Height" Value="24" />
             <Setter Property="Padding" Value="0" />
             <Setter Property="Margin" Value="0" />
             <Setter Property="Background" Value="Transparent" />
+            <Setter Property="ClipToBounds" Value="True" />
+            <Style.Triggers>
+                <!--  Only while a tag is being typed the row is taller (the input box needs more room)  -->
+                <DataTrigger Binding="{Binding IsTagEditing}" Value="True">
+                    <Setter Property="Height" Value="40" />
+                </DataTrigger>
+            </Style.Triggers>
             <Setter Property="Template">
                 <Setter.Value>
                     <ControlTemplate TargetType="DataGridRow">
@@ -78,6 +86,7 @@
                             Background="{TemplateBinding Background}"
                             BorderBrush="#22FFFFFF"
                             BorderThickness="0,0,0,1"
+                            ClipToBounds="True"
                             SnapsToDevicePixels="True">
                             <DataGridCellsPresenter ItemsPanel="{TemplateBinding ItemsControl.ItemsPanel}" SnapsToDevicePixels="{TemplateBinding SnapsToDevicePixels}" />
                         </Border>
