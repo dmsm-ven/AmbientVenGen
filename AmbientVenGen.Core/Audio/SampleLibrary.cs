@@ -76,6 +76,8 @@ public static class SampleLibrary
     /// <summary>The recording with the transform applied, or null while it is being prepared (or cannot be).</summary>
     public static DecodedSample? TryGet(string path, SampleTransform transform)
     {
+        transform = transform.ForProcessing();
+
         if (transform.IsIdentity)
             return TryGet(path);
 
@@ -91,6 +93,8 @@ public static class SampleLibrary
     /// <summary>Starts decoding and processing in the background if it has not been started yet.</summary>
     public static Task<DecodedSample?> Request(string path, SampleTransform transform, bool force = false)
     {
+        transform = transform.ForProcessing();
+
         if (transform.IsIdentity)
             return Cache.GetOrAdd(path, static p => Task.Run(() => Decode(p)));
 
@@ -110,7 +114,7 @@ public static class SampleLibrary
 
     /// <summary>True while the stretch / pitch result of the recording is being calculated.</summary>
     public static bool IsPending(string path, SampleTransform transform) =>
-        transform.IsHeavy
+        (transform = transform.ForProcessing()).IsHeavy
         && Processed.TryGetValue(ProcessedKey(path, transform), out Task<DecodedSample?>? task)
         && !task.IsCompleted;
 
@@ -146,11 +150,11 @@ public static class SampleLibrary
 
     private static IEnumerable<(string Path, SampleTransform Transform)> SourcesOf(ProjectSpec spec) => spec.Layers
         .Where(layer => layer.Type == LayerType.FieldRecord && !layer.Muted && !string.IsNullOrEmpty(layer.SourcePath))
-        .Select(layer => (layer.SourcePath!, layer.Transform))
+        .Select(layer => (layer.SourcePath!, layer.Transform.ForProcessing()))
         .Distinct();
 
     private static string ProcessedKey(string path, SampleTransform t) =>
-        FormattableString.Invariant($"{path}|{(t.Reverse ? 1 : 0)}|{t.Stretch:0.####}|{t.PitchSemitones:0.####}");
+        FormattableString.Invariant($"{path}|{(t.Reverse ? 1 : 0)}|{t.Stretch:0.####}|{t.PitchSemitones:0.####}|{t.TrimStart:0.###}|{t.TrimEnd:0.###}");
 
     private static DecodedSample? Process(string path, SampleTransform transform, string processedKey, bool force)
     {
@@ -167,6 +171,9 @@ public static class SampleLibrary
 
                 if (transform.IsHeavy)
                 {
+                    // only the chosen piece is stretched / transposed
+                    source = Trimmed(source, transform);
+
                     // wait for the settings to settle; a newer request for this recording replaces this one
                     Thread.Sleep(SettleMilliseconds);
 
@@ -234,6 +241,16 @@ public static class SampleLibrary
         {
             // nothing to do about it
         }
+    }
+
+    private static DecodedSample Trimmed(DecodedSample sample, SampleTransform transform)
+    {
+        (int begin, int end) = SampleTransform.PieceOf(sample.Frames, transform.TrimStart, transform.TrimEnd, SampleRate);
+
+        if (begin == 0 && end == sample.Frames)
+            return sample;
+
+        return new DecodedSample(sample.Left[begin..end], sample.Right[begin..end]);
     }
 
     private static DecodedSample Reversed(DecodedSample sample)

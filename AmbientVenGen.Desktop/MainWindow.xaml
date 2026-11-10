@@ -1,4 +1,4 @@
-﻿<ui:FluentWindow
+<ui:FluentWindow
     x:Class="AmbientVenGen.Desktop.MainWindow"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
@@ -1181,6 +1181,39 @@
                                                             Minimum="-24"
                                                             Step="0.5"
                                                             Value="{Binding PitchShift, Mode=TwoWay}" />
+                                                        <!--  The piece of the file that is played and looped (cross-fade at the loop point)  -->
+                                                        <TextBlock
+                                                            Margin="6,6,6,0"
+                                                            FontSize="11"
+                                                            Foreground="#8F8DB0"
+                                                            Text="{Binding DataContext.SelectedPieceText, RelativeSource={RelativeSource AncestorType=Window}}" />
+                                                        <controls:LabeledSlider
+                                                            Margin="6,0"
+                                                            Format="{}{0:0.0} s"
+                                                            Header="Start offset"
+                                                            Hint="{x:Static vm:HintTexts.TrimStart}"
+                                                            Maximum="{Binding DataContext.SelectedSourceSeconds, RelativeSource={RelativeSource AncestorType=Window}}"
+                                                            Minimum="0"
+                                                            Step="0.1"
+                                                            Value="{Binding TrimStart, Mode=TwoWay}" />
+                                                        <controls:LabeledSlider
+                                                            Margin="6,0"
+                                                            Format="{}{0:0.0} s"
+                                                            Header="End offset"
+                                                            Hint="{x:Static vm:HintTexts.TrimEnd}"
+                                                            Maximum="{Binding DataContext.SelectedSourceSeconds, RelativeSource={RelativeSource AncestorType=Window}}"
+                                                            Minimum="0"
+                                                            Step="0.1"
+                                                            Value="{Binding TrimEnd, Mode=TwoWay}" />
+                                                        <controls:LabeledSlider
+                                                            Margin="6,0"
+                                                            Format="{}{0:0.0} s"
+                                                            Header="Loop crossfade"
+                                                            Hint="{x:Static vm:HintTexts.LoopCrossfade}"
+                                                            Maximum="10"
+                                                            Minimum="0"
+                                                            Step="0.1"
+                                                            Value="{Binding LoopCrossfade, Mode=TwoWay}" />
                                                     </StackPanel>
                                                 </StackPanel>
                                             </Border>
