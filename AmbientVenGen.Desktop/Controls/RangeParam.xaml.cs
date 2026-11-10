@@ -49,8 +49,8 @@ public partial class RangeParam : UserControl
     public static readonly DependencyProperty AllowRangeProperty = DependencyProperty.Register(
         nameof(AllowRange), typeof(bool), typeof(RangeParam), new PropertyMetadata(true, OnChanged));
 
-    public static readonly DependencyProperty UseKnobsProperty = InputStyle.UseKnobsProperty.AddOwner(
-        typeof(RangeParam), new FrameworkPropertyMetadata(false, FrameworkPropertyMetadataOptions.Inherits, OnChanged));
+    public static readonly DependencyProperty UseKnobsProperty = DependencyProperty.Register(
+        nameof(UseKnobs), typeof(bool), typeof(RangeParam), new PropertyMetadata(true, OnChanged));
 
     private bool _syncing;
     private int _editHandle;

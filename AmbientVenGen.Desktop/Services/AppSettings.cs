@@ -6,13 +6,6 @@ using System.Windows.Media;
 
 namespace AmbientVenGen.Desktop.Services;
 
-/// <summary>How parameters are edited: with sliders (default) or with gauge knobs.</summary>
-public enum ControlStyle
-{
-    Slider,
-    Knob
-}
-
 /// <summary>
 /// User settings of the program. Loaded at start and saved to %LocalAppData%/AmbientForge/settings.json
 /// on every change; a missing or broken file simply means the defaults.
@@ -26,12 +19,6 @@ public sealed partial class AppSettings : ObservableObject
     };
 
     private readonly string _path;
-
-    [ObservableProperty]
-    [NotifyPropertyChangedFor(nameof(UseKnobs))]
-    [NotifyPropertyChangedFor(nameof(IsSliderStyle))]
-    [NotifyPropertyChangedFor(nameof(IsKnobStyle))]
-    private ControlStyle _controlStyle = ControlStyle.Slider;
 
     /// <summary>The project file that was opened or saved last; it is reopened at the next start.</summary>
     /// <summary>Whether the "Mathematical ratios" group of the pitch interval panel is open.</summary>
@@ -142,29 +129,6 @@ public sealed partial class AppSettings : ObservableObject
         }
     }
 
-    public bool UseKnobs => ControlStyle == ControlStyle.Knob;
-
-    // Two-way properties for the radio buttons of the settings window.
-    public bool IsSliderStyle
-    {
-        get => ControlStyle == ControlStyle.Slider;
-        set
-        {
-            if (value)
-                ControlStyle = ControlStyle.Slider;
-        }
-    }
-
-    public bool IsKnobStyle
-    {
-        get => ControlStyle == ControlStyle.Knob;
-        set
-        {
-            if (value)
-                ControlStyle = ControlStyle.Knob;
-        }
-    }
-
     public AppSettings()
     {
         string directory = Path.Combine(
@@ -174,8 +138,6 @@ public sealed partial class AppSettings : ObservableObject
         _path = Path.Combine(directory, "settings.json");
         Load();
     }
-
-    partial void OnControlStyleChanged(ControlStyle value) => Save();
 
     private void Load()
     {
@@ -187,7 +149,6 @@ public sealed partial class AppSettings : ObservableObject
             SettingsFile? file = JsonSerializer.Deserialize<SettingsFile>(File.ReadAllText(_path), Options);
             if (file is not null)
             {
-                ControlStyle = file.ControlStyle;
                 _lastProjectPath = file.LastProjectPath;
                 _intervalMathExpanded = file.IntervalMathExpanded;
                 _showSpectrogram = file.ShowSpectrogram;
@@ -208,7 +169,7 @@ public sealed partial class AppSettings : ObservableObject
         try
         {
             Directory.CreateDirectory(Path.GetDirectoryName(_path)!);
-            File.WriteAllText(_path, JsonSerializer.Serialize(new SettingsFile { ControlStyle = ControlStyle, LastProjectPath = LastProjectPath, IntervalMathExpanded = IntervalMathExpanded, ShowSpectrogram = ShowSpectrogram, SpectrogramColor = SpectrogramColor.ToString(), RecentProjects = _recentProjects }, Options));
+            File.WriteAllText(_path, JsonSerializer.Serialize(new SettingsFile { LastProjectPath = LastProjectPath, IntervalMathExpanded = IntervalMathExpanded, ShowSpectrogram = ShowSpectrogram, SpectrogramColor = SpectrogramColor.ToString(), RecentProjects = _recentProjects }, Options));
         }
         catch (Exception)
         {
@@ -218,7 +179,6 @@ public sealed partial class AppSettings : ObservableObject
 
     private sealed class SettingsFile
     {
-        public ControlStyle ControlStyle { get; set; }
         public string? LastProjectPath { get; set; }
         public bool IntervalMathExpanded { get; set; } = true;
         public bool ShowSpectrogram { get; set; }

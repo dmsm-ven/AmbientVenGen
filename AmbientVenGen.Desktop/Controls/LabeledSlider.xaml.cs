@@ -50,10 +50,9 @@ public partial class LabeledSlider : UserControl
         nameof(IsLogarithmic), typeof(bool), typeof(LabeledSlider),
         new PropertyMetadata(false, OnPropertyChanged));
 
-    /// <summary>Follows the window-wide "Slider / Knob" setting (inherited attached property).</summary>
-    public static readonly DependencyProperty UseKnobsProperty = InputStyle.UseKnobsProperty.AddOwner(
-        typeof(LabeledSlider),
-        new FrameworkPropertyMetadata(false, FrameworkPropertyMetadataOptions.Inherits, OnPropertyChanged));
+    /// <summary>A knob (default) or, with false, a plain slider for a control that needs the width.</summary>
+    public static readonly DependencyProperty UseKnobsProperty = DependencyProperty.Register(
+        nameof(UseKnobs), typeof(bool), typeof(LabeledSlider), new PropertyMetadata(true, OnPropertyChanged));
 
     /// <summary>In knob mode the caption is shown above the knob; switch it off when the meaning is clear from the layout.</summary>
     public static readonly DependencyProperty KnobHeaderVisibleProperty = DependencyProperty.Register(

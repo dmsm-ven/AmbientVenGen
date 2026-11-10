@@ -47,47 +47,6 @@
                 Margin="0,0,0,2"
                 FontSize="15"
                 FontWeight="SemiBold"
-                Text="Parameter controls" />
-            <ui:TextBlock
-                Margin="0,0,0,12"
-                FontSize="12"
-                Foreground="#A9A7C2"
-                Text="How Level, Brightness, Pitch and the other parameters are edited. The choice is remembered."
-                TextWrapping="Wrap" />
-
-            <Border Style="{StaticResource SectionCard}">
-                <StackPanel>
-                    <RadioButton
-                        Margin="0,0,0,10"
-                        Content="Sliders (default)"
-                        GroupName="ControlStyle"
-                        IsChecked="{Binding IsSliderStyle, Mode=TwoWay}" />
-                    <RadioButton
-                        Content="Knobs (gauge)"
-                        GroupName="ControlStyle"
-                        IsChecked="{Binding IsKnobStyle, Mode=TwoWay}" />
-
-                    <!--  A live sample of the knob: click the arc or the round end buttons  -->
-                    <controls:Knob
-                        Margin="0,14,0,0"
-                        HorizontalAlignment="Center"
-                        Format="{}{0:F0} %"
-                        Maximum="100"
-                        Minimum="0"
-                        Value="50" />
-                    <TextBlock
-                        Margin="0,6,0,0"
-                        HorizontalAlignment="Center"
-                        FontSize="11"
-                        Foreground="#A9A7C2"
-                        Text="Click the arc to set the value; the round ends set the minimum and maximum." />
-                </StackPanel>
-            </Border>
-
-            <ui:TextBlock
-                Margin="0,18,0,2"
-                FontSize="15"
-                FontWeight="SemiBold"
                 Text="Timeline spectrogram" />
             <ui:TextBlock
                 Margin="0,0,0,12"
