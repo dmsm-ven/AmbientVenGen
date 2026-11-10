@@ -66,7 +66,16 @@ public partial class MainViewModel
 
         try
         {
-            await _exportService.ExportAsync(path, Project.ToSpec(), options, progress, cancellation.Token);
+            ProjectSpec spec = Project.ToSpec();
+
+            if (options.TruncateToLastLayer)
+            {
+                // the end of the last audible layer (with its repeats); never beyond the canvas
+                double end = Project.Layers.Where(l => !l.Muted).Select(l => l.StartSeconds + l.TotalSeconds).DefaultIfEmpty(spec.DurationSeconds).Max();
+                spec = spec with { DurationSeconds = Math.Clamp(Math.Ceiling(end), 1, spec.DurationSeconds) };
+            }
+
+            await _exportService.ExportAsync(path, spec, options, progress, cancellation.Token);
             StatusMessage = $"Export completed: {path}";
         }
         catch (OperationCanceledException)

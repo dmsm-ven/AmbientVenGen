@@ -100,6 +100,11 @@
             </Grid>
             <Slider Value="{Binding FadeOutSeconds, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
 
+            <CheckBox
+                Content="Truncate length up to last layer"
+                IsChecked="{Binding TruncateToLastLayer, Mode=TwoWay}"
+                ToolTip="The file ends where the last layer ends, not at the end of the canvas. The fade-out is counted to that moment." />
+
             <ui:TextBlock Foreground="#AAA9BB" Text="{Binding TrackLengthText, StringFormat=Track length: {0} (set in the main window)}" />
         </StackPanel>
 

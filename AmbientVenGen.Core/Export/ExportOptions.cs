@@ -20,4 +20,5 @@ public sealed record ExportOptions(
     int Mp3BitrateKbps,
     WavSampleFormat WavSampleFormat,
     double FadeInSeconds,
-    double FadeOutSeconds);
+    double FadeOutSeconds,
+    bool TruncateToLastLayer = false);

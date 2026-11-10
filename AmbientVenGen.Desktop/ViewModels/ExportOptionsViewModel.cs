@@ -48,6 +48,10 @@ public partial class ExportOptionsViewModel : ObservableObject
     [ObservableProperty]
     private double _fadeOutSeconds = 10;
 
+    /// <summary>The file ends where the last layer ends (the fade-out is counted to that moment).</summary>
+    [ObservableProperty]
+    private bool _truncateToLastLayer;
+
     public bool IsWav => Format == ExportFormat.Wav;
     public bool IsMp3 => Format == ExportFormat.Mp3;
 
@@ -63,6 +67,7 @@ public partial class ExportOptionsViewModel : ObservableObject
         Mp3BitrateKbps = previous.Mp3BitrateKbps;
         FadeInSeconds = previous.FadeInSeconds;
         FadeOutSeconds = previous.FadeOutSeconds;
+        TruncateToLastLayer = previous.TruncateToLastLayer;
     }
 
     public ExportOptions ToOptions() => new(
@@ -70,5 +75,6 @@ public partial class ExportOptionsViewModel : ObservableObject
         Mp3BitrateKbps,
         WavSampleFormat,
         FadeInSeconds,
-        FadeOutSeconds);
+        FadeOutSeconds,
+        TruncateToLastLayer);
 }
