@@ -1119,10 +1119,14 @@
                                                 Value="{Binding ReverbSend, Mode=TwoWay}" />
                                         </WrapPanel>
 
-                                        <!--  Field record: reverse, stretch (Paulstretch) and pitch shift; and two modulators for every layer  -->
-                                        <WrapPanel HorizontalAlignment="Center" Orientation="Horizontal">
+                                        <!--  Field record: the Recording group on the left (vertical), the two modulators on the right  -->
+                                        <Grid>
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="Auto" />
+                                                <ColumnDefinition Width="*" />
+                                            </Grid.ColumnDefinitions>
                                             <Border
-                                                Margin="12.5,0,12.5,8"
+                                                Margin="12.5,0,0,8"
                                                 Padding="12,8"
                                                 Background="#0DFFFFFF"
                                                 BorderBrush="#1FFFFFFF"
@@ -1142,9 +1146,8 @@
                                                     <StackPanel Margin="0,0,0,6" Orientation="Horizontal">
                                                         <TextBlock
                                                             VerticalAlignment="Center"
-                                                            FontSize="12"
+                                                            FontSize="14"
                                                             FontWeight="SemiBold"
-                                                            Foreground="#C9C8D6"
                                                             Text="Recording" />
                                                         <TextBlock
                                                             Margin="10,0,0,0"
@@ -1154,15 +1157,15 @@
                                                             Text="processing..."
                                                             Visibility="{Binding DataContext.IsSelectedSourceProcessing, RelativeSource={RelativeSource AncestorType=Window}, Converter={StaticResource BoolToVisibility}}" />
                                                     </StackPanel>
-                                                    <StackPanel Orientation="Horizontal">
-                                                        <StackPanel Margin="0,0,10,0" VerticalAlignment="Center">
+                                                    <StackPanel Orientation="Vertical">
+                                                        <StackPanel Margin="6,0,0,4" HorizontalAlignment="Left">
                                                             <StackPanel Orientation="Horizontal">
                                                                 <ui:ToggleSwitch Content="Reverse" IsChecked="{Binding Reverse, Mode=TwoWay}" />
                                                                 <controls:HintIcon Margin="5,0,0,0" Text="{x:Static vm:HintTexts.Reverse}" />
                                                             </StackPanel>
                                                         </StackPanel>
                                                         <controls:LabeledSlider
-                                                            Margin="6,0"
+                                                            Margin="0,0"
                                                             Format="{}{0:0.0}x"
                                                             Header="Stretch"
                                                             Hint="{x:Static vm:HintTexts.Stretch}"
@@ -1172,7 +1175,7 @@
                                                             Step="0.1"
                                                             Value="{Binding Stretch, Mode=TwoWay}" />
                                                         <controls:LabeledSlider
-                                                            Margin="6,0"
+                                                            Margin="0,0"
                                                             Format="{}{0:+0.0;-0.0;0} st"
                                                             Header="Pitch shift"
                                                             Hint="{x:Static vm:HintTexts.PitchShift}"
@@ -1182,12 +1185,12 @@
                                                             Value="{Binding PitchShift, Mode=TwoWay}" />
                                                         <!--  The piece of the file that is played and looped (cross-fade at the loop point)  -->
                                                         <TextBlock
-                                                            Margin="6,6,6,0"
+                                                            Margin="6,6,6,2"
                                                             FontSize="11"
                                                             Foreground="#8F8DB0"
                                                             Text="{Binding DataContext.SelectedPieceText, RelativeSource={RelativeSource AncestorType=Window}}" />
                                                         <controls:LabeledSlider
-                                                            Margin="6,0"
+                                                            Margin="0,0"
                                                             Format="{}{0:0.0} s"
                                                             Header="Start offset"
                                                             Hint="{x:Static vm:HintTexts.TrimStart}"
@@ -1196,7 +1199,7 @@
                                                             Step="0.1"
                                                             Value="{Binding TrimStart, Mode=TwoWay}" />
                                                         <controls:LabeledSlider
-                                                            Margin="6,0"
+                                                            Margin="0,0"
                                                             Format="{}{0:0.0} s"
                                                             Header="End offset"
                                                             Hint="{x:Static vm:HintTexts.TrimEnd}"
@@ -1205,7 +1208,7 @@
                                                             Step="0.1"
                                                             Value="{Binding TrimEnd, Mode=TwoWay}" />
                                                         <controls:LabeledSlider
-                                                            Margin="6,0"
+                                                            Margin="0,0"
                                                             Format="{}{0:0.0} s"
                                                             Header="Loop crossfade"
                                                             Hint="{x:Static vm:HintTexts.LoopCrossfade}"
@@ -1216,6 +1219,10 @@
                                                     </StackPanel>
                                                 </StackPanel>
                                             </Border>
+                                            <WrapPanel
+                                                Grid.Column="1"
+                                                HorizontalAlignment="Center"
+                                                Orientation="Horizontal">
                                             <controls:ModulatorEditor
                                                 Margin="12.5,0,12.5,8"
                                                 DataContext="{Binding Mod1}"
@@ -1224,7 +1231,8 @@
                                                 Margin="12.5,0,12.5,8"
                                                 DataContext="{Binding Mod2}"
                                                 Header="Modulator 2" />
-                                        </WrapPanel>
+                                            </WrapPanel>
+                                        </Grid>
                                     </StackPanel>
                                 </Grid>
                             </DataTemplate>
