@@ -7,7 +7,7 @@ namespace AmbientVenGen.Desktop.Services;
 
 /// <summary>
 /// Loudness bars of the layers for the timeline (the "spectrogram" button). A layer is analysed only after it has stopped changing for
-/// <see cref="Debounce"/> (default 1.5 s), one at a time on a background thread with a lower priority, and a result is
+/// <see cref="Debounce"/> (default 0.8 s), two at a time on background threads with a lower priority; a rough picture (1/16 of the bars) is shown first and the full one replaces it, and a result is
 /// remembered by what the layer sounds like (not by where it sits), so moving, renaming or muting costs nothing.
 /// Until the new bars are ready the previous one stays on the clip.
 /// </summary>
@@ -17,10 +17,11 @@ public sealed class SpectrogramService : IDisposable
 
     private readonly Dictionary<Guid, Entry> _entries = [];
     private readonly Dictionary<string, SpectrogramData> _cache = [];
-    private readonly SemaphoreSlim _worker = new(1, 1);
+    // Layers are analysed in parallel (a long one also uses several threads inside), but not all at once.
+    private readonly SemaphoreSlim _worker = new(2, 2);
     private bool _disposed;
 
-    public TimeSpan Debounce { get; set; } = TimeSpan.FromSeconds(1.5);
+    public TimeSpan Debounce { get; set; } = TimeSpan.FromSeconds(0.8);
 
     /// <summary>Raised on the UI thread when a picture changed.</summary>
     public event Action? Changed;
@@ -115,7 +116,28 @@ public sealed class SpectrogramService : IDisposable
 
             try
             {
-                SpectrogramData data = await Task.Run(() => Analyze(spec, projectSeed, token), token).ConfigureAwait(false);
+                LayerSpectrogram.Prepared prepared = await Task.Run(() => LayerSpectrogram.Prepare(spec, projectSeed, token), token)
+                    .ConfigureAwait(false);
+
+                // The full picture is calculated at the same time as the rough one; when it is ready it replaces it.
+                Task<SpectrogramData> full = Task.Run(() => Analyze(() => LayerSpectrogram.ComputeFull(prepared, token)), token);
+                SpectrogramData quick = await Task.Run(() => Analyze(() => LayerSpectrogram.ComputeQuick(prepared, token)), token)
+                    .ConfigureAwait(false);
+
+                if (!full.IsCompleted)
+                {
+                    // Only the data: the key stays empty, so the layer is still "being analysed".
+                    await Application.Current.Dispatcher.InvokeAsync(() =>
+                    {
+                        if (_disposed || token.IsCancellationRequested || entry.PendingKey != key)
+                            return;
+
+                        entry.Data = quick;
+                        Changed?.Invoke();
+                    });
+                }
+
+                SpectrogramData data = await full.ConfigureAwait(false);
 
                 await Application.Current.Dispatcher.InvokeAsync(() =>
                 {
@@ -155,14 +177,14 @@ public sealed class SpectrogramService : IDisposable
         }
     }
 
-    private static SpectrogramData Analyze(LayerSpec spec, int projectSeed, CancellationToken token)
+    private static SpectrogramData Analyze(Func<SpectrogramData> compute)
     {
         ThreadPriority previous = Thread.CurrentThread.Priority;
         Thread.CurrentThread.Priority = ThreadPriority.BelowNormal;
 
         try
         {
-            return LayerSpectrogram.Compute(spec, projectSeed, token);
+            return compute();
         }
         finally
         {
