@@ -78,15 +78,48 @@ public sealed record ModulatorSpec(ModShape Shape, double RateHz, double Depth, 
 /// What is done to a recording before it is played: reversed, stretched (Paulstretch: longer without changing the pitch)
 /// and/or transposed (without changing the length).
 /// </summary>
-public readonly record struct SampleTransform(bool Reverse, double Stretch, double PitchSemitones)
+public readonly record struct SampleTransform(
+    bool Reverse,
+    double Stretch,
+    double PitchSemitones,
+    double TrimStart = 0.0,
+    double TrimEnd = 0.0,
+    double Crossfade = SampleTransform.DefaultCrossfade)
 {
     public const double MaxStretch = 50;
     public const double MaxPitchSemitones = 24;
+
+    /// <summary>The loop cross-fade of a recording, seconds.</summary>
+    public const double DefaultCrossfade = 2.0;
+    public const double MaxCrossfade = 30.0;
+
+    /// <summary>The shortest piece that can be looped, seconds.</summary>
+    public const double MinPieceSeconds = 0.5;
 
     public static SampleTransform None => new(false, 1.0, 0.0);
 
     /// <summary>Stretch or pitch is set: the sound has to be calculated (it takes a while), a reversal alone is instant.</summary>
     public bool IsHeavy => Stretch > 1.001 || Math.Abs(PitchSemitones) > 0.001;
 
+    /// <summary>Nothing is done to the file itself (a cut is only a window over it, see <see cref="ForProcessing"/>).</summary>
     public bool IsIdentity => !Reverse && !IsHeavy;
+
+    /// <summary>
+    /// What decides the processed copy of the file: a cut matters only if the sound is stretched / transposed
+    /// (the piece is cut out before that); otherwise the generator just plays a window of the whole file, and the loop
+    /// cross-fade never matters.
+    /// </summary>
+    public SampleTransform ForProcessing() => IsHeavy
+        ? this with { Crossfade = DefaultCrossfade }
+        : this with { TrimStart = 0.0, TrimEnd = 0.0, Crossfade = DefaultCrossfade };
+
+    /// <summary>The piece of a recording of <paramref name="frames"/> frames: seconds cut from the start and from the end.</summary>
+    public static (int Begin, int End) PieceOf(int frames, double trimStart, double trimEnd, int sampleRate)
+    {
+        int minimum = Math.Min(frames, (int)(MinPieceSeconds * sampleRate));
+        int begin = (int)Math.Clamp(Math.Max(0, trimStart) * sampleRate, 0, Math.Max(0, frames - minimum));
+        int end = (int)Math.Clamp(frames - Math.Max(0, trimEnd) * sampleRate, begin + minimum, frames);
+
+        return (begin, end);
+    }
 }

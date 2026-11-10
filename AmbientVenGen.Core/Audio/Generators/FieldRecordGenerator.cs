@@ -3,15 +3,13 @@ using AmbientVenGen.Core.Composition;
 namespace AmbientVenGen.Core.Audio;
 
 /// <summary>
-/// Plays a decoded recording in a loop (the end is cross-faded into the beginning) at an adjustable speed
+/// Plays a decoded recording in a loop (a chosen piece of it; the end is cross-faded into the beginning) at an adjustable speed
 /// (like a tape: slower is also lower). The read position is kept as a running value, so changing the speed
 /// while playing is smooth; after a seek it is recomputed from the layer time.
 /// Brightness is a low-pass filter, modulation a slow breathing of the level.
 /// </summary>
 internal sealed class FieldRecordGenerator : LayerGenerator
 {
-    private const double MaxCrossfadeSeconds = 2.0;
-
     private readonly string? _path;
     private readonly SampleTransform _transform;
     private readonly double _breathRate;
@@ -24,7 +22,7 @@ internal sealed class FieldRecordGenerator : LayerGenerator
 
     public FieldRecordGenerator(int seed, string? path, SampleTransform transform = default)
     {
-        _transform = transform.Stretch < 1 ? SampleTransform.None with { Reverse = transform.Reverse } : transform;
+        _transform = transform.Stretch < 1 ? transform with { Stretch = 1.0, PitchSemitones = 0.0 } : transform;
         var random = new Random(seed);
 
         _path = path;
@@ -52,8 +50,30 @@ internal sealed class FieldRecordGenerator : LayerGenerator
             return;
         }
 
-        int frames = sample.Frames;
-        int crossfade = (int)Math.Min(MaxCrossfadeSeconds * SampleRate, frames / 4);
+        // The piece that is looped. A stretched / transposed recording was cut before that and is played whole;
+        // otherwise the piece is a window over the file (seen from the end when the file is played backwards).
+        int begin = 0;
+        int end = sample.Frames;
+
+        if (!_transform.IsHeavy)
+        {
+            (int pieceBegin, int pieceEnd) = SampleTransform.PieceOf(sample.Frames,
+                _transform.Reverse ? _transform.TrimEnd : _transform.TrimStart,
+                _transform.Reverse ? _transform.TrimStart : _transform.TrimEnd, SampleRate);
+            begin = pieceBegin;
+            end = pieceEnd;
+        }
+
+        int frames = end - begin;
+
+        if (frames < 2)
+        {
+            left.Clear();
+            right.Clear();
+            return;
+        }
+
+        int crossfade = (int)Math.Min(Math.Clamp(_transform.Crossfade, 0, SampleTransform.MaxCrossfade) * SampleRate, frames / 2);
         int period = frames - crossfade;
         double speed = Math.Clamp(p.Speed, 0.05f, 8f);
 
@@ -73,18 +93,18 @@ internal sealed class FieldRecordGenerator : LayerGenerator
             int index = (int)_position;
             float fraction = (float)(_position - index);
 
-            float l = Interpolate(sample.Left, index, fraction, frames);
-            float r = Interpolate(sample.Right, index, fraction, frames);
+            float l = Interpolate(sample.Left, begin + index, fraction, end);
+            float r = Interpolate(sample.Right, begin + index, fraction, end);
 
-            if (index < crossfade)
+            if (crossfade > 0 && index < crossfade)
             {
                 // Beginning blended with the tail that follows the loop point (equal power).
                 double angle = _position / crossfade * Math.PI / 2.0;
                 float fadeIn = (float)Math.Sin(angle);
                 float fadeOut = (float)Math.Cos(angle);
 
-                l = l * fadeIn + Interpolate(sample.Left, period + index, fraction, frames) * fadeOut;
-                r = r * fadeIn + Interpolate(sample.Right, period + index, fraction, frames) * fadeOut;
+                l = l * fadeIn + Interpolate(sample.Left, begin + period + index, fraction, end) * fadeOut;
+                r = r * fadeIn + Interpolate(sample.Right, begin + period + index, fraction, end) * fadeOut;
             }
 
             _position += speed;

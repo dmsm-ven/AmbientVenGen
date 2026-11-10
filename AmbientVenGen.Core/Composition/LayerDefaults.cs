@@ -116,6 +116,9 @@ public static class LayerDefaults
         layer.Reverse = false;
         layer.Stretch = 1.0;
         layer.PitchShift = 0.0;
+        layer.TrimStart = 0.0;
+        layer.TrimEnd = 0.0;
+        layer.LoopCrossfade = SampleTransform.DefaultCrossfade;
 
         // The fades of a new layer (30 s, sine), as long as the layer is long enough for them.
         double fade = Math.Min(30, layer.DurationSeconds / 2.0);

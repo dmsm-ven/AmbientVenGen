@@ -217,9 +217,53 @@ public partial class MainViewModel
         RefreshSelectedProcessing();
     }
 
-    private void RefreshSelectedProcessing() =>
+    /// <summary>Length of the selected recording (for the trim sliders); at least 1 s.</summary>
+    [ObservableProperty]
+    private double _selectedSourceSeconds = 1;
+
+    /// <summary>"Piece 1:32 of 5:00" for the selected recording.</summary>
+    [ObservableProperty]
+    private string _selectedPieceText = "";
+
+    private void RefreshSelectedProcessing()
+    {
         IsSelectedSourceProcessing = SelectedLayer is { Type: LayerType.FieldRecord, SourcePath: { Length: > 0 } path } layer
             && SampleLibrary.IsPending(path, layer.Transform);
+
+        RefreshPiece();
+    }
+
+    private void RefreshPiece()
+    {
+        if (SelectedLayer is not { Type: LayerType.FieldRecord, SourcePath: { Length: > 0 } path } layer)
+        {
+            SelectedPieceText = "";
+            return;
+        }
+
+        DecodedSample? sample = SampleLibrary.TryGet(path);
+
+        if (sample is null)
+        {
+            // not decoded yet: ask again when it is
+            SampleLibrary.Request(path, SampleTransform.None).ContinueWith(
+                _ => System.Windows.Application.Current?.Dispatcher.BeginInvoke(new Action(RefreshPiece)),
+                TaskScheduler.Default);
+            SelectedPieceText = "";
+            return;
+        }
+
+        (int begin, int end) = SampleTransform.PieceOf(sample.Frames, layer.TrimStart, layer.TrimEnd, ProjectMixer.SampleRate);
+        double total = sample.Frames / (double)ProjectMixer.SampleRate;
+        SelectedSourceSeconds = Math.Max(1, total);
+        SelectedPieceText = $"Piece {FormatClock((end - begin) / (double)ProjectMixer.SampleRate)} of {FormatClock(total)}";
+    }
+
+    private static string FormatClock(double seconds)
+    {
+        var span = TimeSpan.FromSeconds(Math.Round(seconds));
+        return span.TotalHours >= 1 ? span.ToString(@"h\:mm\:ss") : span.ToString(@"m\:ss");
+    }
 
     private void OnProjectChanged()
     {
