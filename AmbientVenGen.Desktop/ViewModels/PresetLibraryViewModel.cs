@@ -129,10 +129,25 @@ public partial class PresetLibraryViewModel : ObservableObject
             oldValue.IsTagEditing = false;
     }
 
+    /// <summary>Words to look for in the file name or in the tags (every word must be found).</summary>
+    [ObservableProperty]
+    private string _searchText = "";
+
+    partial void OnSearchTextChanged(string value) => CollectionViewSource.GetDefaultView(Presets).Refresh();
+
     private bool MatchesTagFilter(object row)
     {
         if (row is not FieldPresetItem item)
             return false;
+
+        foreach (string word in SearchText.Split(' ', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries))
+        {
+            bool found = item.Name.Contains(word, StringComparison.OrdinalIgnoreCase)
+                || item.Tags.Any(t => t.Contains(word, StringComparison.OrdinalIgnoreCase));
+
+            if (!found)
+                return false;
+        }
 
         if (DateFilterDays > 0)
         {
