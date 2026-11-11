@@ -381,25 +381,38 @@
                                             VerticalAlignment="Top"
                                             MaxLength="32"
                                             Text="{Binding Name, UpdateSourceTrigger=PropertyChanged}" />
-                                        <ToggleButton
+<StackPanel
                                             Grid.Column="2"
                                             Margin="14,2,22,0"
                                             VerticalAlignment="Top"
-                                            IsChecked="{Binding Muted, Mode=TwoWay}"
-                                            Style="{StaticResource MuteToggleButton}">
-                                            <ui:SymbolIcon>
-                                                <ui:SymbolIcon.Style>
-                                                    <Style TargetType="ui:SymbolIcon">
-                                                        <Setter Property="Symbol" Value="Speaker224" />
-                                                        <Style.Triggers>
-                                                            <DataTrigger Binding="{Binding Muted}" Value="True">
-                                                                <Setter Property="Symbol" Value="SpeakerOff24" />
-                                                            </DataTrigger>
-                                                        </Style.Triggers>
-                                                    </Style>
-                                                </ui:SymbolIcon.Style>
-                                            </ui:SymbolIcon>
-                                        </ToggleButton>
+                                            Orientation="Horizontal">
+                                                                                    <ToggleButton
+                                                Margin="0"
+                                                VerticalAlignment="Top"
+                                                IsChecked="{Binding Muted, Mode=TwoWay}"
+                                                Style="{StaticResource MuteToggleButton}">
+                                                <ui:SymbolIcon>
+                                                    <ui:SymbolIcon.Style>
+                                                        <Style TargetType="ui:SymbolIcon">
+                                                            <Setter Property="Symbol" Value="Speaker224" />
+                                                            <Style.Triggers>
+                                                                <DataTrigger Binding="{Binding Muted}" Value="True">
+                                                                    <Setter Property="Symbol" Value="SpeakerOff24" />
+                                                                </DataTrigger>
+                                                            </Style.Triggers>
+                                                        </Style>
+                                                    </ui:SymbolIcon.Style>
+                                                </ui:SymbolIcon>
+                                            </ToggleButton>
+                                            <ToggleButton
+                                                Margin="6,0,0,0"
+                                                VerticalAlignment="Top"
+                                                IsChecked="{Binding DataContext.IsSoloActive, RelativeSource={RelativeSource AncestorType=Window}, Mode=TwoWay}"
+                                                Style="{StaticResource MuteToggleButton}"
+                                                ToolTip="Mute all except this layer (press again to restore)">
+                                                <ui:SymbolIcon Symbol="Headphones24" />
+                                            </ToggleButton>
+                                        </StackPanel>
                                         <!--  Start and Duration on one line: caption left of the time  -->
                                         <StackPanel
                                             Grid.Column="3"

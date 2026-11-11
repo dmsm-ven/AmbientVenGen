@@ -159,6 +159,7 @@ public partial class MainViewModel
     {
         StopPlaybackSilently();
         SelectedLayer = null;
+        ResetSolo();
         ClearDeleted();
         EnsureLengthOption(spec.DurationSeconds);
 

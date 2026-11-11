@@ -198,7 +198,7 @@ public sealed partial class TimelineControl
             string detail = layer.Type switch
             {
                 LayerType.Noise => "Noise",
-                LayerType.FieldRecord => $"{layer.TypeLabel} · {layer.SourceName}",
+                LayerType.FieldRecord => layer.TypeLabel,
                 _ => $"{layer.TypeLabel} · {layer.PitchHz:0.#} Hz"
             };
             FormattedText sub = MakeText(detail, 10.5, Color.FromArgb(0xA0, 0xC9, 0xC8, 0xD6), maxWidth: HeaderWidth - 96);
