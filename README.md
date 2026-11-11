@@ -24,14 +24,16 @@ shape how each layer changes over time, listen to it live and export it to WAV o
   - *Drone* - low sustained tones,
   - *Noise* - filtered noise textures (wind, dust),
   - *Pad* - a soft harmonic "choir",
-  - *Field record* - your own recording (wav, mp3, flac...), looped and slowed down or sped up.
-- **Parameters that move** - Level, Brightness and Modulation go *from -> to* over the length of a layer,
-  along a chosen curve (Linear, Sine, Ease in/out, Exponential).
+  - *Field record* - your own recording (wav, mp3, flac...): reverse, stretch (Paulstretch), pitch,
+    loop start / duration with a seamless crossfade.
+- **Modulators** - two per layer (Level, Brightness, ...) with shape and cycle time, mute per modulator.
+- **Parameters that move** - values go *from -> to* over the length of a layer along a chosen curve.
 - **Master section** - reverb, soft limiter, spectrum and level meters, clip indicator.
-- **Preset library** - a catalogue of your recordings with waveform preview, play/loop, tags and tag filter.
-- **Templates and projects** - ready-made compositions, projects saved as readable `.afproj` (JSON).
-- **Export** - WAV (16/32-bit) or MP3
-- **Controls** - sliders (default) or gauge knobs, optional "?" hints (see *Settings*).
+- **Preset library** - recordings with waveform preview, loop, search, tags (auto-detected from file names),
+  date and usage filters.
+- **Projects** - New / Open / recent projects in one menu, saved as readable `.afproj` (JSON).
+- **Export** - WAV (16/32-bit) or MP3, optional truncation after the last layer.
+- **Controls** - knobs, optional "?" hints (see *Settings*).
 
 ## Run
 
@@ -41,7 +43,7 @@ Requires Windows and the .NET 10 SDK.
 dotnet run --project AmbientVenGen.Desktop
 ```
 
-Keys: `Space` play/stop, `Ctrl+N/O/S` new/open/save, `Ctrl+E` export, `Del` remove layer,
+Keys: `Space` play/stop, `Ctrl+N/O/S` new/open/save, `Ctrl+Shift+S` save as, `Ctrl+D` duplicate layer, `Ctrl+E` export, `Del` remove layer,
 `Alt+Up/Down` move layer.
 
 ## Structure
