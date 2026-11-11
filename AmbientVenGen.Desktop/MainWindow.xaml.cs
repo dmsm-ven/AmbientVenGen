@@ -1,6 +1,5 @@
 using AmbientVenGen.Desktop.ViewModels;
 using System.ComponentModel;
-using System.Windows.Controls.Primitives;
 using System.Windows.Input;
 using Wpf.Ui.Controls;
 
@@ -13,82 +12,8 @@ public partial class MainWindow : FluentWindow
         InitializeComponent();
         DataContext = viewModel;
 
-        // The interval panel opens under its button but is pushed left so that at least 60 px stay free on the right.
-        IntervalPopup.CustomPopupPlacementCallback = (popupSize, targetSize, _) =>
-        {
-            double buttonX = IntervalButton.TransformToAncestor(this).Transform(new System.Windows.Point(0, 0)).X;
-            double roomRight = ActualWidth - buttonX - 60;
-            double x = Math.Min(0, roomRight - popupSize.Width);
-            return [new CustomPopupPlacement(new System.Windows.Point(x, targetSize.Height + 4), PopupPrimaryAxis.Horizontal)];
-        };
-
-        Timeline.AddLayerRequested += () => viewModel.AddLayerCommand.Execute(null);
-        Timeline.NewLayerTypeMenuRequested += rect => ShowLayerTypeMenu(viewModel, rect);
-
         PreviewKeyDown += OnPreviewKeyDown;
         Closing += OnClosing;
-    }
-
-    // The type of the layer that "+" adds is chosen here (a list under the chooser in the free row of the timeline).
-    private void ShowLayerTypeMenu(MainViewModel viewModel, System.Windows.Rect rect)
-    {
-        var menu = new System.Windows.Controls.ContextMenu
-        {
-            PlacementTarget = Timeline,
-            PlacementRectangle = rect,
-            Placement = PlacementMode.Bottom
-        };
-
-        foreach (Choice<Core.Composition.LayerType> choice in Choices.LayerTypes)
-        {
-            Core.Composition.LayerType type = choice.Value;
-            var item = new System.Windows.Controls.MenuItem
-            {
-                Header = choice.Label,
-                IsChecked = viewModel.NewLayer.Type == type
-            };
-            item.Click += (_, _) => viewModel.NewLayer.Type = type;
-            menu.Items.Add(item);
-        }
-
-        menu.IsOpen = true;
-    }
-
-    // "New / Open": New Project on top, then the recent projects, and below a separator "Open file..." (the file dialog).
-    private void OnOpenMenuClick(object sender, System.Windows.RoutedEventArgs e)
-    {
-        if (DataContext is not MainViewModel viewModel || sender is not System.Windows.FrameworkElement button)
-            return;
-
-        var menu = new System.Windows.Controls.ContextMenu
-        {
-            PlacementTarget = button,
-            Placement = PlacementMode.Bottom
-        };
-
-        menu.Items.Add(new System.Windows.Controls.MenuItem { Header = "New Project", Command = viewModel.NewProjectCommand });
-        menu.Items.Add(new System.Windows.Controls.Separator());
-
-        foreach (string path in viewModel.Settings.RecentProjects)
-        {
-            var item = new System.Windows.Controls.MenuItem
-            {
-                Header = System.IO.Path.GetFileNameWithoutExtension(path),
-                ToolTip = path,
-                Command = viewModel.OpenRecentCommand,
-                CommandParameter = path
-            };
-
-            menu.Items.Add(item);
-        }
-
-        if (menu.Items.Count == 0)
-            menu.Items.Add(new System.Windows.Controls.MenuItem { Header = "No recent projects", IsEnabled = false });
-
-        menu.Items.Add(new System.Windows.Controls.Separator());
-        menu.Items.Add(new System.Windows.Controls.MenuItem { Header = "Open file...", Command = viewModel.OpenProjectCommand });
-
-        menu.IsOpen = true;
     }
 
     // Keyboard shortcuts. Plain keys are ignored while the user types or picks from a list.

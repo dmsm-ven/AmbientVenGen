@@ -1,0 +1,122 @@
+<UserControl
+    x:Class="AmbientVenGen.Desktop.Panels.RecordingPanel"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:controls="clr-namespace:AmbientVenGen.Desktop.Controls"
+    xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
+    xmlns:vm="clr-namespace:AmbientVenGen.Desktop.ViewModels">
+    <!--  Recording group (Field record layers only): reverse, stretch, pitch, loop  -->
+            <Border
+                Margin="0,0,10,0"
+                DataContext="{Binding SelectedLayer}"
+                >
+                <Border.Style>
+                    <Style BasedOn="{StaticResource SectionCard}" TargetType="Border">
+                        <Setter Property="Visibility" Value="Collapsed" />
+                        <Style.Triggers>
+                            <DataTrigger Binding="{Binding Type}" Value="FieldRecord">
+                                <Setter Property="Visibility" Value="Visible" />
+                            </DataTrigger>
+                        </Style.Triggers>
+                    </Style>
+                </Border.Style>
+                <StackPanel>
+                    <StackPanel Margin="0,0,0,6" Orientation="Horizontal">
+                        <TextBlock
+                            VerticalAlignment="Center"
+                            FontSize="14"
+                            FontWeight="SemiBold"
+                            Text="Recording" />
+                        <TextBlock
+                            Margin="10,0,0,0"
+                            VerticalAlignment="Center"
+                            FontSize="11"
+                            Foreground="#E6D25A"
+                            Text="processing..."
+                            Visibility="{Binding DataContext.IsSelectedSourceProcessing, RelativeSource={RelativeSource AncestorType=Window}, Converter={StaticResource BoolToVisibility}}" />
+                    </StackPanel>
+                    <!--  3 rows of controls, 2 columns; the piece of the file that is played and looped  -->
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="Auto" />
+                        </Grid.RowDefinitions>
+
+                        <StackPanel
+                            Grid.ColumnSpan="2"
+                            Margin="0,0,0,6"
+                            HorizontalAlignment="Center"
+                            Orientation="Horizontal">
+                            <ui:ToggleSwitch Content="Reverse" IsChecked="{Binding Reverse, Mode=TwoWay}" />
+                            <controls:HintIcon Margin="5,0,0,0" Text="{x:Static vm:HintTexts.Reverse}" />
+                        </StackPanel>
+
+                        <controls:LabeledSlider
+                            Grid.Row="1"
+                            Margin="0,0,6,0"
+                            Format="{}{0:0.0}x"
+                            Header="Stretch"
+                            Hint="{x:Static vm:HintTexts.Stretch}"
+                            IsLogarithmic="True"
+                            Maximum="50"
+                            Minimum="1"
+                            Step="0.1"
+                            Value="{Binding Stretch, Mode=TwoWay}" />
+                        <controls:LabeledSlider
+                            Grid.Row="1"
+                            Grid.Column="1"
+                            Margin="6,0,0,0"
+                            Format="{}{0:+0.0;-0.0;0} st"
+                            Header="Pitch shift"
+                            Hint="{x:Static vm:HintTexts.PitchShift}"
+                            Maximum="24"
+                            Minimum="-24"
+                            Step="0.5"
+                            Value="{Binding PitchShift, Mode=TwoWay}" />
+
+                        <controls:LabeledSlider
+                            Grid.Row="2"
+                            Grid.RowSpan="2"
+                            Margin="0,0,6,0"
+                            VerticalAlignment="Center"
+                            Format="{}{0:0.0} s"
+                            Header="Loop crossfade"
+                            Hint="{x:Static vm:HintTexts.LoopCrossfade}"
+                            Maximum="10"
+                            Minimum="0"
+                            Step="0.1"
+                            Value="{Binding LoopCrossfade, Mode=TwoWay}" />
+                        <controls:TimeBox
+                            Grid.Row="2"
+                            Grid.Column="1"
+                            Margin="6,6,0,0"
+                            Header="Loop start"
+                            Hint="{x:Static vm:HintTexts.LoopStart}"
+                            Maximum="{Binding DataContext.SelectedSourceSeconds, RelativeSource={RelativeSource AncestorType=Window}}"
+                            Minimum="0"
+                            Value="{Binding LoopStart, Mode=TwoWay}" />
+                        <controls:TimeBox
+                            Grid.Row="3"
+                            Grid.Column="1"
+                            Margin="6,6,0,0"
+                            Header="Loop duration"
+                            Hint="{x:Static vm:HintTexts.LoopDuration}"
+                            Maximum="{Binding DataContext.SelectedSourceSeconds, RelativeSource={RelativeSource AncestorType=Window}}"
+                            Minimum="0.5"
+                            Value="{Binding LoopDuration, Mode=TwoWay}" />
+                    </Grid>
+                    <TextBlock
+                        Margin="0,8,0,0"
+                        HorizontalAlignment="Center"
+                        FontSize="11"
+                        Foreground="#8F8DB0"
+                        Text="{Binding DataContext.SelectedPieceText, RelativeSource={RelativeSource AncestorType=Window}}" />
+                </StackPanel>
+                </Border>
+</UserControl>

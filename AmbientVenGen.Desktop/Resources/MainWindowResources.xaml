@@ -1,0 +1,275 @@
+<ResourceDictionary
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:controls="clr-namespace:AmbientVenGen.Desktop.Controls"
+    xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
+    xmlns:vm="clr-namespace:AmbientVenGen.Desktop.ViewModels">
+    <BooleanToVisibilityConverter x:Key="BoolToVisibility" />
+
+    <!--  One row of the pitch interval table: [name = link] | [multiplier] | [resulting pitch]  -->
+    <DataTemplate x:Key="IntervalRowTemplate">
+        <!--  A blue border marks the interval the layer has right now  -->
+        <Border
+            Margin="0,1"
+            Padding="4,0"
+            BorderThickness="1"
+            CornerRadius="4">
+            <Border.Style>
+                <Style TargetType="Border">
+                    <Setter Property="BorderBrush" Value="Transparent" />
+                    <Style.Triggers>
+                        <DataTrigger Binding="{Binding IsCurrent}" Value="True">
+                            <Setter Property="BorderBrush" Value="#FF5B9BFF" />
+                            <Setter Property="Background" Value="#1A5B9BFF" />
+                        </DataTrigger>
+                    </Style.Triggers>
+                </Style>
+            </Border.Style>
+            <Grid Margin="0" ToolTip="{Binding Interval.Description}">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="56" />
+                    <ColumnDefinition Width="62" />
+                </Grid.ColumnDefinitions>
+                <!--  The name works like a link: click it to apply the interval  -->
+                <Border
+                    Padding="0,2"
+                    Background="Transparent"
+                    Cursor="Hand">
+                    <Border.InputBindings>
+                        <MouseBinding
+                            Command="{Binding DataContext.ApplyIntervalCommand, RelativeSource={RelativeSource AncestorType=Window}}"
+                            CommandParameter="{Binding}"
+                            MouseAction="LeftClick" />
+                    </Border.InputBindings>
+                    <TextBlock
+                        Margin="0"
+                        FontSize="12"
+                        Text="{Binding Interval.Name}">
+                        <TextBlock.Style>
+                            <Style BasedOn="{StaticResource {x:Type TextBlock}}" TargetType="TextBlock">
+                                <Setter Property="Foreground" Value="#B7AFE9" />
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding IsMouseOver, RelativeSource={RelativeSource AncestorType=Border}}" Value="True">
+                                        <Setter Property="Foreground" Value="#FFFFFF" />
+                                        <Setter Property="TextDecorations" Value="Underline" />
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </TextBlock.Style>
+                    </TextBlock>
+                </Border>
+                <TextBlock
+                    Grid.Column="1"
+                    Margin="0"
+                    VerticalAlignment="Center"
+                    FontSize="11"
+                    Foreground="#8F8DB0"
+                    Text="{Binding Interval.Ratio, StringFormat='&#215;{0:0.###}'}" />
+                <TextBlock
+                    Grid.Column="2"
+                    Margin="0"
+                    HorizontalAlignment="Right"
+                    VerticalAlignment="Center"
+                    FontSize="12"
+                    FontWeight="SemiBold"
+                    Foreground="#8FD16A"
+                    Text="{Binding HzText}" />
+            </Grid>
+        </Border>
+    </DataTemplate>
+    <!--  One row of the three-layer table: [relation = link] [pitches of the lower / higher layer], the ratios under the name  -->
+    <DataTemplate x:Key="ChordRowTemplate">
+        <Border
+            Margin="0,1"
+            Padding="4,1"
+            BorderThickness="1"
+            CornerRadius="4"
+            ToolTip="{Binding Preset.Description}">
+            <Border.Style>
+                <Style TargetType="Border">
+                    <Setter Property="BorderBrush" Value="Transparent" />
+                    <Style.Triggers>
+                        <DataTrigger Binding="{Binding IsCurrent}" Value="True">
+                            <Setter Property="BorderBrush" Value="#FF5B9BFF" />
+                            <Setter Property="Background" Value="#1A5B9BFF" />
+                        </DataTrigger>
+                    </Style.Triggers>
+                </Style>
+            </Border.Style>
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+                <Border
+                    Padding="0,2"
+                    Background="Transparent"
+                    Cursor="Hand">
+                    <Border.InputBindings>
+                        <MouseBinding
+                            Command="{Binding DataContext.ApplyChordCommand, RelativeSource={RelativeSource AncestorType=Window}}"
+                            CommandParameter="{Binding}"
+                            MouseAction="LeftClick" />
+                    </Border.InputBindings>
+                    <StackPanel>
+                        <TextBlock
+                            Margin="0"
+                            FontSize="12"
+                            Text="{Binding Preset.Name}">
+                            <TextBlock.Style>
+                                <Style BasedOn="{StaticResource {x:Type TextBlock}}" TargetType="TextBlock">
+                                    <Setter Property="Foreground" Value="#B7AFE9" />
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding IsMouseOver, RelativeSource={RelativeSource AncestorType=Border}}" Value="True">
+                                            <Setter Property="Foreground" Value="#FFFFFF" />
+                                            <Setter Property="TextDecorations" Value="Underline" />
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </TextBlock.Style>
+                        </TextBlock>
+                        <TextBlock
+                            Margin="0,1,0,0"
+                            FontSize="10"
+                            Foreground="#8F8DB0"
+                            Text="{Binding Preset.RatioText}" />
+                    </StackPanel>
+                </Border>
+                <!--  All three pitches, lowest first, in three right-aligned columns; the root (it keeps its pitch) is blue, the other two green  -->
+                <StackPanel
+                    Grid.Column="1"
+                    VerticalAlignment="Center"
+                    Orientation="Horizontal"
+                    ToolTip="Pitches of the three layers, lowest first. Blue: the root, it keeps its pitch.">
+                    <ItemsControl ItemsSource="{Binding Voices}">
+                        <ItemsControl.ItemsPanel>
+                            <ItemsPanelTemplate>
+                                <StackPanel Orientation="Horizontal" />
+                            </ItemsPanelTemplate>
+                        </ItemsControl.ItemsPanel>
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate>
+                                <TextBlock
+                                    Width="44"
+                                    Margin="0"
+                                    FontSize="12"
+                                    FontWeight="SemiBold"
+                                    Text="{Binding Text}"
+                                    TextAlignment="Right">
+                                    <TextBlock.Style>
+                                        <Style BasedOn="{StaticResource {x:Type TextBlock}}" TargetType="TextBlock">
+                                            <Setter Property="Foreground" Value="#8FD16A" />
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding IsRoot}" Value="True">
+                                                    <Setter Property="Foreground" Value="#4FC3FF" />
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </TextBlock.Style>
+                                </TextBlock>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                    <TextBlock
+                        Width="22"
+                        Margin="0"
+                        VerticalAlignment="Center"
+                        FontSize="11"
+                        Foreground="#8F8DB0"
+                        Text="  Hz" />
+                </StackPanel>
+            </Grid>
+        </Border>
+    </DataTemplate>
+    <!--  A plain tick box (the theme one is clipped in the narrow column)  -->
+    <ControlTemplate x:Key="TickBoxTemplate" TargetType="CheckBox">
+        <Border
+            x:Name="Box"
+            Width="16"
+            Height="16"
+            HorizontalAlignment="Center"
+            VerticalAlignment="Center"
+            Background="#14FFFFFF"
+            BorderBrush="#99B7AFE9"
+            BorderThickness="1.5"
+            CornerRadius="3"
+            SnapsToDevicePixels="True">
+            <Path
+                x:Name="Mark"
+                Margin="2"
+                Data="M0,5 L3.5,8.5 L10,0.5"
+                Stretch="Uniform"
+                Stroke="#FFFFFF"
+                StrokeEndLineCap="Round"
+                StrokeLineJoin="Round"
+                StrokeStartLineCap="Round"
+                StrokeThickness="1.8"
+                Visibility="Collapsed" />
+        </Border>
+        <ControlTemplate.Triggers>
+            <Trigger Property="IsChecked" Value="True">
+                <Setter TargetName="Box" Property="Background" Value="#FF5B9BFF" />
+                <Setter TargetName="Box" Property="BorderBrush" Value="#FF5B9BFF" />
+                <Setter TargetName="Mark" Property="Visibility" Value="Visible" />
+            </Trigger>
+            <Trigger Property="IsMouseOver" Value="True">
+                <Setter TargetName="Box" Property="BorderBrush" Value="#FFFFFFFF" />
+            </Trigger>
+            <Trigger Property="IsEnabled" Value="False">
+                <Setter Property="Opacity" Value="0.35" />
+            </Trigger>
+        </ControlTemplate.Triggers>
+    </ControlTemplate>
+    <controls:GreaterThanOneConverter x:Key="GreaterThanOne" />
+
+    <!--  Generic styles (TextBlock, Slider, ComboBox, SectionCard, ToolIconButton) are in Resources/Styles.xaml.  -->
+
+    <!--  Play / Stop in one button: the icon and tooltip follow MainViewModel.IsPlaying.  -->
+    <Style
+        x:Key="PlayStopButton"
+        BasedOn="{StaticResource TimelineIconButton}"
+        TargetType="ui:Button">
+        <Setter Property="Appearance" Value="Primary" />
+        <Setter Property="ToolTip" Value="Play (Space)" />
+        <Setter Property="Icon">
+            <Setter.Value>
+                <ui:SymbolIcon Symbol="Play24" />
+            </Setter.Value>
+        </Setter>
+        <Style.Triggers>
+            <DataTrigger Binding="{Binding IsPlaying}" Value="True">
+                <Setter Property="ToolTip" Value="Stop (Space)" />
+                <Setter Property="Icon">
+                    <Setter.Value>
+                        <ui:SymbolIcon Symbol="Stop24" />
+                    </Setter.Value>
+                </Setter>
+            </DataTrigger>
+        </Style.Triggers>
+    </Style>
+
+    <!--  Spectrogram on / off: highlighted while the spectrograms are shown on the timeline.  -->
+    <Style
+        x:Key="SpectrogramButton"
+        BasedOn="{StaticResource TimelineIconButton}"
+        TargetType="ui:Button">
+        <Setter Property="ToolTip" Value="Show spectrograms on the timeline" />
+        <Setter Property="Icon">
+            <Setter.Value>
+                <ui:SymbolIcon Symbol="EyeOff24" />
+            </Setter.Value>
+        </Setter>
+        <Style.Triggers>
+            <DataTrigger Binding="{Binding ShowSpectrogram}" Value="True">
+                <Setter Property="Appearance" Value="Primary" />
+                <Setter Property="ToolTip" Value="Hide spectrograms (they are analysed in the background, 1.5 s after the last change)" />
+                <Setter Property="Icon">
+                    <Setter.Value>
+                        <ui:SymbolIcon Symbol="Eye24" />
+                    </Setter.Value>
+                </Setter>
+            </DataTrigger>
+        </Style.Triggers>
+    </Style>
+</ResourceDictionary>

@@ -1,0 +1,99 @@
+<UserControl
+    x:Class="AmbientVenGen.Desktop.Panels.TimelinePanel"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:controls="clr-namespace:AmbientVenGen.Desktop.Controls"
+    xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
+    xmlns:vm="clr-namespace:AmbientVenGen.Desktop.ViewModels">
+    <!--  Timeline: transport buttons and the track  -->
+        <Border
+            Margin="12,10,12,0"
+            Padding="0"
+            Style="{StaticResource SectionCard}">
+            <Grid>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="*" />
+                </Grid.RowDefinitions>
+
+                <Grid Grid.Row="0" Margin="14,5,14,3">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+
+                    <!--  Title with Play / Stop and Seed under it  -->
+                    <StackPanel Grid.Column="0">
+                        <ui:TextBlock
+                            Margin="0"
+                            FontSize="14"
+                            FontWeight="SemiBold"
+                            Text="Timeline" />
+                        <StackPanel Margin="0,3,0,0" Orientation="Horizontal">
+                            <ui:Button Command="{Binding TogglePlayCommand}" Style="{StaticResource PlayStopButton}" />
+                            <ui:Button
+                                Command="{Binding RegenerateCommand}"
+                                Style="{StaticResource TimelineIconButton}"
+                                ToolTip="Regenerate (new seed)">
+                                <ui:Button.Icon>
+                                    <ui:SymbolIcon Symbol="ArrowSync24" />
+                                </ui:Button.Icon>
+                            </ui:Button>
+                            <ui:Button Command="{Binding ToggleSpectrogramCommand}" Style="{StaticResource SpectrogramButton}" />
+                        </StackPanel>
+                    </StackPanel>
+
+                    <controls:LabeledSlider
+                        Grid.Column="2"
+                        Width="190"
+                        Margin="0,0,24,0"
+                        VerticalAlignment="Bottom"
+                        Format="{}{0:P0}"
+                        Header="Space (reverb)"
+                        Hint="{x:Static vm:HintTexts.Reverb}"
+                        Maximum="1"
+                        Minimum="0"
+                        Step="0.01"
+                        UseKnobs="False"
+                        Value="{Binding Project.ReverbMix, Mode=TwoWay}" />
+
+                    <StackPanel
+                        Grid.Column="3"
+                        Width="110"
+                        VerticalAlignment="Bottom">
+                        <StackPanel Orientation="Horizontal">
+                            <ui:TextBlock
+                                Margin="0"
+                                FontSize="12"
+                                Foreground="#C9C8D6"
+                                Text="Track length" />
+                            <controls:HintIcon Margin="5,0,0,0" Text="{x:Static vm:HintTexts.TrackLength}" />
+                        </StackPanel>
+                        <ComboBox
+                            ItemsSource="{Binding LengthOptions}"
+                            SelectedValue="{Binding Project.DurationSeconds, Mode=TwoWay}"
+                            Style="{StaticResource ChoiceCombo}" />
+                    </StackPanel>
+                </Grid>
+
+                <ScrollViewer
+                    Grid.Row="1"
+                    HorizontalScrollBarVisibility="Disabled"
+                    VerticalScrollBarVisibility="Auto">
+                    <controls:TimelineControl
+                        x:Name="Timeline"
+                        DeleteCommand="{Binding DeleteSelectedLayerCommand}"
+                        NewLayerType="{Binding NewLayer.Type, Mode=OneWay}"
+                        PlayheadSeconds="{Binding PlayheadSeconds}"
+                        Project="{Binding Project}"
+                        SeekCommand="{Binding SeekCommand}"
+                        SelectedLayer="{Binding SelectedLayer, Mode=TwoWay}"
+                        ShowSpectrogram="{Binding ShowSpectrogram}"
+                        SpectrogramColor="{Binding Settings.SpectrogramColor}"
+                        Spectrograms="{Binding Spectrograms}" />
+                </ScrollViewer>
+            </Grid>
+        </Border>
+</UserControl>
