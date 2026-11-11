@@ -7,17 +7,17 @@
     xmlns:vm="clr-namespace:AmbientVenGen.Desktop.ViewModels">
     <!--  The two modulators of the selected layer  -->
             <Border
-                Margin="10,0,0,0"
+                Margin="6,0,0,0"
                 IsEnabled="{Binding HasSelectedLayer}"
                 Style="{StaticResource SectionCard}">
                 <StackPanel>
                     <ui:TextBlock
-                        Margin="0,0,0,8"
+                        Margin="0,0,0,4"
                         FontSize="14"
                         FontWeight="SemiBold"
                         Text="Modulators" />
                     <controls:ModulatorEditor
-                    Margin="0,0,0,8"
+                    Margin="0,0,0,4"
                     DataContext="{Binding SelectedLayer.Mod1}"
                     Header="Modulator 1" />
                     <controls:ModulatorEditor

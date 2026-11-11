@@ -457,8 +457,8 @@
                                         Grid.Row="1"
                                         Grid.ColumnSpan="3"
                                         HorizontalAlignment="Center">
-                                        <WrapPanel HorizontalAlignment="Center" Orientation="Horizontal">
-                                            <controls:KnobPair Margin="12.5,0,12.5,8"><controls:KnobPair.Primary><controls:RangeParam
+                                        <WrapPanel Margin="0,30,0,0" HorizontalAlignment="Center" Orientation="Horizontal">
+                                            <controls:KnobPair Margin="4,0,4,6"><controls:KnobPair.Primary><controls:RangeParam
                                                 Easing="{Binding LevelEasing, Mode=TwoWay}"
                                                 End="{Binding LevelTo, Mode=TwoWay}"
                                                 Format="{}{0:P0}"
@@ -468,7 +468,7 @@
                                                 Minimum="0"
                                                 Start="{Binding LevelFrom, Mode=TwoWay}"
                                                 Step="0.01" /></controls:KnobPair.Primary></controls:KnobPair>
-                                            <controls:KnobPair Margin="12.5,0,12.5,8"><controls:KnobPair.Primary><controls:RangeParam
+                                            <controls:KnobPair Margin="4,0,4,6"><controls:KnobPair.Primary><controls:RangeParam
                                                 Easing="{Binding BrightnessEasing, Mode=TwoWay}"
                                                 End="{Binding BrightnessTo, Mode=TwoWay}"
                                                 Format="{}{0:P0}"
@@ -478,7 +478,7 @@
                                                 Minimum="0"
                                                 Start="{Binding BrightnessFrom, Mode=TwoWay}"
                                                 Step="0.01" /></controls:KnobPair.Primary></controls:KnobPair>
-                                            <controls:KnobPair Margin="12.5,0,12.5,8"><controls:KnobPair.Primary><controls:RangeParam
+                                            <controls:KnobPair Margin="4,0,4,6"><controls:KnobPair.Primary><controls:RangeParam
                                                 Easing="{Binding ModulationEasing, Mode=TwoWay}"
                                                 End="{Binding ModulationTo, Mode=TwoWay}"
                                                 Format="{}{0:P0}"
@@ -488,7 +488,7 @@
                                                 Minimum="0"
                                                 Start="{Binding ModulationFrom, Mode=TwoWay}"
                                                 Step="0.01" /></controls:KnobPair.Primary></controls:KnobPair>
-                                            <controls:KnobPair Margin="12.5,0,12.5,8"><controls:KnobPair.Primary><controls:LabeledSlider
+                                            <controls:KnobPair Margin="4,0,4,6"><controls:KnobPair.Primary><controls:LabeledSlider
                                                 Format="{}{0:P0}"
                                                 Header="Reverb send"
                                                 Hint="{x:Static vm:HintTexts.ReverbSend}"
@@ -496,7 +496,7 @@
                                                 Minimum="0"
                                                 Step="0.01"
                                                 Value="{Binding ReverbSend, Mode=TwoWay}" /></controls:KnobPair.Primary></controls:KnobPair>
-                                            <controls:KnobPair Margin="12.5,0,12.5,8" LinkToolTip="Fade in and fade out">
+                                            <controls:KnobPair Margin="4,0,4,6" LinkToolTip="Fade in and fade out">
                                                 <controls:KnobPair.Primary><controls:RangeParam
                                                     AllowRange="False"
                                                     Easing="{Binding FadeEasing, Mode=TwoWay}"
@@ -521,7 +521,7 @@
                                         </WrapPanel>
                                         <WrapPanel HorizontalAlignment="Center" Orientation="Horizontal">
                                             <controls:KnobPair
-                                                Margin="12.5,0,12.5,8"
+                                                Margin="4,0,4,6"
                                                 LinkToolTip="Pitch drift">
                                                 <controls:KnobPair.Style>
                                                     <Style TargetType="controls:KnobPair">
@@ -560,7 +560,7 @@
                                                 </controls:KnobPair.Secondary>
                                             </controls:KnobPair>
                                             <controls:KnobPair
-                                                Margin="12.5,0,12.5,8"
+                                                Margin="4,0,4,6"
                                                 LinkToolTip="Pan drift">
                                                 <controls:KnobPair.Style>
                                                     <Style TargetType="controls:KnobPair">
@@ -591,7 +591,7 @@
                                                 </controls:KnobPair.Secondary>
                                             </controls:KnobPair>
                                             <controls:KnobPair
-                                                Margin="12.5,0,12.5,8"
+                                                Margin="4,0,4,6"
                                                 LinkToolTip="Resonance">
                                                 <controls:KnobPair.Style>
                                                     <Style TargetType="controls:KnobPair">
@@ -623,7 +623,7 @@
                                                 </controls:KnobPair.Secondary>
                                             </controls:KnobPair>
                                             <controls:KnobPair
-                                                Margin="12.5,0,12.5,8"
+                                                Margin="4,0,4,6"
                                                 LinkToolTip="Feedback">
                                                 <controls:KnobPair.Style>
                                                     <Style TargetType="controls:KnobPair">

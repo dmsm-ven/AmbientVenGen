@@ -25,6 +25,7 @@
                 Width="48"
                 Height="27"
                 HorizontalAlignment="Center"
+                Margin="0,-32,0,0"
                 VerticalAlignment="Top"
                 Visibility="Collapsed"
                 Value="{Binding Easing, RelativeSource={RelativeSource AncestorType=local:RangeParam}, Mode=TwoWay}" />

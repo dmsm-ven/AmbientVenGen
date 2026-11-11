@@ -34,13 +34,13 @@
     </UserControl.Resources>
     <!--  DataContext: a Modulator. The group is kept close to the background colour.  -->
     <Border
-        Padding="10,8"
+        Padding="6,4"
         Background="#0DFFFFFF"
         BorderBrush="#1FFFFFFF"
         BorderThickness="1"
-        CornerRadius="8">
+        CornerRadius="5">
         <StackPanel>
-            <Grid Margin="0,0,0,8">
+            <Grid Margin="0,0,0,4">
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="*" />
                     <ColumnDefinition Width="Auto" />
@@ -96,7 +96,7 @@
                     </Style>
                 </StackPanel.Style>
                 <controls:LabeledSlider
-                    Margin="6,0"
+                    Margin="4,0"
                     Format="{}{0:0.000} Hz"
                     Header="Rate"
                     Hint="{x:Static vm:HintTexts.ModRate}"
@@ -106,7 +106,7 @@
                     Step="0.001"
                     Value="{Binding RateHz, Mode=TwoWay}" />
                 <controls:LabeledSlider
-                    Margin="6,0"
+                    Margin="4,0"
                     Format="{}{0:P0}"
                     Header="Depth"
                     Hint="{x:Static vm:HintTexts.ModDepth}"

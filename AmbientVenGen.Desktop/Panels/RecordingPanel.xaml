@@ -7,7 +7,7 @@
     xmlns:vm="clr-namespace:AmbientVenGen.Desktop.ViewModels">
     <!--  Recording group (Field record layers only): reverse, stretch, pitch, loop  -->
             <Border
-                Margin="0,0,10,0"
+                Margin="0,0,6,0"
                 DataContext="{Binding SelectedLayer}"
                 >
                 <Border.Style>

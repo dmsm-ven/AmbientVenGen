@@ -29,6 +29,12 @@ public sealed class KnobPair : Control
 
     private static void OnContentChanged(DependencyObject d, DependencyPropertyChangedEventArgs e) => ((KnobPair)d).Rebuild();
 
+    // A pair is exactly as wide as two single groups side by side: the link column replaces the two paddings, the two
+    // borders and the gap (2 x GroupGap/2) that two neighbouring groups would have.
+    private const double GroupPadding = 6;
+    private const double GroupGap = 8;
+    private const double LinkWidth = 2 * (GroupPadding + 1) + GroupGap;
+
     private Border? _root;
 
     public override void OnApplyTemplate()
@@ -43,18 +49,18 @@ public sealed class KnobPair : Control
         {
             _root = new Border
             {
-                CornerRadius = new CornerRadius(8),
+                CornerRadius = new CornerRadius(5),
                 BorderThickness = new Thickness(1),
                 BorderBrush = new SolidColorBrush(Color.FromArgb(0x40, 0x8F, 0x8D, 0xB0)),
                 Background = new SolidColorBrush(Color.FromArgb(0x14, 0xFF, 0xFF, 0xFF)),
-                Padding = new Thickness(10, 6, 10, 4)
+                Padding = new Thickness(GroupPadding, 4, GroupPadding, 2)
             };
             AddVisualChild(_root);
         }
 
         var grid = new Grid();
         grid.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
-        grid.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
+        grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(LinkWidth) });
         grid.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
 
         if (Primary is not null)
@@ -65,9 +71,9 @@ public sealed class KnobPair : Control
             var link = new SymbolIcon
             {
                 Symbol = SymbolRegular.Link24,
-                FontSize = 16,
+                FontSize = 14,
                 Foreground = new SolidColorBrush(Color.FromRgb(0x8F, 0x8D, 0xB0)),
-                Margin = new Thickness(8, 0, 8, 0),
+                HorizontalAlignment = HorizontalAlignment.Center,
                 VerticalAlignment = VerticalAlignment.Center,
                 ToolTip = LinkToolTip
             };

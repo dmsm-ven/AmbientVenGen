@@ -130,7 +130,7 @@ public partial class MainViewModel : ObservableObject, IDisposable
     public bool IsLayerSelectionEmpty => SelectedLayer is null;
 
     public string ProjectName => CurrentFilePath is null ? "Untitled" : Path.GetFileNameWithoutExtension(CurrentFilePath);
-    public string WindowTitle => $"Ambient Forge - {ProjectName}{(IsDirty ? " *" : string.Empty)}";
+    public string WindowTitle => $"Ambient Forge - {ProjectName}{(IsDirty ? " *" : string.Empty)} - {StatusMessage}";
     public string TimeText => $"{FormatTime(PlayheadSeconds)} / {FormatTime(Project.DurationSeconds)}";
 
     public MainViewModel(
@@ -193,6 +193,7 @@ public partial class MainViewModel : ObservableObject, IDisposable
 
     partial void OnIsExportingChanged(bool value) => ExportCommand.NotifyCanExecuteChanged();
     partial void OnIsDirtyChanged(bool value) => OnPropertyChanged(nameof(WindowTitle));
+    partial void OnStatusMessageChanged(string value) => OnPropertyChanged(nameof(WindowTitle));
 
     partial void OnCurrentFilePathChanged(string? value)
     {

@@ -23,9 +23,9 @@
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto" />
             <RowDefinition Height="Auto" />
-            <RowDefinition Height="Auto" />
-            <RowDefinition Height="*" />
-            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" MinHeight="200" />
+            <RowDefinition Height="6" />
+            <RowDefinition Height="*" MinHeight="220" />
         </Grid.RowDefinitions>
 
         <!--  The header has its own, lighter solid color (the window itself is a darker translucent Mica).  -->
@@ -52,19 +52,31 @@
         <panels:ToolbarPanel Grid.Row="1" />
 
         <!--  Top row: three groups side by side. Recording and Modulators logically belong to the selected layer.  -->
-        <Grid Grid.Row="2" Margin="12,10,12,0">
-            <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="Auto" />
-                <ColumnDefinition Width="*" />
-                <ColumnDefinition Width="Auto" />
-            </Grid.ColumnDefinitions>
-            <panels:RecordingPanel />
-            <panels:SelectedLayerPanel Grid.Column="1" />
-            <panels:ModulatorsPanel Grid.Column="2" />
-        </Grid>
+        <ScrollViewer Grid.Row="2" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+            <Grid Margin="10,6,10,0">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+                <panels:RecordingPanel />
+                <panels:SelectedLayerPanel Grid.Column="1" />
+                <panels:ModulatorsPanel Grid.Column="2" />
+            </Grid>
+        </ScrollViewer>
 
-        <panels:TimelinePanel Grid.Row="3" />
+        <!--  The only splitter: the height of the top groups against the timeline  -->
+        <GridSplitter
+            Grid.Row="3"
+            Height="6"
+            HorizontalAlignment="Stretch"
+            VerticalAlignment="Stretch"
+            Background="Transparent"
+            Cursor="SizeNS"
+            ResizeBehavior="PreviousAndNext"
+            ResizeDirection="Rows"
+            ShowsPreview="False" />
 
-        <panels:StatusBarPanel Grid.Row="4" />
+        <panels:TimelinePanel Grid.Row="4" />
     </Grid>
 </ui:FluentWindow>

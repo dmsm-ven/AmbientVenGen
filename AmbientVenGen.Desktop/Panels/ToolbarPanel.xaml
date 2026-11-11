@@ -87,6 +87,53 @@
                     </ToggleButton>
                 </StackPanel>
 
+                <!--  Progress (hidden by default): processing of recordings and export, left of the time  -->
+                <StackPanel
+                    Grid.Column="1"
+                    Margin="0,0,16,0"
+                    HorizontalAlignment="Right"
+                    VerticalAlignment="Center"
+                    Orientation="Horizontal">
+                    <StackPanel Margin="0,0,16,0" Orientation="Horizontal" Visibility="{Binding IsRebuilding, Converter={StaticResource BoolToVisibility}}">
+                        <TextBlock
+                            Margin="0,0,10,0"
+                            VerticalAlignment="Center"
+                            Foreground="#E6D25A"
+                            Text="{Binding RebuildText}" />
+                        <ProgressBar
+                            Width="160"
+                            Height="6"
+                            VerticalAlignment="Center"
+                            Maximum="1"
+                            Minimum="0"
+                            Value="{Binding RebuildProgress, Mode=OneWay}" />
+                    </StackPanel>
+                    <StackPanel Orientation="Horizontal" Visibility="{Binding IsExporting, Converter={StaticResource BoolToVisibility}}">
+                        <TextBlock
+                            Margin="0,0,10,0"
+                            VerticalAlignment="Center"
+                            Foreground="#B7AFE9"
+                            Text="Export" />
+                        <ProgressBar
+                            Width="160"
+                            Height="6"
+                            Margin="0,0,6,0"
+                            VerticalAlignment="Center"
+                            Maximum="1"
+                            Minimum="0"
+                            Value="{Binding ExportProgress, Mode=OneWay}" />
+                        <ui:Button
+                            Margin="0"
+                            Command="{Binding CancelExportCommand}"
+                            Style="{StaticResource ToolIconButton}"
+                            ToolTip="Cancel export">
+                            <ui:Button.Icon>
+                                <ui:SymbolIcon Symbol="Dismiss24" />
+                            </ui:Button.Icon>
+                        </ui:Button>
+                    </StackPanel>
+                </StackPanel>
+
                 <StackPanel
                     Grid.Column="2"
                     Margin="0,0,16,0"

@@ -38,8 +38,8 @@
         <Setter Property="Background" Value="#8C20202B" />
         <Setter Property="BorderBrush" Value="#33FFFFFF" />
         <Setter Property="BorderThickness" Value="1" />
-        <Setter Property="CornerRadius" Value="10" />
-        <Setter Property="Padding" Value="12" />
+        <Setter Property="CornerRadius" Value="6" />
+        <Setter Property="Padding" Value="8" />
         <Style.Triggers>
             <Trigger Property="IsEnabled" Value="False">
                 <Setter Property="Opacity" Value="0.45" />

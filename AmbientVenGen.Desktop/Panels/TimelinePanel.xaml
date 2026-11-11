@@ -7,7 +7,7 @@
     xmlns:vm="clr-namespace:AmbientVenGen.Desktop.ViewModels">
     <!--  Timeline: transport buttons and the track  -->
         <Border
-            Margin="12,10,12,0"
+            Margin="10,0,10,8"
             Padding="0"
             Style="{StaticResource SectionCard}">
             <Grid>
@@ -16,62 +16,78 @@
                     <RowDefinition Height="*" />
                 </Grid.RowDefinitions>
 
-                <Grid Grid.Row="0" Margin="14,5,14,3">
+                <!--  One compact line: title, transport buttons, reverb and track length  -->
+                <Grid Grid.Row="0" Margin="12,3,12,3">
                     <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto" />
                         <ColumnDefinition Width="Auto" />
                         <ColumnDefinition Width="*" />
                         <ColumnDefinition Width="Auto" />
                         <ColumnDefinition Width="Auto" />
                     </Grid.ColumnDefinitions>
 
-                    <!--  Title with Play / Stop and Seed under it  -->
-                    <StackPanel Grid.Column="0">
-                        <ui:TextBlock
-                            Margin="0"
-                            FontSize="14"
-                            FontWeight="SemiBold"
-                            Text="Timeline" />
-                        <StackPanel Margin="0,3,0,0" Orientation="Horizontal">
-                            <ui:Button Command="{Binding TogglePlayCommand}" Style="{StaticResource PlayStopButton}" />
-                            <ui:Button
-                                Command="{Binding RegenerateCommand}"
-                                Style="{StaticResource TimelineIconButton}"
-                                ToolTip="Regenerate (new seed)">
-                                <ui:Button.Icon>
-                                    <ui:SymbolIcon Symbol="ArrowSync24" />
-                                </ui:Button.Icon>
-                            </ui:Button>
-                            <ui:Button Command="{Binding ToggleSpectrogramCommand}" Style="{StaticResource SpectrogramButton}" />
-                        </StackPanel>
+                    <ui:TextBlock
+                        Margin="0,0,10,0"
+                        VerticalAlignment="Center"
+                        FontSize="14"
+                        FontWeight="SemiBold"
+                        Text="Timeline" />
+                    <StackPanel Grid.Column="1" Orientation="Horizontal">
+                        <ui:Button Command="{Binding TogglePlayCommand}" Style="{StaticResource PlayStopButton}" />
+                        <ui:Button
+                            Command="{Binding RegenerateCommand}"
+                            Style="{StaticResource TimelineIconButton}"
+                            ToolTip="Regenerate (new seed)">
+                            <ui:Button.Icon>
+                                <ui:SymbolIcon Symbol="ArrowSync24" />
+                            </ui:Button.Icon>
+                        </ui:Button>
+                        <ui:Button Command="{Binding ToggleSpectrogramCommand}" Style="{StaticResource SpectrogramButton}" />
                     </StackPanel>
 
-                    <controls:LabeledSlider
-                        Grid.Column="2"
-                        Width="190"
-                        Margin="0,0,24,0"
-                        VerticalAlignment="Bottom"
-                        Format="{}{0:P0}"
-                        Header="Space (reverb)"
-                        Hint="{x:Static vm:HintTexts.Reverb}"
-                        Maximum="1"
-                        Minimum="0"
-                        Step="0.01"
-                        UseKnobs="False"
-                        Value="{Binding Project.ReverbMix, Mode=TwoWay}" />
-
+                    <!--  Space (reverb): horizontal  -->
                     <StackPanel
                         Grid.Column="3"
-                        Width="110"
-                        VerticalAlignment="Bottom">
-                        <StackPanel Orientation="Horizontal">
-                            <ui:TextBlock
-                                Margin="0"
-                                FontSize="12"
-                                Foreground="#C9C8D6"
-                                Text="Track length" />
-                            <controls:HintIcon Margin="5,0,0,0" Text="{x:Static vm:HintTexts.TrackLength}" />
-                        </StackPanel>
+                        Margin="0,0,20,0"
+                        VerticalAlignment="Center"
+                        Orientation="Horizontal">
+                        <ui:TextBlock
+                            Margin="0"
+                            VerticalAlignment="Center"
+                            FontSize="12"
+                            Foreground="#C9C8D6"
+                            Text="Space (reverb)" />
+                        <controls:HintIcon Margin="5,0,8,0" Text="{x:Static vm:HintTexts.Reverb}" />
+                        <Slider
+                            Width="130"
+                            VerticalAlignment="Center"
+                            Maximum="1"
+                            Minimum="0"
+                            SmallChange="0.01"
+                            Value="{Binding Project.ReverbMix, Mode=TwoWay}" />
+                        <ui:TextBlock
+                            Width="36"
+                            Margin="8,0,0,0"
+                            VerticalAlignment="Center"
+                            FontSize="12"
+                            Foreground="#B7AFE9"
+                            Text="{Binding Project.ReverbMix, StringFormat={}{0:P0}}" />
+                    </StackPanel>
+
+                    <!--  Track length: horizontal  -->
+                    <StackPanel
+                        Grid.Column="4"
+                        VerticalAlignment="Center"
+                        Orientation="Horizontal">
+                        <ui:TextBlock
+                            Margin="0"
+                            VerticalAlignment="Center"
+                            FontSize="12"
+                            Foreground="#C9C8D6"
+                            Text="Track length" />
+                        <controls:HintIcon Margin="5,0,8,0" Text="{x:Static vm:HintTexts.TrackLength}" />
                         <ComboBox
+                            Width="100"
                             ItemsSource="{Binding LengthOptions}"
                             SelectedValue="{Binding Project.DurationSeconds, Mode=TwoWay}"
                             Style="{StaticResource ChoiceCombo}" />
