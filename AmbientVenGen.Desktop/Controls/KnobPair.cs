@@ -1,14 +1,15 @@
-﻿using System.Windows;
+using System.Windows;
 using System.Windows.Controls;
-using System.Windows.Input;
 using System.Windows.Markup;
 using System.Windows.Media;
+using Wpf.Ui.Controls;
 
 namespace AmbientVenGen.Desktop.Controls;
 
 /// <summary>
-/// A main control with a hidden second one (Pitch + Pitch drift, Cutoff + Resonance...). A small 8x8 marker at the
-/// top-right corner of the main control opens the second one right next to it; the state is bound to the layer.
+/// Two dependent controls (Pitch + Pitch drift, Cutoff + Resonance, Fade in + Fade out...) that are always shown side
+/// by side in one rounded group with a chain link between them: the second one depends on the first.
+/// The pair never wraps apart inside a wrapping container because it is a single element.
 /// </summary>
 [ContentProperty(nameof(Primary))]
 public sealed class KnobPair : Control
@@ -19,21 +20,16 @@ public sealed class KnobPair : Control
     public static readonly DependencyProperty SecondaryProperty = DependencyProperty.Register(
         nameof(Secondary), typeof(UIElement), typeof(KnobPair), new PropertyMetadata(null, OnContentChanged));
 
-    public static readonly DependencyProperty IsOpenProperty = DependencyProperty.Register(
-        nameof(IsOpen), typeof(bool), typeof(KnobPair),
-        new FrameworkPropertyMetadata(false, FrameworkPropertyMetadataOptions.BindsTwoWayByDefault, OnOpenChanged));
-
-    public static readonly DependencyProperty MarkerToolTipProperty = DependencyProperty.Register(
-        nameof(MarkerToolTip), typeof(string), typeof(KnobPair), new PropertyMetadata(null));
-
+    public static readonly DependencyProperty LinkToolTipProperty = DependencyProperty.Register(
+        nameof(LinkToolTip), typeof(string), typeof(KnobPair), new PropertyMetadata(null, OnContentChanged));
 
     public UIElement? Primary { get => (UIElement?)GetValue(PrimaryProperty); set => SetValue(PrimaryProperty, value); }
     public UIElement? Secondary { get => (UIElement?)GetValue(SecondaryProperty); set => SetValue(SecondaryProperty, value); }
-    public bool IsOpen { get => (bool)GetValue(IsOpenProperty); set => SetValue(IsOpenProperty, value); }
-    public string? MarkerToolTip { get => (string?)GetValue(MarkerToolTipProperty); set => SetValue(MarkerToolTipProperty, value); }
+    public string? LinkToolTip { get => (string?)GetValue(LinkToolTipProperty); set => SetValue(LinkToolTipProperty, value); }
 
     private static void OnContentChanged(DependencyObject d, DependencyPropertyChangedEventArgs e) => ((KnobPair)d).Rebuild();
-    private static void OnOpenChanged(DependencyObject d, DependencyPropertyChangedEventArgs e) => ((KnobPair)d).Rebuild();
+
+    private Border? _root;
 
     public override void OnApplyTemplate()
     {
@@ -41,70 +37,57 @@ public sealed class KnobPair : Control
         Rebuild();
     }
 
-    private Grid? _root;
-    private Border? _marker;
-
     private void Rebuild()
     {
         if (_root is null)
         {
-            _root = new Grid();
-            _root.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
-            _root.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
-
-            _marker = new Border
+            _root = new Border
             {
-                Width = 8,
-                Height = 8,
-                CornerRadius = new CornerRadius(2),
-                HorizontalAlignment = HorizontalAlignment.Right,
-                VerticalAlignment = VerticalAlignment.Top,
-                Margin = new Thickness(0, 2, 2, 0),
+                CornerRadius = new CornerRadius(8),
                 BorderThickness = new Thickness(1),
-                Cursor = Cursors.Hand
-            };
-            _marker.MouseLeftButtonDown += (_, e) =>
-            {
-                IsOpen = !IsOpen;
-                e.Handled = true;
+                BorderBrush = new SolidColorBrush(Color.FromArgb(0x40, 0x8F, 0x8D, 0xB0)),
+                Background = new SolidColorBrush(Color.FromArgb(0x14, 0xFF, 0xFF, 0xFF)),
+                Padding = new Thickness(10, 6, 10, 4)
             };
             AddVisualChild(_root);
         }
 
-        _root.Children.Clear();
+        var grid = new Grid();
+        grid.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
+        grid.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
+        grid.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
 
         if (Primary is not null)
-        {
-            DetachFromParent(Primary);
-            Grid.SetColumn(Primary, 0);
-            _root.Children.Add(Primary);
-        }
+            Add(grid, Primary, 0);
 
-        if (_marker is not null)
+        var link = new SymbolIcon
         {
-            _marker.Background = IsOpen
-                ? new SolidColorBrush(Color.FromRgb(0x6C, 0x9B, 0xFF))
-                : new SolidColorBrush(Color.FromArgb(0x30, 0xFF, 0xFF, 0xFF));
-            _marker.BorderBrush = new SolidColorBrush(Color.FromRgb(0x8F, 0x8D, 0xB0));
-            _marker.ToolTip = MarkerToolTip;
-            Grid.SetColumn(_marker, 0);
-            _root.Children.Add(_marker);
-        }
+            Symbol = SymbolRegular.Link24,
+            FontSize = 16,
+            Foreground = new SolidColorBrush(Color.FromRgb(0x8F, 0x8D, 0xB0)),
+            Margin = new Thickness(8, 0, 8, 0),
+            VerticalAlignment = VerticalAlignment.Center,
+            ToolTip = LinkToolTip
+        };
+        Grid.SetColumn(link, 1);
+        grid.Children.Add(link);
 
-        if (Secondary is not null && IsOpen)
-        {
-            DetachFromParent(Secondary);
-            Grid.SetColumn(Secondary, 1);
-            _root.Children.Add(Secondary);
-        }
+        if (Secondary is not null)
+            Add(grid, Secondary, 2);
 
+        _root.Child = grid;
         InvalidateMeasure();
     }
 
-    private void DetachFromParent(UIElement element)
+    private static void Add(Grid grid, UIElement element, int column)
     {
-        if (VisualTreeHelper.GetParent(element) is Panel panel && !ReferenceEquals(panel, _root))
+        if (VisualTreeHelper.GetParent(element) is Panel panel)
             panel.Children.Remove(element);
+        else if (VisualTreeHelper.GetParent(element) is Border border && border.Child == element)
+            border.Child = null;
+
+        Grid.SetColumn(element, column);
+        grid.Children.Add(element);
     }
 
     protected override int VisualChildrenCount => _root is null ? 0 : 1;

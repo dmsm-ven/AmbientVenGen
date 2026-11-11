@@ -440,8 +440,8 @@
                                     <!--
                                         All parameters in one wrapping flow (fewer rows at a wide window):
                                         - Level / Brightness / Modulation: one value, or S and E with the curve (double click on the arc)
-                                        - Pitch, Pan, Cutoff, Delay: the main knob and a hidden second one (marker at the top-right corner)
-                                        - Fade in / Fade out: one value each with its own curve
+                                        - Pitch, Pan, Cutoff, Delay: the main knob and its dependent one, always side by side in a group with a link
+                                        - Fade in / Fade out: one linked pair, each with its own curve
                                         - Speed (recording), Reverb send: one value
                                     -->
                                     <StackPanel
@@ -482,9 +482,8 @@
                                                 Minimum="0"
                                                 Start="{Binding ModulationFrom, Mode=TwoWay}"
                                                 Step="0.01" />
-                                            <StackPanel Orientation="Horizontal">
-                                                <controls:RangeParam
-                                                    Margin="12.5,0,12.5,8"
+                                            <controls:KnobPair Margin="12.5,0,12.5,8" LinkToolTip="Fade in and fade out">
+                                                <controls:KnobPair.Primary><controls:RangeParam
                                                     AllowRange="False"
                                                     Easing="{Binding FadeEasing, Mode=TwoWay}"
                                                     Format="{}{0:0} s"
@@ -493,9 +492,8 @@
                                                     Maximum="{Binding DurationSeconds}"
                                                     Minimum="0"
                                                     Start="{Binding FadeInSeconds, Mode=TwoWay}"
-                                                    Step="1" />
-                                                <controls:RangeParam
-                                                    Margin="12.5,0,12.5,8"
+                                                    Step="1" /></controls:KnobPair.Primary>
+                                                <controls:KnobPair.Secondary><controls:RangeParam
                                                     AllowRange="False"
                                                     Easing="{Binding FadeOutEasing, Mode=TwoWay}"
                                                     Format="{}{0:0} s"
@@ -504,14 +502,13 @@
                                                     Maximum="{Binding DurationSeconds}"
                                                     Minimum="0"
                                                     Start="{Binding FadeOutSeconds, Mode=TwoWay}"
-                                                    Step="1" />
-                                            </StackPanel>
+                                                    Step="1" /></controls:KnobPair.Secondary>
+                                            </controls:KnobPair>
                                         </WrapPanel>
                                         <WrapPanel HorizontalAlignment="Center" Orientation="Horizontal">
                                             <controls:KnobPair
                                                 Margin="12.5,0,12.5,8"
-                                                IsOpen="{Binding View.PitchPairOpen, Mode=TwoWay}"
-                                                MarkerToolTip="Pitch drift">
+                                                LinkToolTip="Pitch drift">
                                                 <controls:KnobPair.Style>
                                                     <Style TargetType="controls:KnobPair">
                                                         <Style.Triggers>
@@ -536,7 +533,7 @@
                                                         Value="{Binding PitchHz, Mode=TwoWay}" />
                                                 </controls:KnobPair.Primary>
                                                 <controls:KnobPair.Secondary>
-                                                    <Border Margin="25,0,0,0">
+                                                    <Border>
                                                         <controls:LabeledSlider
                                                             Format="{}{0:P0}"
                                                             Header="Pitch drift"
@@ -550,8 +547,7 @@
                                             </controls:KnobPair>
                                             <controls:KnobPair
                                                 Margin="12.5,0,12.5,8"
-                                                IsOpen="{Binding View.PitchPairOpen, Mode=TwoWay}"
-                                                MarkerToolTip="Pitch drift">
+                                                LinkToolTip="Speed drift">
                                                 <controls:KnobPair.Style>
                                                     <Style TargetType="controls:KnobPair">
                                                         <Setter Property="Visibility" Value="Collapsed" />
@@ -574,10 +570,10 @@
                                                         Value="{Binding Speed, Mode=TwoWay}" />
                                                 </controls:KnobPair.Primary>
                                                 <controls:KnobPair.Secondary>
-                                                    <Border Margin="25,0,0,0">
+                                                    <Border>
                                                         <controls:LabeledSlider
                                                             Format="{}{0:P0}"
-                                                            Header="Pitch drift"
+                                                            Header="Speed drift"
                                                             Hint="{x:Static vm:HintTexts.PitchDrift}"
                                                             Maximum="1"
                                                             Minimum="0"
@@ -588,8 +584,7 @@
                                             </controls:KnobPair>
                                             <controls:KnobPair
                                                 Margin="12.5,0,12.5,8"
-                                                IsOpen="{Binding View.PanPairOpen, Mode=TwoWay}"
-                                                MarkerToolTip="Pan drift">
+                                                LinkToolTip="Pan drift">
                                                 <controls:KnobPair.Style>
                                                     <Style TargetType="controls:KnobPair">
                                                         <Style.Triggers />
@@ -606,7 +601,7 @@
                                                         Value="{Binding Pan, Mode=TwoWay}" />
                                                 </controls:KnobPair.Primary>
                                                 <controls:KnobPair.Secondary>
-                                                    <Border Margin="25,0,0,0">
+                                                    <Border>
                                                         <controls:LabeledSlider
                                                             Format="{}{0:P0}"
                                                             Header="Pan drift"
@@ -620,8 +615,7 @@
                                             </controls:KnobPair>
                                             <controls:KnobPair
                                                 Margin="12.5,0,12.5,8"
-                                                IsOpen="{Binding View.FilterPairOpen, Mode=TwoWay}"
-                                                MarkerToolTip="Resonance">
+                                                LinkToolTip="Resonance">
                                                 <controls:KnobPair.Style>
                                                     <Style TargetType="controls:KnobPair">
                                                         <Style.Triggers />
@@ -639,7 +633,7 @@
                                                         Value="{Binding FilterCutoffHz, Mode=TwoWay}" />
                                                 </controls:KnobPair.Primary>
                                                 <controls:KnobPair.Secondary>
-                                                    <Border Margin="25,0,0,0">
+                                                    <Border>
                                                         <controls:LabeledSlider
                                                             Format="{}{0:P0}"
                                                             Header="Resonance"
@@ -653,8 +647,7 @@
                                             </controls:KnobPair>
                                             <controls:KnobPair
                                                 Margin="12.5,0,12.5,8"
-                                                IsOpen="{Binding View.DelayPairOpen, Mode=TwoWay}"
-                                                MarkerToolTip="Feedback">
+                                                LinkToolTip="Feedback">
                                                 <controls:KnobPair.Style>
                                                     <Style TargetType="controls:KnobPair">
                                                         <Style.Triggers />
@@ -671,7 +664,7 @@
                                                         Value="{Binding DelaySeconds, Mode=TwoWay}" />
                                                 </controls:KnobPair.Primary>
                                                 <controls:KnobPair.Secondary>
-                                                    <Border Margin="25,0,0,0">
+                                                    <Border>
                                                         <controls:LabeledSlider
                                                             Format="{}{0:P0}"
                                                             Header="Feedback"

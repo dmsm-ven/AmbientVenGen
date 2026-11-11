@@ -20,9 +20,6 @@ public sealed partial class Layer : ObservableObject
 
     public Guid Id { get; } = Guid.NewGuid();
 
-    /// <summary>UI-only state (expanded second knobs); never saved and never heard.</summary>
-    public LayerViewState View { get; private set; } = new();
-
     [ObservableProperty]
     private string _name = "Layer";
 
@@ -357,7 +354,6 @@ public sealed partial class Layer : ObservableObject
         };
         layer.Mod1.Apply(spec.Mod1);
         layer.Mod2.Apply(spec.Mod2);
-        layer.View = LayerViewState.For(layer);
         return layer;
     }
 
