@@ -342,7 +342,16 @@
                         </ui:Button>
                     </Grid>
 
-                    <ContentControl Grid.Row="1" Content="{Binding SelectedLayer}">
+                    <!--  Below this width the parameters scroll horizontally instead of running out of the panel  -->
+                    <ScrollViewer
+                        x:Name="ParamsScroller"
+                        Grid.Row="1"
+                        HorizontalScrollBarVisibility="Auto"
+                        VerticalScrollBarVisibility="Disabled">
+                    <ContentControl
+                        MinWidth="760"
+                        Width="{Binding ViewportWidth, ElementName=ParamsScroller}"
+                        Content="{Binding SelectedLayer}">
                         <ContentControl.ContentTemplate>
                             <DataTemplate>
                                 <Grid>
@@ -442,7 +451,7 @@
                                         - Level / Brightness / Modulation: one value, or S and E with the curve (double click on the arc)
                                         - Pitch, Pan, Cutoff, Delay: the main knob and its dependent one, always side by side in a group with a link
                                         - Fade in / Fade out: one linked pair, each with its own curve
-                                        - Speed (recording), Reverb send: one value
+                                        - Reverb send: one value (Speed / Speed drift live in the Recording group)
                                     -->
                                     <StackPanel
                                         Grid.Row="1"
@@ -482,6 +491,15 @@
                                                 Minimum="0"
                                                 Start="{Binding ModulationFrom, Mode=TwoWay}"
                                                 Step="0.01" />
+                                            <controls:LabeledSlider
+                                                Margin="12.5,0,12.5,8"
+                                                Format="{}{0:P0}"
+                                                Header="Reverb send"
+                                                Hint="{x:Static vm:HintTexts.ReverbSend}"
+                                                Maximum="1"
+                                                Minimum="0"
+                                                Step="0.01"
+                                                Value="{Binding ReverbSend, Mode=TwoWay}" />
                                             <controls:KnobPair Margin="12.5,0,12.5,8" LinkToolTip="Fade in and fade out">
                                                 <controls:KnobPair.Primary><controls:RangeParam
                                                     AllowRange="False"
@@ -537,43 +555,6 @@
                                                         <controls:LabeledSlider
                                                             Format="{}{0:P0}"
                                                             Header="Pitch drift"
-                                                            Hint="{x:Static vm:HintTexts.PitchDrift}"
-                                                            Maximum="1"
-                                                            Minimum="0"
-                                                            Step="0.01"
-                                                            Value="{Binding PitchDrift, Mode=TwoWay}" />
-                                                    </Border>
-                                                </controls:KnobPair.Secondary>
-                                            </controls:KnobPair>
-                                            <controls:KnobPair
-                                                Margin="12.5,0,12.5,8"
-                                                LinkToolTip="Speed drift">
-                                                <controls:KnobPair.Style>
-                                                    <Style TargetType="controls:KnobPair">
-                                                        <Setter Property="Visibility" Value="Collapsed" />
-                                                        <Style.Triggers>
-                                                            <DataTrigger Binding="{Binding Type}" Value="FieldRecord">
-                                                                <Setter Property="Visibility" Value="Visible" />
-                                                            </DataTrigger>
-                                                        </Style.Triggers>
-                                                    </Style>
-                                                </controls:KnobPair.Style>
-                                                <controls:KnobPair.Primary>
-                                                    <controls:LabeledSlider
-                                                        Format="{}{0:0.00}x"
-                                                        Header="Speed"
-                                                        Hint="{x:Static vm:HintTexts.Speed}"
-                                                        IsLogarithmic="True"
-                                                        Maximum="4"
-                                                        Minimum="0.25"
-                                                        Step="0.01"
-                                                        Value="{Binding Speed, Mode=TwoWay}" />
-                                                </controls:KnobPair.Primary>
-                                                <controls:KnobPair.Secondary>
-                                                    <Border>
-                                                        <controls:LabeledSlider
-                                                            Format="{}{0:P0}"
-                                                            Header="Speed drift"
                                                             Hint="{x:Static vm:HintTexts.PitchDrift}"
                                                             Maximum="1"
                                                             Minimum="0"
@@ -676,15 +657,6 @@
                                                     </Border>
                                                 </controls:KnobPair.Secondary>
                                             </controls:KnobPair>
-                                            <controls:LabeledSlider
-                                                Margin="12.5,0,12.5,8"
-                                                Format="{}{0:P0}"
-                                                Header="Reverb send"
-                                                Hint="{x:Static vm:HintTexts.ReverbSend}"
-                                                Maximum="1"
-                                                Minimum="0"
-                                                Step="0.01"
-                                                Value="{Binding ReverbSend, Mode=TwoWay}" />
                                         </WrapPanel>
 
                                     </StackPanel>
@@ -692,6 +664,7 @@
                             </DataTemplate>
                         </ContentControl.ContentTemplate>
                     </ContentControl>
+                    </ScrollViewer>
                 </Grid>
             </Border>
 </UserControl>

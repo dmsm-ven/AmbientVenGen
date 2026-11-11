@@ -46,6 +46,7 @@
                             <RowDefinition Height="Auto" />
                             <RowDefinition Height="Auto" />
                             <RowDefinition Height="Auto" />
+                            <RowDefinition Height="Auto" />
                         </Grid.RowDefinitions>
 
                         <StackPanel
@@ -80,8 +81,36 @@
                             Step="0.5"
                             Value="{Binding PitchShift, Mode=TwoWay}" />
 
+                        <controls:KnobPair
+                                                Grid.Row="2" Grid.ColumnSpan="2" Margin="0,8,0,0" HorizontalAlignment="Center"
+                                                LinkToolTip="Speed drift">
+                                                <controls:KnobPair.Primary>
+                                                    <controls:LabeledSlider
+                                                        Format="{}{0:0.00}x"
+                                                        Header="Speed"
+                                                        Hint="{x:Static vm:HintTexts.Speed}"
+                                                        IsLogarithmic="True"
+                                                        Maximum="4"
+                                                        Minimum="0.25"
+                                                        Step="0.01"
+                                                        Value="{Binding Speed, Mode=TwoWay}" />
+                                                </controls:KnobPair.Primary>
+                                                <controls:KnobPair.Secondary>
+                                                    <Border>
+                                                        <controls:LabeledSlider
+                                                            Format="{}{0:P0}"
+                                                            Header="Speed drift"
+                                                            Hint="{x:Static vm:HintTexts.PitchDrift}"
+                                                            Maximum="1"
+                                                            Minimum="0"
+                                                            Step="0.01"
+                                                            Value="{Binding PitchDrift, Mode=TwoWay}" />
+                                                    </Border>
+                                                </controls:KnobPair.Secondary>
+                                            </controls:KnobPair>
+
                         <controls:LabeledSlider
-                            Grid.Row="2"
+                            Grid.Row="3"
                             Grid.RowSpan="2"
                             Margin="0,0,6,0"
                             VerticalAlignment="Center"
@@ -93,7 +122,7 @@
                             Step="0.1"
                             Value="{Binding LoopCrossfade, Mode=TwoWay}" />
                         <controls:TimeBox
-                            Grid.Row="2"
+                            Grid.Row="3"
                             Grid.Column="1"
                             Margin="6,6,0,0"
                             Header="Loop start"
@@ -102,7 +131,7 @@
                             Minimum="0"
                             Value="{Binding LoopStart, Mode=TwoWay}" />
                         <controls:TimeBox
-                            Grid.Row="3"
+                            Grid.Row="4"
                             Grid.Column="1"
                             Margin="6,6,0,0"
                             Header="Loop duration"
