@@ -1,5 +1,6 @@
-using AmbientVenGen.Desktop.ViewModels;
+﻿using AmbientVenGen.Desktop.ViewModels;
 using System.ComponentModel;
+using System.Windows.Controls.Primitives;
 using System.Windows.Input;
 using Wpf.Ui.Controls;
 
