@@ -7,9 +7,9 @@ using Wpf.Ui.Controls;
 namespace AmbientVenGen.Desktop.Controls;
 
 /// <summary>
-/// Two dependent controls (Pitch + Pitch drift, Cutoff + Resonance, Fade in + Fade out...) that are always shown side
+/// One control, or two dependent ones (Pitch + Pitch drift, Cutoff + Resonance, Fade in + Fade out...) that are always shown side
 /// by side in one rounded group with a chain link between them: the second one depends on the first.
-/// The pair never wraps apart inside a wrapping container because it is a single element.
+/// A single control gets the same frame, so that every group has the same gap. The pair never wraps apart inside a wrapping container because it is a single element.
 /// </summary>
 [ContentProperty(nameof(Primary))]
 public sealed class KnobPair : Control
@@ -60,20 +60,22 @@ public sealed class KnobPair : Control
         if (Primary is not null)
             Add(grid, Primary, 0);
 
-        var link = new SymbolIcon
-        {
-            Symbol = SymbolRegular.Link24,
-            FontSize = 16,
-            Foreground = new SolidColorBrush(Color.FromRgb(0x8F, 0x8D, 0xB0)),
-            Margin = new Thickness(8, 0, 8, 0),
-            VerticalAlignment = VerticalAlignment.Center,
-            ToolTip = LinkToolTip
-        };
-        Grid.SetColumn(link, 1);
-        grid.Children.Add(link);
-
         if (Secondary is not null)
+        {
+            var link = new SymbolIcon
+            {
+                Symbol = SymbolRegular.Link24,
+                FontSize = 16,
+                Foreground = new SolidColorBrush(Color.FromRgb(0x8F, 0x8D, 0xB0)),
+                Margin = new Thickness(8, 0, 8, 0),
+                VerticalAlignment = VerticalAlignment.Center,
+                ToolTip = LinkToolTip
+            };
+            Grid.SetColumn(link, 1);
+            grid.Children.Add(link);
+
             Add(grid, Secondary, 2);
+        }
 
         _root.Child = grid;
         InvalidateMeasure();

@@ -6,37 +6,34 @@
     HorizontalAlignment="Left">
     <Grid>
         <Grid.RowDefinitions>
-            <RowDefinition x:Name="CurveRow" Height="Auto" />
+            <RowDefinition x:Name="CurveRow" Height="0" />
             <RowDefinition Height="Auto" />
         </Grid.RowDefinitions>
 
-        <!--  Knob mode: the curve of the change sits above the knob, 12 px over its top (50 %) anchor  -->
+        <!--  Knob mode: the curve picker floats over the top of the knob (it takes no room) and shows for 5 s after a change or on hover  -->
         <Grid
             x:Name="KnobArea"
             Grid.Row="0"
             Grid.RowSpan="2"
-            Width="161">
-            <Grid.RowDefinitions>
-                <RowDefinition Height="27" />
-                <RowDefinition Height="12" />
-                <RowDefinition Height="Auto" />
-            </Grid.RowDefinitions>
+            Width="161"
+            Background="Transparent"
+            MouseEnter="OnAreaMouseChanged"
+            MouseLeave="OnAreaMouseChanged">
             <local:TransitionFunctionDropdown
                 x:Name="KnobCurve"
-                Grid.Row="0"
+                Panel.ZIndex="2"
                 Width="48"
                 Height="27"
                 HorizontalAlignment="Center"
-                VerticalAlignment="Center"
+                VerticalAlignment="Top"
+                Visibility="Collapsed"
                 Value="{Binding Easing, RelativeSource={RelativeSource AncestorType=local:RangeParam}, Mode=TwoWay}" />
             <local:Knob
                 x:Name="RangeKnob"
-                Grid.Row="2"
                 HorizontalAlignment="Center" />
             <!--  Exact value of a handle (right click on the knob); floats over the knob, so the layout does not move  -->
             <TextBox
                 x:Name="Editor"
-                Grid.Row="2"
                 Width="76"
                 Height="22"
                 MinHeight="0"

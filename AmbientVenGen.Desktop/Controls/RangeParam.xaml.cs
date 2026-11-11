@@ -52,12 +52,24 @@ public partial class RangeParam : UserControl
     public static readonly DependencyProperty UseKnobsProperty = DependencyProperty.Register(
         nameof(UseKnobs), typeof(bool), typeof(RangeParam), new PropertyMetadata(true, OnChanged));
 
+    private static readonly TimeSpan CurveVisibleFor = TimeSpan.FromSeconds(5);
+
+    private readonly System.Windows.Threading.DispatcherTimer _curveTimer;
+    private bool _curveRecent;
     private bool _syncing;
     private int _editHandle;
 
     public RangeParam()
     {
         InitializeComponent();
+
+        _curveTimer = new System.Windows.Threading.DispatcherTimer { Interval = CurveVisibleFor };
+        _curveTimer.Tick += (_, _) =>
+        {
+            _curveTimer.Stop();
+            _curveRecent = false;
+            Sync();
+        };
 
         RangeKnob.ValueChanged += OnKnobValueChanged;
         RangeKnob.ValueEndChanged += OnKnobEndChanged;
@@ -90,6 +102,8 @@ public partial class RangeParam : UserControl
         if (_syncing)
             return;
 
+        ShowCurveTemporarily();
+
         bool wasRange = IsRange;
         SetCurrentValue(StartProperty, value);
 
@@ -100,9 +114,22 @@ public partial class RangeParam : UserControl
 
     private void OnKnobEndChanged(double value)
     {
-        if (!_syncing && AllowRange)
-            SetCurrentValue(EndProperty, value);
+        if (_syncing || !AllowRange)
+            return;
+
+        ShowCurveTemporarily();
+        SetCurrentValue(EndProperty, value);
     }
+
+    // The curve picker is hidden by default: it shows for 5 s after the value changes and while the mouse is over the knob.
+    private void ShowCurveTemporarily()
+    {
+        _curveRecent = true;
+        _curveTimer.Stop();
+        _curveTimer.Start();
+    }
+
+    private void OnAreaMouseChanged(object sender, MouseEventArgs e) => Sync();
 
     // ------------------------------------------------------------------ slider mode switch
 
@@ -150,7 +177,9 @@ public partial class RangeParam : UserControl
 
             // The curve's place above the knob is always reserved, so that nothing jumps when the second value appears.
             KnobArea.Visibility = knob ? Visibility.Visible : Visibility.Collapsed;
-            KnobCurve.Visibility = range || !AllowRange ? Visibility.Visible : Visibility.Hidden;
+            KnobCurve.Visibility = (range || !AllowRange) && (_curveRecent || KnobArea.IsMouseOver || KnobCurve.IsKeyboardFocusWithin)
+                ? Visibility.Visible
+                : Visibility.Collapsed;
 
             SliderPanel.Visibility = knob ? Visibility.Collapsed : Visibility.Visible;
             RangeCheck.Visibility = AllowRange ? Visibility.Visible : Visibility.Collapsed;
@@ -212,6 +241,7 @@ public partial class RangeParam : UserControl
             return;
 
         typed = NumberText.Snap(typed, Step, Minimum, Maximum);
+        ShowCurveTemporarily();
 
         bool wasRange = IsRange;
 
