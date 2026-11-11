@@ -1,4 +1,4 @@
-﻿namespace AmbientVenGen.Core.Audio;
+namespace AmbientVenGen.Core.Audio;
 
 /// <summary>
 /// Extreme time stretching (the "Paulstretch" method): the recording is cut into long overlapping windows, only the
@@ -33,8 +33,11 @@ public static class PaulStretch
         var left = new float[outFrames];
         var right = new float[outFrames];
 
+        int half = window / 2;
+        int frames = outFrames / half + 1;
+
         // progress: all the windows of both channels
-        long total = 2L * (outFrames / (window / 2) + 1);
+        long total = 2L * frames;
         long done = 0;
 
         void Step()
@@ -45,9 +48,36 @@ public static class PaulStretch
                 progress?.Invoke(Math.Min(1.0, (double)now / total));
         }
 
-        Parallel.Invoke(
-            () => Run(input.Left, used, left, window, effective, 0x1234567u, token, Step),
-            () => Run(input.Right, used, right, window, effective, 0x7654321u, token, Step));
+        // Window f covers [f*half, f*half + 2*half): it overlaps only its neighbours f-1 and f+1. So all the even windows
+        // are independent of each other and are processed in parallel (both channels in each), then all the odd ones.
+        // No locks and no extra buffers are needed.
+        var shape = MakeShape(window);
+        var fft = new Fft(window);
+        double step = half / effective;     // how far the reading position moves for every window
+        var options = new ParallelOptions { CancellationToken = token, MaxDegreeOfParallelism = Environment.ProcessorCount };
+
+        for (int parity = 0; parity < 2; parity++)
+        {
+            int count = (frames - parity + 1) / 2;
+
+            Parallel.For(
+                0,
+                count,
+                options,
+                () => new Scratch(window),
+                (index, _, scratch) =>
+                {
+                    int frame = parity + 2 * index;
+                    int start = (int)(frame * step);
+
+                    RunWindow(input.Left, used, left, scratch, fft, shape, frame, start, half, 0x1234567u);
+                    Step();
+                    RunWindow(input.Right, used, right, scratch, fft, shape, frame, start, half, 0x7654321u);
+                    Step();
+                    return scratch;
+                },
+                _ => { });
+        }
 
         token.ThrowIfCancellationRequested();
 
@@ -61,12 +91,20 @@ public static class PaulStretch
         return new DecodedSample(left, right);
     }
 
-    private static void Run(float[] source, int used, float[] output, int window, double stretch, uint seed, CancellationToken token, Action stepAction)
+    private sealed class Scratch
     {
-        int half = window / 2;
-        var fft = new Fft(window);
-        var re = new float[window];
-        var im = new float[window];
+        public readonly float[] Re;
+        public readonly float[] Im;
+
+        public Scratch(int window)
+        {
+            Re = new float[window];
+            Im = new float[window];
+        }
+    }
+
+    private static float[] MakeShape(int window)
+    {
         var shape = new float[window];
 
         for (int i = 0; i < window; i++)
@@ -75,57 +113,65 @@ public static class PaulStretch
             shape[i] = (float)Math.Pow(Math.Max(0.0, 1.0 - x * x), 1.25);
         }
 
-        uint state = seed;
-        double step = half / stretch;       // how far the reading position moves for every window
-        int frames = output.Length / half + 1;
+        return shape;
+    }
 
-        for (int frame = 0; frame < frames; frame++)
+    // One window: cut, FFT, random phases (a different sequence for every window, so the result does not depend on the
+    // order or on the number of threads), inverse FFT, overlap-add.
+    private static void RunWindow(float[] source, int used, float[] output, Scratch scratch, Fft fft, float[] shape,
+        int frame, int start, int half, uint seed)
+    {
+        int window = shape.Length;
+        float[] re = scratch.Re;
+        float[] im = scratch.Im;
+
+        uint state = seed ^ ((uint)frame * 2654435761u);
+        if (state == 0)
+            state = 0x9E3779B9u;
+        for (int warm = 0; warm < 3; warm++)
         {
-            if ((frame & 7) == 0)
-                token.ThrowIfCancellationRequested();
-
-            stepAction();
-
-            int start = (int)(frame * step);
-
-            for (int i = 0; i < window; i++)
-            {
-                int index = start + i;
-                re[i] = index < used ? source[index] * shape[i] : 0f;
-                im[i] = 0f;
-            }
-
-            fft.Transform(re, im, inverse: false);
-
-            // Keep the magnitudes, give every bin a random phase (symmetric, so that the result is real).
-            for (int k = 0; k <= half; k++)
-            {
-                float magnitude = MathF.Sqrt(re[k] * re[k] + im[k] * im[k]);
-
-                if (k == 0 || k == half)
-                {
-                    re[k] = magnitude;
-                    im[k] = 0f;
-                    continue;
-                }
-
-                state ^= state << 13;
-                state ^= state >> 17;
-                state ^= state << 5;
-                float phase = (state & 0xFFFFFF) / 16777216f * MathF.Tau;
-
-                re[k] = magnitude * MathF.Cos(phase);
-                im[k] = magnitude * MathF.Sin(phase);
-                re[window - k] = re[k];
-                im[window - k] = -im[k];
-            }
-
-            fft.Transform(re, im, inverse: true);
-
-            int write = frame * half;
-            for (int i = 0; i < window && write + i < output.Length; i++)
-                output[write + i] += re[i] * shape[i];
+            state ^= state << 13;
+            state ^= state >> 17;
+            state ^= state << 5;
         }
+
+        for (int i = 0; i < window; i++)
+        {
+            int index = start + i;
+            re[i] = index < used ? source[index] * shape[i] : 0f;
+            im[i] = 0f;
+        }
+
+        fft.Transform(re, im, inverse: false);
+
+        // Keep the magnitudes, give every bin a random phase (symmetric, so that the result is real).
+        for (int k = 0; k <= half; k++)
+        {
+            float magnitude = MathF.Sqrt(re[k] * re[k] + im[k] * im[k]);
+
+            if (k == 0 || k == half)
+            {
+                re[k] = magnitude;
+                im[k] = 0f;
+                continue;
+            }
+
+            state ^= state << 13;
+            state ^= state >> 17;
+            state ^= state << 5;
+            float phase = (state & 0xFFFFFF) / 16777216f * MathF.Tau;
+
+            re[k] = magnitude * MathF.Cos(phase);
+            im[k] = magnitude * MathF.Sin(phase);
+            re[window - k] = re[k];
+            im[window - k] = -im[k];
+        }
+
+        fft.Transform(re, im, inverse: true);
+
+        int write = frame * half;
+        for (int i = 0; i < window && write + i < output.Length; i++)
+            output[write + i] += re[i] * shape[i];
     }
 
     // Reads the sound "ratio" times faster (a higher pitch, a shorter sound), with a cubic interpolation.
@@ -134,8 +180,13 @@ public static class PaulStretch
         int length = Math.Max(2, (int)(data.Length / ratio));
         var result = new float[length];
 
-        for (int i = 0; i < length; i++)
+        const int Block = 1 << 16;
+        Parallel.For(0, (length + Block - 1) / Block, block =>
         {
+            int end = Math.Min(length, (block + 1) * Block);
+
+            for (int i = block * Block; i < end; i++)
+            {
             double position = i * ratio;
             int index = (int)position;
             float t = (float)(position - index);
@@ -146,7 +197,8 @@ public static class PaulStretch
             float p3 = data[Math.Min(index + 2, data.Length - 1)];
 
             result[i] = p1 + 0.5f * t * (p2 - p0 + t * (2f * p0 - 5f * p1 + 4f * p2 - p3 + t * (3f * (p1 - p2) + p3 - p0)));
-        }
+            }
+        });
 
         return result;
     }
