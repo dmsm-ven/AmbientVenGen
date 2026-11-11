@@ -60,8 +60,13 @@ public sealed class KnobPair : Control
 
         var grid = new Grid();
         grid.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
-        grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(LinkWidth) });
-        grid.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
+
+        // The link column exists only for a real pair: a single control must not get the 22 px of empty space.
+        if (Secondary is not null)
+        {
+            grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(LinkWidth) });
+            grid.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
+        }
 
         if (Primary is not null)
             Add(grid, Primary, 0);
