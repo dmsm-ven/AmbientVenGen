@@ -8,7 +8,7 @@ namespace AmbientVenGen.Desktop.Views;
 public partial class CommonTagWindow : FluentWindow
 {
     /// <summary>The chosen tag; empty when the window was skipped.</summary>
-    public string Tag { get; private set; } = string.Empty;
+    public string SelectedTag { get; private set; } = string.Empty;
 
     public CommonTagWindow(int count, IEnumerable<string> existingTags)
     {
@@ -31,7 +31,7 @@ public partial class CommonTagWindow : FluentWindow
             window.Owner = owner;
 
         window.ShowDialog();
-        return window.Tag;
+        return window.SelectedTag;
     }
 
     private bool _finished;
@@ -42,7 +42,7 @@ public partial class CommonTagWindow : FluentWindow
             return;
 
         _finished = true;
-        Tag = tag;
+        SelectedTag = tag;
         Close();
     }
 

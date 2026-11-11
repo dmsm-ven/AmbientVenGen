@@ -3,7 +3,7 @@ using AmbientVenGen.Core.Export;
 using NAudio.Wave;
 using System.IO;
 
-namespace AmbientVenGen.Desktop.Audio;
+namespace AmbientVenGen.Desktop.Services.Audio;
 
 /// <summary>
 /// Export to a file. Rendering itself is in Core (<see cref="ProjectRenderer"/>);

@@ -1,9 +1,57 @@
 <ResourceDictionary
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-    xmlns:controls="clr-namespace:AmbientVenGen.Desktop.Controls">
+    xmlns:controls="clr-namespace:AmbientVenGen.Desktop.Controls"
+    xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml">
 
     <!--  Look of custom controls (templates). Generic styles live in Styles.xaml.  -->
 
     <!--  The Knob draws itself (see Controls/Knob.cs), so it needs no template here.  -->
+
+    <!--
+        KnobPair: a framed group with one or two controls. A pair is exactly as wide as two single groups side by side:
+        the link column (22 px) replaces two paddings (6), two borders (1) and the 8 px gap (margins 4 + 4) of neighbours.
+    -->
+    <Style TargetType="controls:KnobPair">
+        <Setter Property="Focusable" Value="False" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="controls:KnobPair">
+                    <Border
+                        Padding="6,4,6,2"
+                        Background="#14FFFFFF"
+                        BorderBrush="#408F8DB0"
+                        BorderThickness="1"
+                        CornerRadius="5">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto" />
+                                <ColumnDefinition Width="Auto" />
+                                <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
+                            <ContentPresenter Content="{TemplateBinding Primary}" />
+                            <Border
+                                x:Name="Link"
+                                Grid.Column="1"
+                                Width="22"
+                                ToolTip="{TemplateBinding LinkToolTip}">
+                                <ui:SymbolIcon
+                                    HorizontalAlignment="Center"
+                                    VerticalAlignment="Center"
+                                    FontSize="14"
+                                    Foreground="#8F8DB0"
+                                    Symbol="Link24" />
+                            </Border>
+                            <ContentPresenter Grid.Column="2" Content="{TemplateBinding Secondary}" />
+                        </Grid>
+                    </Border>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="Secondary" Value="{x:Null}">
+                            <Setter TargetName="Link" Property="Visibility" Value="Collapsed" />
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
 </ResourceDictionary>

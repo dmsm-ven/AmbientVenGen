@@ -1,5 +1,5 @@
 using AmbientVenGen.Core.Projects;
-using AmbientVenGen.Desktop.Audio;
+using AmbientVenGen.Desktop.Services.Audio;
 using AmbientVenGen.Desktop.DataAccess.Repositories;
 using AmbientVenGen.Desktop.Services;
 using AmbientVenGen.Desktop.ViewModels;

@@ -524,7 +524,7 @@
                                                 Margin="4,0,4,6"
                                                 LinkToolTip="Pitch drift">
                                                 <controls:KnobPair.Style>
-                                                    <Style TargetType="controls:KnobPair">
+                                                    <Style BasedOn="{StaticResource {x:Type controls:KnobPair}}" TargetType="controls:KnobPair">
                                                         <Style.Triggers>
                                                             <DataTrigger Binding="{Binding Type}" Value="Noise">
                                                                 <Setter Property="Visibility" Value="Collapsed" />
@@ -562,11 +562,6 @@
                                             <controls:KnobPair
                                                 Margin="4,0,4,6"
                                                 LinkToolTip="Pan drift">
-                                                <controls:KnobPair.Style>
-                                                    <Style TargetType="controls:KnobPair">
-                                                        <Style.Triggers />
-                                                    </Style>
-                                                </controls:KnobPair.Style>
                                                 <controls:KnobPair.Primary>
                                                     <controls:LabeledSlider
                                                         Format="{}{0:+0.00;-0.00;0.00}"
@@ -593,11 +588,6 @@
                                             <controls:KnobPair
                                                 Margin="4,0,4,6"
                                                 LinkToolTip="Resonance">
-                                                <controls:KnobPair.Style>
-                                                    <Style TargetType="controls:KnobPair">
-                                                        <Style.Triggers />
-                                                    </Style>
-                                                </controls:KnobPair.Style>
                                                 <controls:KnobPair.Primary>
                                                     <controls:LabeledSlider
                                                         Format="{}{0:0} Hz"
@@ -625,11 +615,6 @@
                                             <controls:KnobPair
                                                 Margin="4,0,4,6"
                                                 LinkToolTip="Feedback">
-                                                <controls:KnobPair.Style>
-                                                    <Style TargetType="controls:KnobPair">
-                                                        <Style.Triggers />
-                                                    </Style>
-                                                </controls:KnobPair.Style>
                                                 <controls:KnobPair.Primary>
                                                     <controls:LabeledSlider
                                                         Format="{}{0:0.00} s"

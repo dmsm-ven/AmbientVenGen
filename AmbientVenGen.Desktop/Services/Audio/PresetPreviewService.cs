@@ -1,7 +1,7 @@
-﻿using NAudio.Wave;
+using NAudio.Wave;
 using NAudio.Wave.SampleProviders;
 
-namespace AmbientVenGen.Desktop.Audio;
+namespace AmbientVenGen.Desktop.Services.Audio;
 
 /// <summary>
 /// Plays one library file at a time, for listening before use. Independent of the project playback.

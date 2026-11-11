@@ -3,7 +3,7 @@ using AmbientVenGen.Core.Composition;
 using NAudio.Wave;
 using NAudio.Wave.SampleProviders;
 
-namespace AmbientVenGen.Desktop.Audio;
+namespace AmbientVenGen.Desktop.Services.Audio;
 
 public sealed class AudioPlaybackService : IDisposable
 {
