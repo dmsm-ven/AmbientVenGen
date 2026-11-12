@@ -10,17 +10,30 @@ namespace AmbientVenGen.Desktop.Controls;
 /// <summary>The time ruler and its tick steps.</summary>
 public sealed partial class TimelineControl
 {
-    private void DrawRuler(DrawingContext dc, double width)
+    internal void DrawRuler(DrawingContext dc, double width, bool bottom = false)
+    {
+        DrawRulerCore(dc, width, bottom);
+    }
+
+    private void DrawRulerCore(DrawingContext dc, double width, bool bottom)
     {
         dc.DrawRectangle(BrushOf(Color.FromArgb(0x58, 0x0C, 0x0C, 0x12)), null, new Rect(0, 0, width, RulerHeight));
 
+        // The top ruler has its separator line at the bottom and its ticks grow up from it; the bottom copy is mirrored.
+        double lineY = bottom ? 0.5 : RulerHeight - 0.5;
+        double tickBase = bottom ? 1 : RulerHeight - 1;
+        double sign = bottom ? 1 : -1;
+
         dc.DrawLine(
             new Pen(BrushOf(Color.FromArgb(0x30, 0xFF, 0xFF, 0xFF)), 1),
-            new Point(0, RulerHeight - 0.5),
-            new Point(width, RulerHeight - 0.5));
+            new Point(0, lineY),
+            new Point(width, lineY));
 
-        FormattedText caption = MakeText("LAYERS", 10, Color.FromArgb(0x80, 0xC9, 0xC8, 0xD6), bold: true);
-        dc.DrawText(caption, new Point(20, (RulerHeight - caption.Height) / 2.0));
+        if (!bottom)
+        {
+            FormattedText caption = MakeText("LAYERS", 10, Color.FromArgb(0x80, 0xC9, 0xC8, 0xD6), bold: true);
+            dc.DrawText(caption, new Point(20, (RulerHeight - caption.Height) / 2.0));
+        }
 
         GetTicks(out double major, out double minor, out int divisions);
 
@@ -40,14 +53,14 @@ public sealed partial class TimelineControl
 
             if (isMajor)
             {
-                dc.DrawLine(majorPen, new Point(x, RulerHeight - 11), new Point(x, RulerHeight - 1));
+                dc.DrawLine(majorPen, new Point(x, tickBase), new Point(x, tickBase + sign * 8));
 
                 FormattedText label = MakeText(FormatTime(time), 10.5, Color.FromArgb(0xB8, 0xC9, 0xC8, 0xD6));
-                dc.DrawText(label, new Point(x + 4, 5));
+                dc.DrawText(label, new Point(x + 4, (RulerHeight - label.Height) / 2.0));
             }
             else if (minor * PixelsPerSecond >= 8)
             {
-                dc.DrawLine(minorPen, new Point(x, RulerHeight - 6), new Point(x, RulerHeight - 1));
+                dc.DrawLine(minorPen, new Point(x, tickBase), new Point(x, tickBase + sign * 5));
             }
         }
 

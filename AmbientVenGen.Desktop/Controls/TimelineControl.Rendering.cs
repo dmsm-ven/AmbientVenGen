@@ -23,6 +23,7 @@ public sealed partial class TimelineControl
         {
             _contentQueued = false;
             RenderContent();
+            ViewChanged?.Invoke();
         }));
     }
 
@@ -192,7 +193,7 @@ public sealed partial class TimelineControl
                 2,
                 2);
 
-            FormattedText name = MakeText(layer.Name, 13, Color.FromArgb(0xF0, 0xEC, 0xEC, 0xF2), bold: true, maxWidth: HeaderWidth - 96);
+            FormattedText name = MakeText(layer.Name, 13, Color.FromArgb(0xF0, 0xEC, 0xEC, 0xF2), bold: true, maxWidth: HeaderWidth - 124);
             dc.DrawText(name, new Point(20, top + LaneHeight / 2.0 - 17));
 
             string detail = layer.Type switch
@@ -201,7 +202,7 @@ public sealed partial class TimelineControl
                 LayerType.FieldRecord => layer.TypeLabel,
                 _ => $"{layer.TypeLabel} · {layer.PitchHz:0.#} Hz"
             };
-            FormattedText sub = MakeText(detail, 10.5, Color.FromArgb(0xA0, 0xC9, 0xC8, 0xD6), maxWidth: HeaderWidth - 96);
+            FormattedText sub = MakeText(detail, 10.5, Color.FromArgb(0xA0, 0xC9, 0xC8, 0xD6), maxWidth: HeaderWidth - 124);
             dc.DrawText(sub, new Point(20, top + LaneHeight / 2.0 + 2));
 
             dc.Pop();
@@ -230,6 +231,25 @@ public sealed partial class TimelineControl
 
             FormattedText m = MakeText("M", 11, text, bold: true);
             dc.DrawText(m, new Point(badge.Left + (badge.Width - m.Width) / 2.0, badge.Top + (badge.Height - m.Height) / 2.0));
+
+            // The solo button ("S"): lit on the layer that is the only one left audible.
+            bool soloOn = IsSoloActive && ReferenceEquals(layer, SelectedLayer);
+            bool soloHot = lane == _hoverLane && _hoverSolo;
+            Rect soloBadge = SoloRect(lane);
+            Color soloFill = soloOn
+                ? Color.FromArgb(soloHot ? (byte)0xFF : (byte)0xE0, 0x8F, 0xD1, 0x6A)
+                : Color.FromArgb(soloHot ? (byte)0x40 : (byte)0x16, 0xFF, 0xFF, 0xFF);
+            Color soloText = soloOn ? Color.FromRgb(0x10, 0x20, 0x08) : Color.FromArgb(0xB0, 0xC9, 0xC8, 0xD6);
+
+            dc.DrawRoundedRectangle(
+                BrushOf(soloFill),
+                new Pen(BrushOf(Color.FromArgb(soloHot ? (byte)0x80 : (byte)0x30, 0xFF, 0xFF, 0xFF)), 1),
+                soloBadge,
+                5,
+                5);
+
+            FormattedText sText = MakeText("S", 11, soloText, bold: true);
+            dc.DrawText(sText, new Point(soloBadge.Left + (soloBadge.Width - sText.Width) / 2.0, soloBadge.Top + (soloBadge.Height - sText.Height) / 2.0));
         }
 
         // Vertical line between the headers and the track.

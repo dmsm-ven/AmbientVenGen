@@ -100,11 +100,18 @@ public sealed partial class TimelineControl
                 Layer layer = project.Layers[lane];
                 int direction = ArrowAt(point, lane);
 
+                bool wasSelected = ReferenceEquals(SelectedLayer, layer);
                 SetCurrentValue(SelectedLayerProperty, layer);
 
                 if (MuteRect(lane).Contains(point))
                 {
                     layer.Muted = !layer.Muted;
+                }
+                else if (SoloRect(lane).Contains(point))
+                {
+                    // While the solo is on, a click on another layer only moves it (the selection did that already).
+                    if ((!IsSoloActive || wasSelected) && SoloCommand is { } solo && solo.CanExecute(null))
+                        solo.Execute(null);
                 }
                 else if (direction != 0)
                 {
@@ -234,11 +241,12 @@ public sealed partial class TimelineControl
         base.OnMouseLeave(e);
         SetAddHover(false);
 
-        if (_hoverLane != -1 || _hoverArrow != 0 || _hoverMute)
+        if (_hoverLane != -1 || _hoverArrow != 0 || _hoverMute || _hoverSolo)
         {
             _hoverLane = -1;
             _hoverArrow = 0;
             _hoverMute = false;
+            _hoverSolo = false;
             InvalidateContent();
         }
     }
@@ -250,6 +258,7 @@ public sealed partial class TimelineControl
         int lane = -1;
         int arrow = 0;
         bool mute = false;
+        bool soloHover = false;
 
         if (Project is { } project && point.X >= 0 && point.X < HeaderWidth && point.Y >= RulerHeight)
         {
@@ -260,14 +269,16 @@ public sealed partial class TimelineControl
                 lane = candidate;
                 arrow = ArrowAt(point, lane);
                 mute = MuteRect(lane).Contains(point);
+                soloHover = SoloRect(lane).Contains(point);
             }
         }
 
-        if (lane != _hoverLane || arrow != _hoverArrow || mute != _hoverMute)
+        if (lane != _hoverLane || arrow != _hoverArrow || mute != _hoverMute || soloHover != _hoverSolo)
         {
             _hoverLane = lane;
             _hoverArrow = arrow;
             _hoverMute = mute;
+            _hoverSolo = soloHover;
             InvalidateContent();
         }
     }
@@ -288,6 +299,17 @@ public sealed partial class TimelineControl
             ReleaseMouseCapture();
     }
 
+    // The bottom ruler (TimelineRuler) moves the playhead through these.
+    internal void BeginScrub(double x)
+    {
+        _mode = DragMode.Scrub;
+        ScrubTo(x);
+    }
+
+    internal void ContinueScrub(double x) => ScrubTo(x);
+
+    internal void EndScrub() => _mode = DragMode.None;
+
     private void ScrubTo(double x)
     {
         double time = Math.Clamp(XToTime(x), 0, Total);
@@ -306,7 +328,7 @@ public sealed partial class TimelineControl
 
         if (point.X < HeaderWidth)
         {
-            Cursor = _hoverArrow != 0 || _hoverMute || IsOverAddControl(point) ? Cursors.Hand : Cursors.Arrow;
+            Cursor = _hoverArrow != 0 || _hoverMute || _hoverSolo || IsOverAddControl(point) ? Cursors.Hand : Cursors.Arrow;
             return;
         }
 

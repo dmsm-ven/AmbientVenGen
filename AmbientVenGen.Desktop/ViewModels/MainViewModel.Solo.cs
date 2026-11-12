@@ -1,5 +1,6 @@
 using AmbientVenGen.Core.Composition;
 using CommunityToolkit.Mvvm.ComponentModel;
+using CommunityToolkit.Mvvm.Input;
 
 namespace AmbientVenGen.Desktop.ViewModels;
 
@@ -11,6 +12,9 @@ public partial class MainViewModel
 
     [ObservableProperty]
     private bool _isSoloActive;
+
+    [RelayCommand]
+    private void ToggleSolo() => IsSoloActive = !IsSoloActive;
 
     partial void OnIsSoloActiveChanged(bool value)
     {

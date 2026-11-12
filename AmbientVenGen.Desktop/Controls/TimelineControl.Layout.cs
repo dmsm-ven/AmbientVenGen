@@ -39,14 +39,21 @@ public sealed partial class TimelineControl
 
     // The mute button is at the right edge of the header; the reorder arrows (shown on hover) are next to it.
     private static Rect MuteRect(int lane) => new(
-        HeaderWidth - 36,
+        HeaderWidth - 62,
+        LaneTop(lane) + (LaneHeight - 20) / 2.0,
+        24,
+        20);
+
+    // "Mute all except this layer": right of the mute button, at the right edge of the header.
+    private static Rect SoloRect(int lane) => new(
+        HeaderWidth - 34,
         LaneTop(lane) + (LaneHeight - 20) / 2.0,
         24,
         20);
 
     // The two arrows (up and down): 24 px wide, one above the other, left of the mute button.
     private static Rect ArrowRect(int lane, int direction) => new(
-        HeaderWidth - 66,
+        HeaderWidth - 92,
         LaneTop(lane) + (LaneHeight - 30) / 2.0 + (direction > 0 ? 16 : 0),
         24,
         14);

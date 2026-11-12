@@ -14,6 +14,7 @@
                 <Grid.RowDefinitions>
                     <RowDefinition Height="Auto" />
                     <RowDefinition Height="*" />
+                    <RowDefinition Height="Auto" />
                 </Grid.RowDefinitions>
 
                 <!--  One compact line: title, transport buttons, reverb and track length  -->
@@ -104,12 +105,21 @@
                         NewLayerType="{Binding NewLayer.Type, Mode=OneWay}"
                         PlayheadSeconds="{Binding PlayheadSeconds}"
                         Project="{Binding Project}"
+                        IsSoloActive="{Binding IsSoloActive}"
                         SeekCommand="{Binding SeekCommand}"
+                        SoloCommand="{Binding ToggleSoloCommand}"
                         SelectedLayer="{Binding SelectedLayer, Mode=TwoWay}"
                         ShowSpectrogram="{Binding ShowSpectrogram}"
                         SpectrogramColor="{Binding Settings.SpectrogramColor}"
                         Spectrograms="{Binding Spectrograms}" />
                 </ScrollViewer>
+
+                <!--  The second ruler: always visible, even when the layers scroll  -->
+                <controls:TimelineRuler
+                    Grid.Row="2"
+                    Width="{Binding ActualWidth, ElementName=Timeline}"
+                    HorizontalAlignment="Left"
+                    Timeline="{Binding ElementName=Timeline}" />
             </Grid>
         </Border>
 </UserControl>

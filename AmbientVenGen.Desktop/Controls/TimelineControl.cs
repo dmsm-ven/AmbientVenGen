@@ -17,8 +17,8 @@ namespace AmbientVenGen.Desktop.Controls;
 /// </summary>
 public sealed partial class TimelineControl : FrameworkElement
 {
-    private const double HeaderWidth = 204;
-    private const double RulerHeight = 30;
+    private const double HeaderWidth = 230;
+    private const double RulerHeight = 22;
     private const double LaneHeight = 68;
     private const double LanePadding = 7;
     private const double RightPadding = 16;
@@ -75,6 +75,33 @@ public sealed partial class TimelineControl : FrameworkElement
         nameof(SpectrogramColor), typeof(Color), typeof(TimelineControl),
         new PropertyMetadata(Color.FromRgb(0x5B, 0x9B, 0xFF), (d, _) => ((TimelineControl)d).OnSpectrogramColorChanged()));
 
+    /// <summary>Command of the "solo" badge in a layer header (mute all except this layer).</summary>
+    public static readonly DependencyProperty SoloCommandProperty = DependencyProperty.Register(
+        nameof(SoloCommand), typeof(ICommand), typeof(TimelineControl), new PropertyMetadata(null));
+
+    /// <summary>True while "mute all except the selected layer" is on.</summary>
+    public static readonly DependencyProperty IsSoloActiveProperty = DependencyProperty.Register(
+        nameof(IsSoloActive), typeof(bool), typeof(TimelineControl),
+        new PropertyMetadata(false, (d, _) => ((TimelineControl)d).InvalidateContent()));
+
+    public ICommand? SoloCommand
+    {
+        get => (ICommand?)GetValue(SoloCommandProperty);
+        set => SetValue(SoloCommandProperty, value);
+    }
+
+    public bool IsSoloActive
+    {
+        get => (bool)GetValue(IsSoloActiveProperty);
+        set => SetValue(IsSoloActiveProperty, value);
+    }
+
+    /// <summary>Raised when the view or the playhead was redrawn (the bottom ruler follows it).</summary>
+    public event Action? ViewChanged;
+
+    /// <summary>Height of the ruler (the bottom copy of it is a <see cref="TimelineRuler"/>).</summary>
+    public static double RulerStripHeight => RulerHeight;
+
     private enum DragMode { None, Move, ResizeLeft, ResizeRight, FadeIn, FadeOut, Scrub }
 
     private enum HitZone { None, Body, LeftEdge, RightEdge, FadeInHandle, FadeOutHandle }
@@ -94,6 +121,7 @@ public sealed partial class TimelineControl : FrameworkElement
     private int _hoverLane = -1;
     private int _hoverArrow;
     private bool _hoverMute;
+    private bool _hoverSolo;
     private double _dragStartTime;
     private double _originalStart;
     private double _originalDuration;
