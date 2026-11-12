@@ -508,12 +508,10 @@ public partial class PresetLibraryViewModel : ObservableObject
 
         var preset = new FieldPreset
         {
-            Name = Path.GetFileNameWithoutExtension(path),
             FilePath = path,
             AddedAtUnix = DateTimeOffset.UtcNow.ToUnixTimeSeconds(),
             DurationSeconds = info.Duration.TotalSeconds,
-            SizeBytes = info.SizeBytes,
-            Extension = info.Extension
+            SizeBytes = info.SizeBytes
         };
 
         try

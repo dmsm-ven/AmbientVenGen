@@ -1,4 +1,4 @@
-﻿namespace AmbientVenGen.Desktop.DataAccess.Models;
+namespace AmbientVenGen.Desktop.DataAccess.Models;
 
 /// <summary>
 /// A field-recording preset: a reference to an audio/video file in the user's library.
@@ -7,17 +7,19 @@
 public sealed class FieldPreset
 {
     public long Id { get; set; }
-    public string Name { get; set; } = string.Empty;
     public string FilePath { get; set; } = string.Empty;
+
+    /// <summary>The file name without extension. Not stored: it is the end of <see cref="FilePath"/>.</summary>
+    public string Name => System.IO.Path.GetFileNameWithoutExtension(FilePath);
+
+    /// <summary>Lower-case extension with a dot, e.g. ".flac". Not stored: it is the end of <see cref="FilePath"/>.</summary>
+    public string Extension => System.IO.Path.GetExtension(FilePath).ToLowerInvariant();
 
     /// <summary>When the preset was added, in Unix seconds (UTC).</summary>
     public long AddedAtUnix { get; set; }
 
     public double DurationSeconds { get; set; }
     public long SizeBytes { get; set; }
-
-    /// <summary>Lower-case extension with a dot, e.g. ".flac".</summary>
-    public string Extension { get; set; } = string.Empty;
 
     /// <summary>How many times the preset was put into a project (Add new Layer / Replace in current Layer).</summary>
     public long ViewsCount { get; set; }
