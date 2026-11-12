@@ -17,6 +17,10 @@ public sealed partial class TimelineControl
 
     private void DrawRulerCore(DrawingContext dc, double width, bool bottom)
     {
+        // The bottom ruler can be rendered before it has its width (0 on the first pass).
+        if (width <= 0)
+            return;
+
         dc.DrawRectangle(BrushOf(Color.FromArgb(0x58, 0x0C, 0x0C, 0x12)), null, new Rect(0, 0, width, RulerHeight));
 
         // The top ruler has its separator line at the bottom and its ticks grow up from it; the bottom copy is mirrored.
@@ -40,7 +44,7 @@ public sealed partial class TimelineControl
         var majorPen = new Pen(BrushOf(Color.FromArgb(0x90, 0xC9, 0xC8, 0xD6)), 1);
         var minorPen = new Pen(BrushOf(Color.FromArgb(0x48, 0xC9, 0xC8, 0xD6)), 1);
 
-        dc.PushClip(new RectangleGeometry(new Rect(HeaderWidth, 0, width - HeaderWidth, RulerHeight)));
+        dc.PushClip(new RectangleGeometry(new Rect(HeaderWidth, 0, Math.Max(0, width - HeaderWidth), RulerHeight)));
 
         long first = (long)Math.Ceiling(_viewStart / minor);
         long last = (long)Math.Floor((_viewStart + _viewSpan) / minor);

@@ -43,6 +43,9 @@ public sealed class TimelineRuler : FrameworkElement
 
     protected override void OnRender(DrawingContext dc)
     {
+        if (ActualWidth <= 0)
+            return;
+
         // Transparent background: the whole strip takes the mouse, not only the ticks.
         dc.DrawRectangle(Brushes.Transparent, null, new Rect(0, 0, ActualWidth, ActualHeight));
         Timeline?.DrawRuler(dc, ActualWidth, bottom: true);
