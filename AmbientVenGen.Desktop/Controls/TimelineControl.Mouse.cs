@@ -46,14 +46,15 @@ public sealed partial class TimelineControl
         if (point.X < rect.Left - 3 || point.X > rect.Right + 3 || point.Y < rect.Top || point.Y > rect.Bottom)
             return (null, lane, HitZone.None);
 
-        if (rect.Width >= 24)
-        {
-            if (Math.Abs(point.X - rect.Left) <= EdgeGrab)
-                return (layer, lane, HitZone.LeftEdge);
+        // A narrow clip (a short recording on a long timeline) still has edges to resize it: the grab zone shrinks so
+        // that a third of the clip stays free in the middle for moving it.
+        double grab = rect.Width >= 24 ? EdgeGrab : Math.Max(2, rect.Width / 3.0);
 
-            if (Math.Abs(point.X - rect.Right) <= EdgeGrab)
-                return (layer, lane, HitZone.RightEdge);
-        }
+        if (Math.Abs(point.X - rect.Left) <= grab)
+            return (layer, lane, HitZone.LeftEdge);
+
+        if (Math.Abs(point.X - rect.Right) <= grab)
+            return (layer, lane, HitZone.RightEdge);
 
         return (layer, lane, HitZone.Body);
     }
