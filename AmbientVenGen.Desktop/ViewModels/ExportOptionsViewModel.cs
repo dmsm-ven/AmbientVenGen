@@ -34,19 +34,19 @@ public partial class ExportOptionsViewModel : ObservableObject
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(IsWav))]
     [NotifyPropertyChangedFor(nameof(IsMp3))]
-    private ExportFormat _format = ExportFormat.Wav;
+    private ExportFormat _format = ExportFormat.Mp3;
 
     [ObservableProperty]
     private WavSampleFormat _wavSampleFormat = WavSampleFormat.Pcm16;
 
     [ObservableProperty]
-    private int _mp3BitrateKbps = 192;
+    private int _mp3BitrateKbps = 320;
 
     [ObservableProperty]
-    private double _fadeInSeconds = 5;
+    private double _fadeInSeconds = 1;
 
     [ObservableProperty]
-    private double _fadeOutSeconds = 10;
+    private double _fadeOutSeconds = 3;
 
     /// <summary>The file ends where the last layer ends (the fade-out is counted to that moment).</summary>
     [ObservableProperty]

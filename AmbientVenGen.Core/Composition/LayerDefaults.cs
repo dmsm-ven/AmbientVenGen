@@ -126,6 +126,25 @@ public static class LayerDefaults
         layer.FadeOutSeconds = fade;
         layer.FadeEasing = Easing.Sine;
         layer.FadeOutEasing = fresh.FadeOutEasing;
+
+        // A recording is cleared to "as if it was played in a media player": the file itself, with nothing added.
+        if (layer.Type == LayerType.FieldRecord)
+        {
+            layer.LevelFrom = layer.LevelTo = 1.0;
+            layer.BrightnessFrom = layer.BrightnessTo = 1.0;
+            layer.ModulationFrom = layer.ModulationTo = 0.0;
+            layer.Pan = 0.0;
+            layer.PanDrift = 0.0;
+            layer.PitchDrift = 0.0;
+            layer.FilterCutoffHz = Layer.MaxCutoffHz;
+            layer.FilterResonance = 0.0;
+            layer.DelaySeconds = 0.0;
+            layer.DelayFeedback = 0.0;
+            layer.ReverbSend = 0.0;
+            layer.FadeInSeconds = 0.0;
+            layer.FadeOutSeconds = 0.0;
+            layer.LoopCrossfade = 0.0;
+        }
     }
 
     /// <summary>Creates a layer and lets the caller adjust it, to keep templates compact.</summary>

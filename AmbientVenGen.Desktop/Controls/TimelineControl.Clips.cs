@@ -217,8 +217,17 @@ public sealed partial class TimelineControl
         dc.DrawGeometry(null, new Pen(BrushOf(Color.FromArgb(0xE6, 0xFF, 0xFF, 0xFF)), 1.4), line);
     }
 
+    // A short layer has no fade handles on the timeline: they would take the clicks of its edges (the fades can still
+    // be set in the Selected Layer panel).
+    private const double MinFadeHandleSeconds = 6;
+
+    private static bool HasFadeHandles(Layer layer) => layer.DurationSeconds >= MinFadeHandleSeconds;
+
     private void DrawFadeHandles(DrawingContext dc, Layer layer, Rect rect, Color accent)
     {
+        if (!HasFadeHandles(layer))
+            return;
+
         var pen = new Pen(BrushOf(WithAlpha(accent, 0xFF)), 1.6);
         Brush fill = BrushOf(Color.FromArgb(0xF5, 0xFF, 0xFF, 0xFF));
 
