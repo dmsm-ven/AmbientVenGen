@@ -23,9 +23,13 @@
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto" />
             <RowDefinition Height="Auto" />
-            <RowDefinition Height="Auto" MinHeight="200" />
+            <!--
+                Both main sections are proportional (star), so the height of the top groups does not depend on their
+                content (switching the layer type hides the Recording group) - only the splitter changes it.
+            -->
+            <RowDefinition Height="5*" MinHeight="200" />
             <RowDefinition Height="6" />
-            <RowDefinition Height="*" MinHeight="220" />
+            <RowDefinition Height="4*" MinHeight="220" />
         </Grid.RowDefinitions>
 
         <!--  The header has its own, lighter solid color (the window itself is a darker translucent Mica).  -->
