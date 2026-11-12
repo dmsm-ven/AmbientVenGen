@@ -638,32 +638,51 @@ public partial class PresetLibraryViewModel : ObservableObject
         _ = CountUseAsync(item);
     }
 
+    private List<FieldPresetItem> _selection = [];
+
+    /// <summary>The rows selected in the table (the table allows several).</summary>
+    public void SetSelection(List<FieldPresetItem> items) => _selection = items;
+
     private bool CanDeletePreset() => SelectedPreset is not null;
 
     /// <summary>Removes the preset from the library. The file itself is not touched.</summary>
     [RelayCommand(CanExecute = nameof(CanDeletePreset))]
     private async Task DeletePresetAsync()
     {
-        FieldPresetItem? item = SelectedPreset;
-        if (item is null)
+        List<FieldPresetItem> items = _selection.Count > 0 ? [.. _selection] : SelectedPreset is { } one ? [one] : [];
+        if (items.Count == 0)
             return;
 
-        try
-        {
-            await _repository.DeleteAsync(item.Id);
-        }
-        catch (Exception ex)
-        {
-            _messageService.ShowError($"Cannot delete the preset:\n{ex.Message}");
+        if (items.Count > 1
+            && !_messageService.Confirm($"Remove {items.Count} recordings from the library?\nThe files themselves are not deleted.", "Remove", "Cancel"))
             return;
-        }
 
-        if (ReferenceEquals(item, _playingItem))
-            StopPreview();
+        var failed = new List<string>();
+
+        foreach (FieldPresetItem item in items)
+        {
+            try
+            {
+                await _repository.DeleteAsync(item.Id);
+            }
+            catch (Exception ex)
+            {
+                failed.Add($"{item.Name}: {ex.Message}");
+                continue;
+            }
+
+            if (ReferenceEquals(item, _playingItem))
+                StopPreview();
+
+            Presets.Remove(item);
+        }
 
         SelectedPreset = null;
-        Presets.Remove(item);
+        _selection = [];
         RebuildTagFilters();
+
+        if (failed.Count > 0)
+            _messageService.ShowError("Cannot delete:\n" + string.Join("\n", failed));
     }
 
     // Decoding happens on a background thread; the bitmap is drawn on the UI thread.

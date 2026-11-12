@@ -31,6 +31,10 @@ public partial class PresetLibraryWindow : FluentWindow
         PresetsGrid.ScrollIntoView(PresetsGrid.Items[0]);
     }
 
+    // Several rows can be selected (to remove them at once); the view model keeps the whole selection.
+    private void OnPresetsSelectionChanged(object sender, SelectionChangedEventArgs e) =>
+        ViewModel?.SetSelection(PresetsGrid.SelectedItems.OfType<FieldPresetItem>().ToList());
+
     private PresetLibraryViewModel? ViewModel => DataContext as PresetLibraryViewModel;
 
     // ---- tags

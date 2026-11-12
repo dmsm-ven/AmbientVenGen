@@ -64,4 +64,16 @@ public partial class MainViewModel
         IsSoloActive = false;
         _soloResetting = false;
     }
+
+    // Only one layer is audible (solo): when its end is reached the playback jumps back to its start, like a loop.
+    private void LoopSoloLayer()
+    {
+        if (!IsSoloActive || SelectedLayer is not { } layer)
+            return;
+
+        double end = Math.Min(layer.StartSeconds + layer.TotalSeconds, Project.DurationSeconds);
+
+        if (end - layer.StartSeconds > 0.2 && _playbackService.PositionSeconds >= end - 0.03)
+            _playbackService.Seek(layer.StartSeconds);
+    }
 }

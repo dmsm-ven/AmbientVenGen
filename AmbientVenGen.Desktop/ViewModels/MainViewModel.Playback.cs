@@ -102,7 +102,10 @@ public partial class MainViewModel
     private void OnTimerTick(object? sender, EventArgs e)
     {
         if (IsPlaying)
+        {
+            LoopSoloLayer();
             PlayheadSeconds = Math.Min(_playbackService.PositionSeconds, Project.DurationSeconds);
+        }
 
         _playbackService.Analyzer.TakePeaks(out float left, out float right, out float over);
 
