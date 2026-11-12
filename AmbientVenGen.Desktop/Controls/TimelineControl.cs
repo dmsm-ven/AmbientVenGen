@@ -183,9 +183,6 @@ public sealed partial class TimelineControl : FrameworkElement
         Focusable = true;
         FocusVisualStyle = null;
         ClipToBounds = true;
-        ToolTip = "Drag clips to move, drag edges to resize, drag the round handles to set fades.\n"
-                  + "Click the ruler to move the playhead. Ctrl+wheel: zoom. Shift+wheel: scroll. Del: remove layer.\n"
-                  + "Hover a layer name and use the arrows (or Alt+Up/Down) to change the order of layers.";
     }
 
     protected override int VisualChildrenCount => 3;

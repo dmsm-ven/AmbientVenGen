@@ -65,6 +65,17 @@ public sealed class TimelineRuler : FrameworkElement
         e.Handled = true;
     }
 
+    protected override void OnMouseWheel(MouseWheelEventArgs e)
+    {
+        base.OnMouseWheel(e);
+
+        if (Timeline is null)
+            return;
+
+        Timeline.NudgePlayhead(e.Delta, Keyboard.Modifiers.HasFlag(ModifierKeys.Alt));
+        e.Handled = true;
+    }
+
     protected override void OnMouseMove(MouseEventArgs e)
     {
         base.OnMouseMove(e);

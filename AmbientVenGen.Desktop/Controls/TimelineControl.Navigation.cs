@@ -47,6 +47,27 @@ public sealed partial class TimelineControl
             RenderPlayhead();
             e.Handled = true;
         }
+        else if (modifiers == ModifierKeys.None && e.GetPosition(this).X >= HeaderWidth)
+        {
+            // The wheel over the track moves the playhead (over the layer headers it still scrolls the layers).
+            NudgePlayhead(e.Delta);
+            e.Handled = true;
+        }
+        else if (modifiers == ModifierKeys.Alt)
+        {
+            NudgePlayhead(e.Delta, fine: true);
+            e.Handled = true;
+        }
+    }
+
+    /// <summary>One wheel notch = 1 s (Alt: 0.1 s); wheel up goes back, wheel down goes forward.</summary>
+    internal void NudgePlayhead(int delta, bool fine = false)
+    {
+        double step = fine ? 0.1 : 1.0;
+        double time = Math.Clamp(PlayheadSeconds + (delta > 0 ? -step : step), 0, Total);
+
+        if (SeekCommand is { } command && command.CanExecute(time))
+            command.Execute(time);
     }
 
     protected override void OnKeyDown(KeyEventArgs e)
