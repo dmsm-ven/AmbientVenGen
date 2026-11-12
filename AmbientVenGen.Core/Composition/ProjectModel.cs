@@ -25,6 +25,10 @@ public sealed partial class ProjectModel : ObservableObject
     [ObservableProperty]
     private double _reverbMix = 0.35;
 
+    /// <summary>0..1: how much of the reverb tail is shifted an octave up and fed back into the reverb.</summary>
+    [ObservableProperty]
+    private double _shimmer;
+
     public event Action? Changed;
 
     public ProjectModel()
@@ -35,13 +39,15 @@ public sealed partial class ProjectModel : ObservableObject
     partial void OnDurationSecondsChanged(double value) => RaiseChanged();
     partial void OnSeedChanged(int value) => RaiseChanged();
     partial void OnReverbMixChanged(double value) => RaiseChanged();
+    partial void OnShimmerChanged(double value) => RaiseChanged();
 
     public ProjectSpec ToSpec() => new(
         ProjectSpec.CurrentVersion,
         DurationSeconds,
         Seed,
         ReverbMix,
-        Layers.Select(layer => layer.ToSpec()).ToArray());
+        Layers.Select(layer => layer.ToSpec()).ToArray(),
+        Shimmer);
 
     /// <summary>
     /// Moves the layer up (negative offset) or down (positive) in the list; the order is the order of the
@@ -73,6 +79,7 @@ public sealed partial class ProjectModel : ObservableObject
             DurationSeconds = Math.Clamp(spec.DurationSeconds, 10, 7200);
             Seed = spec.Seed;
             ReverbMix = Math.Clamp(spec.ReverbMix, 0, 1);
+            Shimmer = Math.Clamp(spec.Shimmer, 0, 1);
 
             foreach (LayerSpec layerSpec in spec.Layers)
                 Layers.Add(Layer.FromSpec(layerSpec));

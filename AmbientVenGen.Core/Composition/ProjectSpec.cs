@@ -160,7 +160,8 @@ public sealed record ProjectSpec(
     double DurationSeconds,
     int Seed,
     double ReverbMix,
-    LayerSpec[] Layers)
+    LayerSpec[] Layers,
+    double Shimmer = 0.0)
 {
     public const int CurrentVersion = 1;
 

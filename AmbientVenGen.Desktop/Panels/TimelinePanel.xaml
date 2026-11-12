@@ -25,6 +25,7 @@
                         <ColumnDefinition Width="*" />
                         <ColumnDefinition Width="Auto" />
                         <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition Width="Auto" />
                     </Grid.ColumnDefinitions>
 
                     <ui:TextBlock
@@ -60,7 +61,7 @@
                             Text="Space (reverb)" />
                         <controls:HintIcon Margin="5,0,8,0" Text="{x:Static vm:HintTexts.Reverb}" />
                         <Slider
-                            Width="130"
+                            Width="110"
                             VerticalAlignment="Center"
                             Maximum="1"
                             Minimum="0"
@@ -75,9 +76,38 @@
                             Text="{Binding Project.ReverbMix, StringFormat={}{0:P0}}" />
                     </StackPanel>
 
-                    <!--  Track length: horizontal  -->
+                    <!--  Shimmer: the reverb tail shifted an octave up and fed back  -->
                     <StackPanel
                         Grid.Column="4"
+                        Margin="0,0,20,0"
+                        VerticalAlignment="Center"
+                        Orientation="Horizontal">
+                        <ui:TextBlock
+                            Margin="0"
+                            VerticalAlignment="Center"
+                            FontSize="12"
+                            Foreground="#C9C8D6"
+                            Text="Shimmer" />
+                        <controls:HintIcon Margin="5,0,8,0" Text="{x:Static vm:HintTexts.Shimmer}" />
+                        <Slider
+                            Width="110"
+                            VerticalAlignment="Center"
+                            Maximum="1"
+                            Minimum="0"
+                            SmallChange="0.01"
+                            Value="{Binding Project.Shimmer, Mode=TwoWay}" />
+                        <ui:TextBlock
+                            Width="36"
+                            Margin="8,0,0,0"
+                            VerticalAlignment="Center"
+                            FontSize="12"
+                            Foreground="#B7AFE9"
+                            Text="{Binding Project.Shimmer, StringFormat={}{0:P0}}" />
+                    </StackPanel>
+
+                    <!--  Track length: horizontal  -->
+                    <StackPanel
+                        Grid.Column="5"
                         VerticalAlignment="Center"
                         Orientation="Horizontal">
                         <ui:TextBlock
