@@ -26,7 +26,7 @@ public sealed partial class TimelineControl
         Layer layer = project.Layers[lane];
         Rect rect = ClipRect(layer, lane);
 
-        if (ReferenceEquals(layer, SelectedLayer))
+        if (ReferenceEquals(layer, SelectedLayer) && HasFadeHandles(layer))
         {
             if (Distance(point, FadeInHandle(layer, rect)) <= HandleRadius + 4)
                 return (layer, lane, HitZone.FadeInHandle);
