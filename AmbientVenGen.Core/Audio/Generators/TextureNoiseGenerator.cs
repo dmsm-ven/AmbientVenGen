@@ -4,7 +4,7 @@ namespace AmbientVenGen.Core.Audio;
 
 /// <summary>
 /// Noise textures made of events (clicks, drops, dropouts) and slow movement (gusts, tuning drift) on top of filtered
-/// noise: Crackle, Vinyl, RadioStatic, Wind, Rain, Ocean, ElectricalHum, TapeHiss, SpaceRumble, Geiger, IceSinging, HighVoltage, EnergyShield, CrtWhine, PlasmaArc, GasBurner, Gong and WaterDrop. Every channel has its own random stream, so the left and the right
+/// noise: Crackle, Vinyl, RadioStatic, Wind, Rain, Ocean, ElectricalHum, TapeHiss, SpaceRumble, Geiger, IceSinging, HighVoltage, EnergyShield, CrtWhine, PlasmaArc and Gong. Every channel has its own random stream, so the left and the right
 /// side are different (wide). Brightness sets the tone, Modulation the density or the amount of movement.
 /// Everything is random-driven from the seed, so the sound is the same every time and can have any length.
 /// </summary>
@@ -51,9 +51,7 @@ internal sealed class TextureNoiseGenerator : LayerGenerator
         NoiseType.EnergyShield => new ShieldChannel(seed),
         NoiseType.CrtWhine => new WhineChannel(seed),
         NoiseType.PlasmaArc => new ArcChannel(seed),
-        NoiseType.GasBurner => new GasBurnerChannel(seed),
         NoiseType.Gong => new GongChannel(seed),
-        NoiseType.WaterDrop => new WaterDropChannel(seed),
         _ => new CrackleChannel(seed)
     };
 
@@ -900,44 +898,6 @@ internal sealed class TextureNoiseGenerator : LayerGenerator
     }
 
     /// <summary>
-    /// Gas burner: a steady blue-flame roar (band-passed noise with a slow flutter and fast flamelet wobble), a low
-    /// rumble under it, a hiss above and now and then a soft "whoomf". Brightness tunes the roar, Modulation the flutter.
-    /// </summary>
-    private sealed class GasBurnerChannel : Channel
-    {
-        private Rng _rng;
-        private Svf _roar = new(900f, 0.8f), _rumble = new(110f, 0.9f), _hiss = new(5500f, 0.7f), _wobble = new(11f, 0.7f);
-        private Wander _flutter, _gust;
-        private Clicker _whoomf;
-        private int _counter;
-
-        public GasBurnerChannel(uint seed)
-        {
-            _rng = new Rng(seed);
-            _flutter = new Wander(seed ^ 0x9E3779B9u);
-            _gust = new Wander(seed ^ 0x85EBCA6Bu);
-        }
-
-        public override float Next(float brightness, float modulation)
-        {
-            if ((_counter++ & 31) == 0)
-                _roar.Set(380f + 1900f * brightness * (0.85f + 0.3f * _gust.Next(2.5f)), 0.9f);
-
-            _wobble.Process(_rng.Signed(), out float slow, out _, out _);
-            float flutter = 1f + (0.35f * (_flutter.Next(0.6f) - 0.5f) + 5f * slow) * (0.3f + 0.9f * modulation);
-
-            _roar.Process(_rng.Signed(), out _, out float band, out _);
-            _rumble.Process(_rng.Signed(), out float low, out _, out _);
-            _hiss.Process(_rng.Signed(), out _, out _, out float high);
-
-            if (_rng.Event(0.05f + 0.5f * modulation))
-                _whoomf.Trigger(0.8f, 140f + 120f * _rng.Next01(), 0.8f, 0.09f);
-
-            return band * 1.5f * flutter + low * 1.6f + high * 0.12f * (0.3f + brightness) + _whoomf.Next(_rng.Signed()) * 3f;
-        }
-    }
-
-    /// <summary>
     /// Gong: now and then a stroke. A stroke is a set of inharmonic partials that ring for seconds, every one slowly
     /// beating, started by a soft thud. Brightness sets the pitch and how much the upper partials ring; Modulation how
     /// often the gong is struck. Strokes can overlap.
@@ -1036,80 +996,6 @@ internal sealed class TextureNoiseGenerator : LayerGenerator
                     _active = false;
 
                 return sum * _attack * 0.35f;
-            }
-        }
-    }
-
-    /// <summary>
-    /// A drop falling from a height into water: a tiny impact click, then the "bloop" of the air bubble it traps (a
-    /// short tone that rises in pitch while it fades), often a smaller second bubble and a quiet ripple. Brightness sets the
-    /// pitch (a small or a big drop); Modulation how often drops fall.
-    /// </summary>
-    private sealed class WaterDropChannel : Channel
-    {
-        private Rng _rng;
-        private Bubble _main, _second;
-        private Clicker _impact, _ripple;
-        private int _secondDelay;
-        private float _secondHz, _secondGain;
-
-        public WaterDropChannel(uint seed) => _rng = new Rng(seed);
-
-        public override float Next(float brightness, float modulation)
-        {
-            if (_rng.Event(0.25f + 3.5f * modulation))
-            {
-                float hz = (300f + 1100f * brightness) * (0.8f + 0.4f * _rng.Next01());
-                float loudness = 0.5f + 0.5f * _rng.Next01();
-
-                _main.Trigger(loudness, hz, 0.07f + 0.05f * (1f - brightness));
-                _impact.Trigger(0.5f * loudness, 2200f + 2500f * brightness, 1.2f, 0.0012f);
-                _ripple.Trigger(0.12f * loudness, 1600f + 1500f * brightness, 1f, 0.18f);
-
-                if (_rng.Next01() < 0.55f)
-                {
-                    _secondDelay = (int)((0.015f + 0.07f * _rng.Next01()) * Sr);
-                    _secondHz = hz * (1.4f + 0.5f * _rng.Next01());
-                    _secondGain = loudness * (0.25f + 0.3f * _rng.Next01());
-                }
-            }
-
-            if (_secondDelay > 0 && --_secondDelay == 0)
-                _second.Trigger(_secondGain, _secondHz, 0.04f);
-
-            return (_main.Next() + _second.Next()) * 1.4f
-                + (_impact.Next(_rng.Signed()) + _ripple.Next(_rng.Signed())) * 1.5f;
-        }
-
-        /// <summary>The bubble: a sine whose pitch climbs quickly toward 2.2x the start while the tone dies out.</summary>
-        private struct Bubble
-        {
-            private float _hz, _amplitude, _decay, _time, _attack, _phase;
-
-            public void Trigger(float amplitude, float hz, float decaySeconds)
-            {
-                _amplitude = amplitude;
-                _hz = hz;
-                _decay = MathF.Exp(-1f / (Math.Max(decaySeconds, 5e-3f) * Sr));
-                _time = 0f;
-                _attack = 0f;
-            }
-
-            public float Next()
-            {
-                if (_amplitude < 1e-4f)
-                    return 0f;
-
-                _time += 1f / Sr;
-                _amplitude *= _decay;
-                _attack = Math.Min(1f, _attack + 1f / (0.0012f * Sr));
-
-                float hz = _hz * (1f + 1.2f * (1f - MathF.Exp(-_time / 0.035f)));
-                _phase += hz / Sr;
-                if (_phase >= 1f)
-                    _phase -= 1f;
-
-                return MathF.Sin(_phase * MathF.Tau) * _amplitude * _attack;
             }
         }
     }

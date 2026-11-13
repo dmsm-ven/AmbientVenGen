@@ -106,12 +106,23 @@
                             FontSize="12"
                             Foreground="#B7AFE9"
                             Text="{Binding Project.Shimmer, StringFormat={}{0:P0}}" />
-                        <ComboBox
-                            Width="84"
-                            ItemsSource="{Binding ShimmerIntervals}"
-                            SelectedValue="{Binding Project.ShimmerSemitones, Mode=TwoWay}"
-                            Style="{StaticResource ChoiceCombo}"
-                            ToolTip="Shimmer interval in semitones (+12 = an octave up)" />
+                        <Slider
+                            Width="90"
+                            VerticalAlignment="Center"
+                            IsSnapToTickEnabled="True"
+                            Maximum="24"
+                            Minimum="-24"
+                            SmallChange="1"
+                            TickFrequency="1"
+                            ToolTip="Shimmer interval in semitones (+12 = an octave up)"
+                            Value="{Binding Project.ShimmerSemitones, Mode=TwoWay}" />
+                        <ui:TextBlock
+                            Width="46"
+                            Margin="8,0,0,0"
+                            VerticalAlignment="Center"
+                            FontSize="12"
+                            Foreground="#B7AFE9"
+                            Text="{Binding Project.ShimmerSemitones, StringFormat={}{0:+0;-0;0} st}" />
                     </StackPanel>
 
                     <!--  Track length: horizontal  -->
