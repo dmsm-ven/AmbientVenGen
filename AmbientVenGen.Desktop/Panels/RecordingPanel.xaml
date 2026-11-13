@@ -81,7 +81,7 @@
                             Step="0.5"
                             Value="{Binding PitchShift, Mode=TwoWay}" />
 
-                        <controls:KnobPair
+                        <controls:KnobPair Icon="Speed"
                                                 Grid.Row="2" Grid.ColumnSpan="2" Margin="0,8,0,0" HorizontalAlignment="Center"
                                                 LinkToolTip="Speed drift">
                                                 <controls:KnobPair.Primary>

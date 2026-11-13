@@ -5,24 +5,40 @@
     xmlns:controls="clr-namespace:AmbientVenGen.Desktop.Controls"
     xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
     xmlns:vm="clr-namespace:AmbientVenGen.Desktop.ViewModels">
-    <!--  The two modulators of the selected layer  -->
-            <Border
-                Margin="6,0,0,0"
-                IsEnabled="{Binding HasSelectedLayer}"
-                Style="{StaticResource SectionCard}">
+    <!--  The modulators of the selected layer: any number, added with the "+" button below the last one  -->
+    <Border
+        Margin="6,0,0,0"
+        IsEnabled="{Binding HasSelectedLayer}"
+        Style="{StaticResource SectionCard}">
+        <Grid>
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="*" />
+            </Grid.RowDefinitions>
+            <ui:TextBlock
+                Margin="0,0,0,4"
+                FontSize="14"
+                FontWeight="SemiBold"
+                Text="Modulators" />
+            <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
                 <StackPanel>
-                    <ui:TextBlock
-                        Margin="0,0,0,4"
-                        FontSize="14"
-                        FontWeight="SemiBold"
-                        Text="Modulators" />
-                    <controls:ModulatorEditor
-                    Margin="0,0,0,4"
-                    DataContext="{Binding SelectedLayer.Mod1}"
-                    Header="Modulator 1" />
-                    <controls:ModulatorEditor
-                    DataContext="{Binding SelectedLayer.Mod2}"
-                    Header="Modulator 2" />
+                    <ItemsControl ItemsSource="{Binding SelectedLayer.Modulators}">
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate>
+                                <controls:ModulatorEditor Margin="0,0,0,4" />
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                    <ui:Button
+                        Height="40"
+                        HorizontalAlignment="Stretch"
+                        HorizontalContentAlignment="Center"
+                        Click="OnAddModulatorClick"
+                        ToolTip="Add a modulator">
+                        <ui:SymbolIcon Symbol="Add24" />
+                    </ui:Button>
                 </StackPanel>
-            </Border>
+            </ScrollViewer>
+        </Grid>
+    </Border>
 </UserControl>

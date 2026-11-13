@@ -111,8 +111,7 @@ public static class LayerDefaults
         layer.DelayFeedback = fresh.DelayFeedback;
         layer.ReverbSend = fresh.ReverbSend;
         layer.NoiseType = fresh.NoiseType;
-        layer.Mod1.Reset();
-        layer.Mod2.Reset();
+        layer.Modulators.Clear();
         layer.Reverse = false;
         layer.Stretch = 1.0;
         layer.PitchShift = 0.0;

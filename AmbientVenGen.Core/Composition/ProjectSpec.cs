@@ -85,7 +85,8 @@ public sealed record LayerSpec(
     double PitchShift = 0.0,
     double LoopStart = 0.0,
     double LoopDuration = 0.0,
-    double LoopCrossfade = SampleTransform.DefaultCrossfade)
+    double LoopCrossfade = SampleTransform.DefaultCrossfade,
+    IReadOnlyList<ModulatorSpec>? Modulators = null)
 {
     /// <summary>What is done to the recording of a Field record layer (nothing for the other types).</summary>
     [System.Text.Json.Serialization.JsonIgnore]
