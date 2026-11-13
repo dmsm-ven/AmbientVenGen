@@ -125,7 +125,7 @@ public static class Choices
             "Rare strokes of a big gong: inharmonic partials that ring for seconds and slowly beat. Modulation = how often it is struck.",
             "Sounds like: a temple gong, a big tam-tam, a slow ceremonial stroke fading in the hall."),
         new(NoiseType.WaterDrop, "Water drop",
-            "A drop falling from a height into water: an impact tick, a rising \"bloop\" and quiet ripples. Modulation = how often drops fall.",
+            "A drop falling from a height into water: an impact tick, a short clean \"plink\" of the trapped bubble and a soft splash. Modulation = how often drops fall.",
             "Sounds like: a drop falling into a still pond, a cave, a leaking tap above a full bucket.")
     ];
 
