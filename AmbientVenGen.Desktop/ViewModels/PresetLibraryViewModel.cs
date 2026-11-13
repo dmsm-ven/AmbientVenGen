@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using AmbientVenGen.Desktop.Services.Audio;
 using AmbientVenGen.Desktop.DataAccess.Models;
 using AmbientVenGen.Desktop.DataAccess.Repositories;
@@ -22,6 +23,7 @@ public partial class PresetLibraryViewModel : ObservableObject
     private readonly AudioFileAnalyzer _analyzer;
     private readonly FileDialogService _fileDialogService;
     private readonly MessageService _messageService;
+    private readonly AppSettings _settings;
     private readonly PresetPreviewService _preview;
     private readonly DispatcherTimer _progressTimer;
     private FieldPresetItem? _playingItem;
@@ -91,7 +93,8 @@ public partial class PresetLibraryViewModel : ObservableObject
         AudioFileAnalyzer analyzer,
         FileDialogService fileDialogService,
         MessageService messageService,
-        PresetPreviewService preview)
+        PresetPreviewService preview,
+        AppSettings settings)
     {
         _repository = repository ?? throw new ArgumentNullException(nameof(repository));
         _analyzer = analyzer ?? throw new ArgumentNullException(nameof(analyzer));
@@ -99,6 +102,8 @@ public partial class PresetLibraryViewModel : ObservableObject
         _messageService = messageService ?? throw new ArgumentNullException(nameof(messageService));
         _preview = preview ?? throw new ArgumentNullException(nameof(preview));
 
+        _settings = settings ?? throw new ArgumentNullException(nameof(settings));
+        _preview.Volume = _settings.PresetVolume;
         _preview.Loop = Loop;
         _preview.Ended += OnPreviewEnded;
 
@@ -121,6 +126,67 @@ public partial class PresetLibraryViewModel : ObservableObject
     }
 
     partial void OnLoopChanged(bool value) => _preview.Loop = value;
+
+    /// <summary>Master volume of the preview, 0..1 (remembered between runs).</summary>
+    public double Volume
+    {
+        get => _settings.PresetVolume;
+        set
+        {
+            _settings.PresetVolume = value;
+            _preview.Volume = _settings.PresetVolume;
+            OnPropertyChanged();
+        }
+    }
+
+    /// <summary>Moves the position of the playing preview (click on the waveform), 0..1.</summary>
+    public void SeekPreview(double fraction)
+    {
+        if (_playingItem is not { } item)
+            return;
+
+        _preview.Seek(fraction);
+        item.PlayProgress = _preview.Progress;
+    }
+
+    /// <summary>Shows the file of the selected row in Windows Explorer.</summary>
+    public void RevealInExplorer()
+    {
+        if (_selection.Count > 1 || (_selection.Count == 0 ? SelectedPreset : _selection[0]) is not { } item)
+            return;
+
+        if (!File.Exists(item.FilePath))
+        {
+            _messageService.ShowError($"The file does not exist any more:\n{item.FilePath}");
+            return;
+        }
+
+        try
+        {
+            Process.Start(new ProcessStartInfo("explorer.exe", $"/select,\"{item.FilePath}\"") { UseShellExecute = true });
+        }
+        catch (Exception ex)
+        {
+            _messageService.ShowError($"Cannot open Explorer:\n{ex.Message}");
+        }
+    }
+
+    /// <summary>Asks for a tag and puts it on every selected row.</summary>
+    public async Task AddTagToSelectionAsync()
+    {
+        List<FieldPresetItem> items = _selection.Count > 0 ? [.. _selection] : SelectedPreset is { } one ? [one] : [];
+        if (items.Count == 0)
+            return;
+
+        string message = items.Count == 1 ? "Add a tag to this recording:" : $"Add a tag to {items.Count} recordings:";
+        string tag = CommonTagWindow.Ask(message, AllTags);
+
+        if (tag.Length == 0)
+            return;
+
+        foreach (FieldPresetItem item in items)
+            await AddTagAsync(item, tag);
+    }
 
     // The tag box of a row is shown only while that row is the selected one.
     partial void OnSelectedPresetChanged(FieldPresetItem? oldValue, FieldPresetItem? newValue)

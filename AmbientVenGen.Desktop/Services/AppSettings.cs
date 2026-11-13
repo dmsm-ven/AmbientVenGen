@@ -1,3 +1,4 @@
+using AmbientVenGen.Core.Export;
 using CommunityToolkit.Mvvm.ComponentModel;
 using System.IO;
 using System.Text.Json;
@@ -106,12 +107,65 @@ public sealed partial class AppSettings : ObservableObject
 
     private List<string> _recentProjects = [];
 
-    private const int MaxRecent = 10;
+    private const int MaxRecent = 6;
+
+    private Dictionary<string, DateTime> _recentDates = new(StringComparer.OrdinalIgnoreCase);
+
+    /// <summary>When a recent project was last opened or saved here (local time), if it is known.</summary>
+    public DateTime? RecentProjectDate(string path) =>
+        _recentDates.TryGetValue(path, out DateTime date) ? date : File.Exists(path) ? File.GetLastWriteTime(path) : null;
+
+    /// <summary>The folder of the last opened or saved project (offered by the next Save / Open dialog).</summary>
+    public string? LastProjectDirectory
+    {
+        get => _lastProjectDirectory;
+        set { if (_lastProjectDirectory != value) { _lastProjectDirectory = value; OnPropertyChanged(); Save(); } }
+    }
+
+    private string? _lastProjectDirectory;
+
+    /// <summary>The folder of the last exported file.</summary>
+    public string? LastExportDirectory
+    {
+        get => _lastExportDirectory;
+        set { if (_lastExportDirectory != value) { _lastExportDirectory = value; OnPropertyChanged(); Save(); } }
+    }
+
+    private string? _lastExportDirectory;
+
+    /// <summary>The export options of the last export (format, bitrate, fades, truncation).</summary>
+    public ExportOptions? ExportOptions
+    {
+        get => _exportOptions;
+        set { _exportOptions = value; OnPropertyChanged(); Save(); }
+    }
+
+    private ExportOptions? _exportOptions;
+
+    /// <summary>Volume of the preview player of the preset library, 0..1.</summary>
+    public double PresetVolume
+    {
+        get => _presetVolume;
+        set
+        {
+            value = Math.Clamp(value, 0, 1);
+            if (Math.Abs(_presetVolume - value) < 1e-9)
+                return;
+
+            _presetVolume = value;
+            OnPropertyChanged();
+            Save();
+        }
+    }
+
+    private double _presetVolume = 0.8;
 
     public void AddRecentProject(string path)
     {
         _recentProjects.RemoveAll(p => string.Equals(p, path, StringComparison.OrdinalIgnoreCase));
         _recentProjects.Insert(0, path);
+        _recentDates[path] = DateTime.Now;
+        LastProjectDirectory = Path.GetDirectoryName(path) ?? LastProjectDirectory;
 
         if (_recentProjects.Count > MaxRecent)
             _recentProjects.RemoveRange(MaxRecent, _recentProjects.Count - MaxRecent);
@@ -153,6 +207,11 @@ public sealed partial class AppSettings : ObservableObject
                 _intervalMathExpanded = file.IntervalMathExpanded;
                 _showSpectrogram = file.ShowSpectrogram;
                 _recentProjects = (file.RecentProjects ?? []).Where(p => !string.IsNullOrWhiteSpace(p)).Take(MaxRecent).ToList();
+                _recentDates = new Dictionary<string, DateTime>(file.RecentDates ?? [], StringComparer.OrdinalIgnoreCase);
+                _lastProjectDirectory = file.LastProjectDirectory;
+                _lastExportDirectory = file.LastExportDirectory;
+                _exportOptions = file.ExportOptions;
+                _presetVolume = Math.Clamp(file.PresetVolume ?? 0.8, 0, 1);
 
                 if (!string.IsNullOrWhiteSpace(file.SpectrogramColor))
                     _spectrogramColor = (Color)ColorConverter.ConvertFromString(file.SpectrogramColor);
@@ -169,7 +228,7 @@ public sealed partial class AppSettings : ObservableObject
         try
         {
             Directory.CreateDirectory(Path.GetDirectoryName(_path)!);
-            File.WriteAllText(_path, JsonSerializer.Serialize(new SettingsFile { LastProjectPath = LastProjectPath, IntervalMathExpanded = IntervalMathExpanded, ShowSpectrogram = ShowSpectrogram, SpectrogramColor = SpectrogramColor.ToString(), RecentProjects = _recentProjects }, Options));
+            File.WriteAllText(_path, JsonSerializer.Serialize(new SettingsFile { LastProjectPath = LastProjectPath, IntervalMathExpanded = IntervalMathExpanded, ShowSpectrogram = ShowSpectrogram, SpectrogramColor = SpectrogramColor.ToString(), RecentProjects = _recentProjects, RecentDates = _recentDates, LastProjectDirectory = _lastProjectDirectory, LastExportDirectory = _lastExportDirectory, ExportOptions = _exportOptions, PresetVolume = _presetVolume }, Options));
         }
         catch (Exception)
         {
@@ -184,5 +243,10 @@ public sealed partial class AppSettings : ObservableObject
         public bool ShowSpectrogram { get; set; }
         public string? SpectrogramColor { get; set; }
         public List<string>? RecentProjects { get; set; }
+        public Dictionary<string, DateTime>? RecentDates { get; set; }
+        public string? LastProjectDirectory { get; set; }
+        public string? LastExportDirectory { get; set; }
+        public ExportOptions? ExportOptions { get; set; }
+        public double? PresetVolume { get; set; }
     }
 }

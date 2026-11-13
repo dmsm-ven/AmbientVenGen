@@ -46,8 +46,9 @@ public partial class MainViewModel
             return;
 
         _lastExportOptions = options;
+        Settings.ExportOptions = options;
 
-        string? path = _fileDialogService.ChooseExportPath(options.Format == ExportFormat.Mp3, Project.Seed);
+        string? path = _fileDialogService.ChooseExportPath(options.Format == ExportFormat.Mp3, ProjectName);
         if (string.IsNullOrWhiteSpace(path))
             return;
 

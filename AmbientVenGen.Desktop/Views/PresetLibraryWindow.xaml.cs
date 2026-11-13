@@ -35,6 +35,62 @@ public partial class PresetLibraryWindow : FluentWindow
     private void OnPresetsSelectionChanged(object sender, SelectionChangedEventArgs e) =>
         ViewModel?.SetSelection(PresetsGrid.SelectedItems.OfType<FieldPresetItem>().ToList());
 
+    // ---- waveform: a click (or a drag) moves the playing position
+
+    private bool _seeking;
+
+    private void SeekTo(object sender, MouseEventArgs e)
+    {
+        if (sender is FrameworkElement { ActualWidth: > 0 } element)
+            ViewModel?.SeekPreview(e.GetPosition(element).X / element.ActualWidth);
+    }
+
+    private void OnWaveformMouseDown(object sender, MouseButtonEventArgs e)
+    {
+        _seeking = true;
+        ((UIElement)sender).CaptureMouse();
+        SeekTo(sender, e);
+    }
+
+    private void OnWaveformMouseMove(object sender, MouseEventArgs e)
+    {
+        if (_seeking)
+            SeekTo(sender, e);
+    }
+
+    private void OnWaveformMouseUp(object sender, MouseButtonEventArgs e)
+    {
+        _seeking = false;
+        ((UIElement)sender).ReleaseMouseCapture();
+    }
+
+    // ---- context menu of the table
+
+    // A right click on a row that is not selected selects it first (a click inside the selection keeps it).
+    private void OnGridRightClick(object sender, MouseButtonEventArgs e)
+    {
+        DependencyObject? source = e.OriginalSource as DependencyObject;
+        while (source is not null and not DataGridRow)
+            source = System.Windows.Media.VisualTreeHelper.GetParent(source);
+
+        if (source is DataGridRow { IsSelected: false } row)
+        {
+            PresetsGrid.SelectedItems.Clear();
+            row.IsSelected = true;
+        }
+    }
+
+    private void OnRowMenuOpened(object sender, RoutedEventArgs e) =>
+        RevealMenuItem.IsEnabled = PresetsGrid.SelectedItems.Count == 1;
+
+    private void OnRevealClick(object sender, RoutedEventArgs e) => ViewModel?.RevealInExplorer();
+
+    private async void OnAddTagClick(object sender, RoutedEventArgs e)
+    {
+        if (ViewModel is { } viewModel)
+            await viewModel.AddTagToSelectionAsync();
+    }
+
     private PresetLibraryViewModel? ViewModel => DataContext as PresetLibraryViewModel;
 
     // ---- tags

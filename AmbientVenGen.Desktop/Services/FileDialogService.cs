@@ -1,13 +1,14 @@
 using AmbientVenGen.Core.Projects;
 using Microsoft.Win32;
+using System.IO;
 
 namespace AmbientVenGen.Desktop.Services;
 
-public sealed class FileDialogService
+public sealed class FileDialogService(AppSettings settings)
 {
     private const string ProjectFilter = "Ambient Forge project (*.afproj)|*.afproj";
 
-    public string? ChooseExportPath(bool mp3, int seed)
+    public string? ChooseExportPath(bool mp3, string projectName)
     {
         var dialog = new SaveFileDialog
         {
@@ -15,13 +16,18 @@ public sealed class FileDialogService
             Filter = mp3
                 ? "MP3 audio (*.mp3)|*.mp3"
                 : "WAV audio (*.wav)|*.wav",
-            FileName = $"AmbientForge_{seed}" + (mp3 ? ".mp3" : ".wav"),
+            FileName = SafeName(projectName) + (mp3 ? ".mp3" : ".wav"),
+            InitialDirectory = ExistingOrNull(settings.LastExportDirectory),
             AddExtension = true,
             DefaultExt = mp3 ? ".mp3" : ".wav",
             OverwritePrompt = true
         };
 
-        return dialog.ShowDialog() == true ? dialog.FileName : null;
+        if (dialog.ShowDialog() != true)
+            return null;
+
+        settings.LastExportDirectory = Path.GetDirectoryName(dialog.FileName);
+        return dialog.FileName;
     }
 
     public IReadOnlyList<string> ChooseFieldPresetFiles()
@@ -43,10 +49,15 @@ public sealed class FileDialogService
         {
             Title = "Open project",
             Filter = ProjectFilter,
+            InitialDirectory = ExistingOrNull(settings.LastProjectDirectory),
             CheckFileExists = true
         };
 
-        return dialog.ShowDialog() == true ? dialog.FileName : null;
+        if (dialog.ShowDialog() != true)
+            return null;
+
+        settings.LastProjectDirectory = Path.GetDirectoryName(dialog.FileName);
+        return dialog.FileName;
     }
 
     public string? ChooseProjectSavePath(string suggestedName)
@@ -56,11 +67,26 @@ public sealed class FileDialogService
             Title = "Save project",
             Filter = ProjectFilter,
             FileName = suggestedName,
+            InitialDirectory = ExistingOrNull(settings.LastProjectDirectory),
             AddExtension = true,
             DefaultExt = ProjectFileService.Extension,
             OverwritePrompt = true
         };
 
-        return dialog.ShowDialog() == true ? dialog.FileName : null;
+        if (dialog.ShowDialog() != true)
+            return null;
+
+        settings.LastProjectDirectory = Path.GetDirectoryName(dialog.FileName);
+        return dialog.FileName;
+    }
+
+    private static string? ExistingOrNull(string? directory) =>
+        !string.IsNullOrWhiteSpace(directory) && Directory.Exists(directory) ? directory : null;
+
+    // The project name as a file name (without characters a file name cannot have).
+    private static string SafeName(string name)
+    {
+        string cleaned = string.Concat(name.Select(c => Path.GetInvalidFileNameChars().Contains(c) ? '_' : c)).Trim();
+        return cleaned.Length == 0 ? "AmbientForge" : cleaned;
     }
 }

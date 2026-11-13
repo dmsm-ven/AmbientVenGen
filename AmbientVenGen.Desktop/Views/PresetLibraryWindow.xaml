@@ -386,10 +386,17 @@
             ItemsSource="{Binding Presets}"
             ScrollViewer.CanContentScroll="True"
             ScrollViewer.HorizontalScrollBarVisibility="Disabled"
+            PreviewMouseRightButtonDown="OnGridRightClick"
             SelectedItem="{Binding SelectedPreset, Mode=TwoWay}"
             SelectionChanged="OnPresetsSelectionChanged"
             SelectionMode="Extended"
             VirtualizingPanel.IsVirtualizing="True">
+            <ui:DataGrid.ContextMenu>
+                <ContextMenu Opened="OnRowMenuOpened">
+                    <MenuItem x:Name="RevealMenuItem" Click="OnRevealClick" Header="Reveal in Explorer" />
+                    <MenuItem Click="OnAddTagClick" Header="Add Tag..." />
+                </ContextMenu>
+            </ui:DataGrid.ContextMenu>
             <ui:DataGrid.InputBindings>
                 <!--  Double click on a row = Add new Layer  -->
                 <MouseBinding Command="{Binding UsePresetCommand}" MouseAction="LeftDoubleClick" />
@@ -527,6 +534,7 @@
 
         <!--  Waveform of the active recording (the one that plays, else the selected one); always there, so nothing jumps  -->
         <Border
+            x:Name="WaveformBorder"
             Grid.Row="3"
             Height="56"
             Margin="10,0,6,10"
@@ -547,6 +555,11 @@
                 </ToggleButton>
                 <controls:WaveformBars
                     Margin="36,0,0,0"
+                    Cursor="Hand"
+                    MouseLeftButtonDown="OnWaveformMouseDown"
+                    MouseLeftButtonUp="OnWaveformMouseUp"
+                    MouseMove="OnWaveformMouseMove"
+                    Background="Transparent"
                     IsPlaying="{Binding ActiveItem.IsPlaying}"
                     Peaks="{Binding ActiveItem.Peaks}"
                     Progress="{Binding ActiveItem.PlayProgress}" />
@@ -556,6 +569,38 @@
                     FontSize="12"
                     Foreground="#7C7B94"
                     Text="{Binding ActiveItem.WaveformHint, FallbackValue='Select a recording'}" />
+                <!--  Master volume of the preview: shown while the mouse is over the waveform  -->
+                <Border
+                    Width="150"
+                    Margin="0,0,4,0"
+                    Padding="8,0"
+                    HorizontalAlignment="Right"
+                    VerticalAlignment="Center"
+                    Panel.ZIndex="2"
+                    Background="#E61C1C24"
+                    CornerRadius="6"
+                    ToolTip="Preview volume">
+                    <Border.Style>
+                        <Style TargetType="Border">
+                            <Setter Property="Visibility" Value="Collapsed" />
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding IsMouseOver, ElementName=WaveformBorder}" Value="True">
+                                    <Setter Property="Visibility" Value="Visible" />
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </Border.Style>
+                    <StackPanel Orientation="Horizontal">
+                        <ui:SymbolIcon VerticalAlignment="Center" Symbol="Speaker224" />
+                        <Slider
+                            Width="100"
+                            Margin="8,0,0,0"
+                            VerticalAlignment="Center"
+                            Maximum="1"
+                            Minimum="0"
+                            Value="{Binding Volume, Mode=TwoWay}" />
+                    </StackPanel>
+                </Border>
                 <ui:ProgressRing
                     Width="24"
                     Height="24"

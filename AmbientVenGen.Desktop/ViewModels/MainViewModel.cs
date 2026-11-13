@@ -152,6 +152,7 @@ public partial class MainViewModel : ObservableObject, IDisposable
         SampleLibrary.StateChanged += () => Application.Current?.Dispatcher.InvokeAsync(RefreshProcessing);
         _showSpectrogram = settings.ShowSpectrogram;
         Settings = settings ?? throw new ArgumentNullException(nameof(settings));
+        _lastExportOptions = settings.ExportOptions;
         _settingsWindowService = settingsWindowService ?? throw new ArgumentNullException(nameof(settingsWindowService));
         _playbackService = playbackService ?? throw new ArgumentNullException(nameof(playbackService));
         _exportService = exportService ?? throw new ArgumentNullException(nameof(exportService));

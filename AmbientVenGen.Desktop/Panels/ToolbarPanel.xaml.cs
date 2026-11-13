@@ -27,7 +27,7 @@ public partial class ToolbarPanel : UserControl
         {
             var item = new System.Windows.Controls.MenuItem
             {
-                Header = System.IO.Path.GetFileNameWithoutExtension(path),
+                Header = RecentHeader(path, viewModel.Settings.RecentProjectDate(path)),
                 ToolTip = path,
                 Command = viewModel.OpenRecentCommand,
                 CommandParameter = path
@@ -43,5 +43,26 @@ public partial class ToolbarPanel : UserControl
         menu.Items.Add(new System.Windows.Controls.MenuItem { Header = "Open file...", Command = viewModel.OpenProjectCommand });
 
         menu.IsOpen = true;
+    }
+
+    // "Project 1 | 4 day(s) ago": the name and, in grey, when the project was last opened or saved.
+    private static object RecentHeader(string path, DateTime? date)
+    {
+        var panel = new System.Windows.Controls.StackPanel { Orientation = System.Windows.Controls.Orientation.Horizontal };
+        panel.Children.Add(new System.Windows.Controls.TextBlock { Text = System.IO.Path.GetFileNameWithoutExtension(path) });
+
+        if (date is { } stamp)
+        {
+            int days = Math.Max(0, (int)(DateTime.Now.Date - stamp.Date).TotalDays);
+            string age = days == 0 ? "today" : $"{days} day(s) ago";
+
+            panel.Children.Add(new System.Windows.Controls.TextBlock
+            {
+                Text = $"  |  {age}",
+                Foreground = System.Windows.Media.Brushes.Gray
+            });
+        }
+
+        return panel;
     }
 }

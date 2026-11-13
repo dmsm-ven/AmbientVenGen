@@ -50,7 +50,7 @@ public partial class ExportOptionsViewModel : ObservableObject
 
     /// <summary>The file ends where the last layer ends (the fade-out is counted to that moment).</summary>
     [ObservableProperty]
-    private bool _truncateToLastLayer;
+    private bool _truncateToLastLayer = true;
 
     public bool IsWav => Format == ExportFormat.Wav;
     public bool IsMp3 => Format == ExportFormat.Mp3;

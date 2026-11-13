@@ -11,6 +11,32 @@ public sealed class PresetPreviewService : IDisposable
 {
     private WaveOut? _player;
     private AudioFileReader? _reader;
+    private readonly object _readLock = new();
+    private float _volume = 1f;
+
+    /// <summary>Playback volume 0..1 (applies to the current file and the next ones).</summary>
+    public double Volume
+    {
+        get => _volume;
+        set
+        {
+            _volume = (float)Math.Clamp(value, 0, 1);
+            AudioFileReader? reader = _reader;
+            if (reader is not null)
+                reader.Volume = _volume;
+        }
+    }
+
+    /// <summary>Moves the playing position to a place of the file, 0..1.</summary>
+    public void Seek(double fraction)
+    {
+        AudioFileReader? reader = _reader;
+        if (reader is null || reader.TotalTime <= TimeSpan.Zero)
+            return;
+
+        lock (_readLock)
+            reader.CurrentTime = TimeSpan.FromSeconds(Math.Clamp(fraction, 0, 1) * reader.TotalTime.TotalSeconds * 0.999);
+    }
 
     /// <summary>Repeat the file when it ends. Can be changed while playing.</summary>
     public bool Loop { get; set; }
@@ -39,12 +65,12 @@ public sealed class PresetPreviewService : IDisposable
     {
         Stop();
 
-        var reader = new AudioFileReader(path);
+        var reader = new AudioFileReader(path) { Volume = _volume };
         var player = new WaveOut();
 
         try
         {
-            player.Init(new SampleToWaveProvider16(new LoopingSampleProvider(reader, () => Loop)));
+            player.Init(new SampleToWaveProvider16(new LoopingSampleProvider(reader, () => Loop, _readLock)));
             player.PlaybackStopped += OnPlaybackStopped;
             player.Play();
         }
@@ -93,21 +119,24 @@ public sealed class PresetPreviewService : IDisposable
     public void Dispose() => Stop();
 
     /// <summary>Starts over at the end of the file while looping is on.</summary>
-    private sealed class LoopingSampleProvider(AudioFileReader reader, Func<bool> loop) : ISampleProvider
+    private sealed class LoopingSampleProvider(AudioFileReader reader, Func<bool> loop, object readLock) : ISampleProvider
     {
         public WaveFormat WaveFormat => reader.WaveFormat;
 
         public int Read(Span<float> buffer)
         {
-            int read = reader.Read(buffer);
-
-            if (read == 0 && loop())
+            lock (readLock)
             {
-                reader.Position = 0;
-                read = reader.Read(buffer);
-            }
+                int read = reader.Read(buffer);
 
-            return read;
+                if (read == 0 && loop())
+                {
+                    reader.Position = 0;
+                    read = reader.Read(buffer);
+                }
+
+                return read;
+            }
         }
     }
 }

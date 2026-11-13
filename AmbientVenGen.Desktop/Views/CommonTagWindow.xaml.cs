@@ -10,18 +10,22 @@ public partial class CommonTagWindow : FluentWindow
     /// <summary>The chosen tag; empty when the window was skipped.</summary>
     public string SelectedTag { get; private set; } = string.Empty;
 
-    public CommonTagWindow(int count, IEnumerable<string> existingTags)
+    public CommonTagWindow(string message, IEnumerable<string> existingTags)
     {
         InitializeComponent();
 
-        MessageText.Text = $"{count} files were added. Tag all of them with:";
+        MessageText.Text = message;
         TagBox.ItemsSource = existingTags.ToList();
     }
 
     /// <summary>Returns the tag to put on all the new files, or an empty string.</summary>
-    public static string Ask(int count, IEnumerable<string> existingTags)
+    public static string Ask(int count, IEnumerable<string> existingTags) =>
+        Ask($"{count} files were added. Tag all of them with:", existingTags);
+
+    /// <summary>Returns the entered tag, or an empty string when the window was skipped.</summary>
+    public static string Ask(string message, IEnumerable<string> existingTags)
     {
-        var window = new CommonTagWindow(count, existingTags);
+        var window = new CommonTagWindow(message, existingTags);
 
         Window? owner = Application.Current.Windows
             .OfType<Window>()
