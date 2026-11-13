@@ -100,7 +100,7 @@
                 MouseWheel="OnInputMouseWheel"
                 PreviewKeyDown="OnInputKeyDown"
                 TextAlignment="Center"
-                ToolTip="hh:mm:ss. Up/Down arrows or the mouse wheel: 1 s (Shift: 10 s, Ctrl: 1 min)" />
+                ToolTip="hh:mm:ss. Up/Down arrows or the mouse wheel: 1 s (Alt: 0.1 s, Shift: 10 s, Ctrl: 1 min)" />
 
             <StackPanel Grid.Column="1" Margin="4,0,0,0" VerticalAlignment="Center">
                 <RepeatButton

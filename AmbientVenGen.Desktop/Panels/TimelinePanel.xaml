@@ -143,7 +143,7 @@
                             x:Name="ReverbToggle"
                             Style="{StaticResource ToolIconToggleButton}"
                             ToolTip="Space (reverb)">
-                            <ui:SymbolIcon Symbol="Speaker224" />
+                            <ui:SymbolIcon Symbol="DataArea24" />
                         </ToggleButton>
                         <ToggleButton
                             x:Name="ShimmerToggle"

@@ -35,7 +35,10 @@ public enum NoiseType
     HighVoltage,
     EnergyShield,
     CrtWhine,
-    PlasmaArc
+    PlasmaArc,
+    GasBurner,
+    Gong,
+    WaterDrop
 }
 
 /// <summary>A parameter that moves from one value to another over the length of a layer.</summary>

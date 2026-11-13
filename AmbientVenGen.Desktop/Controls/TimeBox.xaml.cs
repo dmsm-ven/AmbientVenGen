@@ -187,7 +187,10 @@ public partial class TimeBox : UserControl
 
     private double StepFor(ModifierKeys modifiers) => IsInteger
         ? (modifiers.HasFlag(ModifierKeys.Shift) ? 5 : 1)
-        : modifiers.HasFlag(ModifierKeys.Control) ? 60 : modifiers.HasFlag(ModifierKeys.Shift) ? 10 : 1;
+        : modifiers.HasFlag(ModifierKeys.Alt) ? 0.1
+        : modifiers.HasFlag(ModifierKeys.Control) ? 60
+        : modifiers.HasFlag(ModifierKeys.Shift) ? 10
+        : 1;
 
     private void OnUpClick(object sender, RoutedEventArgs e) => Adjust(StepFor(Keyboard.Modifiers));
 
@@ -203,7 +206,10 @@ public partial class TimeBox : UserControl
 
     private void OnInputKeyDown(object sender, KeyEventArgs e)
     {
-        switch (e.Key)
+        // With Alt held the key arrives as Key.System and the real key is in SystemKey.
+        Key key = e.Key == Key.System ? e.SystemKey : e.Key;
+
+        switch (key)
         {
             case Key.Enter:
                 Commit();

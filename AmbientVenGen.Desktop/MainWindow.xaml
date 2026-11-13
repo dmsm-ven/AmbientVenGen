@@ -64,6 +64,7 @@
                     <ColumnDefinition Width="Auto" />
                 </Grid.ColumnDefinitions>
                 <panels:RecordingPanel />
+                <panels:NoisePanel />
                 <panels:SelectedLayerPanel Grid.Column="1" />
                 <panels:ModulatorsPanel Grid.Column="2" />
             </Grid>
