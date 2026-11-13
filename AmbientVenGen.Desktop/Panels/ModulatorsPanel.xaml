@@ -2,10 +2,11 @@
     x:Class="AmbientVenGen.Desktop.Panels.ModulatorsPanel"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:core="clr-namespace:AmbientVenGen.Core.Composition;assembly=AmbientVenGen.Core"
     xmlns:controls="clr-namespace:AmbientVenGen.Desktop.Controls"
     xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
     xmlns:vm="clr-namespace:AmbientVenGen.Desktop.ViewModels">
-    <!--  The modulators of the selected layer: any number, added with the "+" button below the last one  -->
+    <!--  The oscillators (modulators) of the selected layer: any number, added with the "+" button below the last one  -->
     <Border
         Margin="6,0,0,0"
         IsEnabled="{Binding HasSelectedLayer}"
@@ -19,7 +20,18 @@
                 Margin="0,0,0,4"
                 FontSize="14"
                 FontWeight="SemiBold"
-                Text="Modulators" />
+                Text="Oscillators" />
+            <!--  An invisible editor with the longest title: the panel is always as wide as with oscillators in it  -->
+            <controls:ModulatorEditor
+                Grid.Row="1"
+                Height="0"
+                VerticalAlignment="Top"
+                IsHitTestVisible="False"
+                Visibility="Hidden">
+                <controls:ModulatorEditor.DataContext>
+                    <core:Modulator RateHz="0.005" Target="Modulation" />
+                </controls:ModulatorEditor.DataContext>
+            </controls:ModulatorEditor>
             <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
                 <StackPanel>
                     <ItemsControl ItemsSource="{Binding SelectedLayer.Modulators}">
