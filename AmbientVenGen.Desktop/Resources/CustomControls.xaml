@@ -17,6 +17,7 @@
         <Setter Property="Template">
             <Setter.Value>
                 <ControlTemplate TargetType="controls:KnobPair">
+                    <Grid>
                     <Border
                         Padding="6,4,6,2"
                         Background="#14FFFFFF"
@@ -45,6 +46,18 @@
                             <ContentPresenter Grid.Column="2" Content="{TemplateBinding Secondary}" />
                         </Grid>
                     </Border>
+                    <!--  The icon of the group: over the corner, it takes no room  -->
+                    <controls:ModGlyph
+                        x:Name="Glyph"
+                        Width="13"
+                        Height="13"
+                        Margin="5,4,0,0"
+                        HorizontalAlignment="Left"
+                        VerticalAlignment="Top"
+                        IsHitTestVisible="False"
+                        Key="{TemplateBinding Icon}"
+                        Opacity="0.85" />
+                    </Grid>
                     <ControlTemplate.Triggers>
                         <Trigger Property="Secondary" Value="{x:Null}">
                             <Setter TargetName="Link" Property="Visibility" Value="Collapsed" />

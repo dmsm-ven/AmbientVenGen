@@ -281,11 +281,10 @@ public sealed class ProjectMixer : ISampleProvider
         {
             double level = 1.0, octaves = 0, pan = 0, send = 0, brightness = 0, modulation = 0;
 
-            for (int i = 0; i < 2; i++)
+            void Add(ModulatorSpec? spec, int i)
             {
-                ModulatorSpec? spec = i == 0 ? layer.Mod1 : layer.Mod2;
                 if (spec is null || spec.Muted || spec.Target == ModTarget.None || spec.Depth <= 0)
-                    continue;
+                    return;
 
                 double depth = Math.Clamp(spec.Depth, 0.0, 1.0);
                 double value = spec.ValueAt(seconds, unchecked(seed + i * 7919));
@@ -311,6 +310,18 @@ public sealed class ProjectMixer : ISampleProvider
                         modulation += depth * value * 0.5;
                         break;
                 }
+            }
+
+            if (layer.Modulators is { } list)
+            {
+                for (int i = 0; i < list.Count; i++)
+                    Add(list[i], i);
+            }
+            else
+            {
+                // a spec of the older version: two fixed modulators
+                Add(layer.Mod1, 0);
+                Add(layer.Mod2, 1);
             }
 
             return new ModOffsets

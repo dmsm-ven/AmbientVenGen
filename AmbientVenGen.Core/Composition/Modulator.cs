@@ -46,6 +46,14 @@ public sealed partial class Modulator : ObservableObject
         return seconds.ToString(format, System.Globalization.CultureInfo.InvariantCulture) + " sec";
     }
 
+    /// <summary>A modulator made from a saved spec (values are clamped).</summary>
+    public static Modulator From(ModulatorSpec spec)
+    {
+        var modulator = new Modulator();
+        modulator.Apply(spec);
+        return modulator;
+    }
+
     public ModulatorSpec ToSpec() => new(Shape, RateHz, Depth, Target, Muted);
 
     public void Apply(ModulatorSpec? spec)

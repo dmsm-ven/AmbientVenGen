@@ -21,6 +21,12 @@ public sealed class KnobPair : Control
     public static readonly DependencyProperty LinkToolTipProperty = DependencyProperty.Register(
         nameof(LinkToolTip), typeof(string), typeof(KnobPair));
 
+    public static readonly DependencyProperty IconProperty = DependencyProperty.Register(
+        nameof(Icon), typeof(string), typeof(KnobPair));
+
+    /// <summary>Name of the glyph (see <see cref="ModGlyph"/>) drawn over the top-left corner of the group.</summary>
+    public string? Icon { get => (string?)GetValue(IconProperty); set => SetValue(IconProperty, value); }
+
     public UIElement? Primary { get => (UIElement?)GetValue(PrimaryProperty); set => SetValue(PrimaryProperty, value); }
     public UIElement? Secondary { get => (UIElement?)GetValue(SecondaryProperty); set => SetValue(SecondaryProperty, value); }
     public string? LinkToolTip { get => (string?)GetValue(LinkToolTipProperty); set => SetValue(LinkToolTipProperty, value); }

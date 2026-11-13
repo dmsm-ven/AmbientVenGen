@@ -1,3 +1,4 @@
+using System.Collections.ObjectModel;
 using AmbientVenGen.Core.Audio;
 using CommunityToolkit.Mvvm.ComponentModel;
 using System.IO;
@@ -167,10 +168,8 @@ public sealed partial class Layer : ObservableObject
     [ObservableProperty]
     private NoiseType _noiseType = NoiseType.White;
 
-    /// <summary>Two slow modulators that move parameters of the layer around their set values.</summary>
-    public Modulator Mod1 { get; } = new();
-
-    public Modulator Mod2 { get; } = new();
+    /// <summary>Slow modulators that move parameters of the layer around their set values (any number).</summary>
+    public ObservableCollection<Modulator> Modulators { get; } = [];
 
     /// <summary>Field record: play the recording backwards.</summary>
     [ObservableProperty]
@@ -206,9 +205,20 @@ public sealed partial class Layer : ObservableObject
     public Layer()
     {
         // A change of a modulator is a change of the layer (the project is told, the engine gets the new spec).
-        Mod1.PropertyChanged += (_, _) => OnPropertyChanged(nameof(Mod1));
-        Mod2.PropertyChanged += (_, _) => OnPropertyChanged(nameof(Mod2));
+        Modulators.CollectionChanged += (_, e) =>
+        {
+            foreach (Modulator removed in e.OldItems?.OfType<Modulator>() ?? [])
+                removed.PropertyChanged -= OnModulatorChanged;
+
+            foreach (Modulator added in e.NewItems?.OfType<Modulator>() ?? [])
+                added.PropertyChanged += OnModulatorChanged;
+
+            OnPropertyChanged(nameof(Modulators));
+        };
     }
+
+    private void OnModulatorChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e) =>
+        OnPropertyChanged(nameof(Modulators));
 
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(SourceName))]
@@ -296,14 +306,15 @@ public sealed partial class Layer : ObservableObject
         PitchDrift,
         PanDrift,
         FadeOutEasing,
-        Mod1.ToSpec(),
-        Mod2.ToSpec(),
+        null,
+        null,
         Reverse,
         Stretch,
         PitchShift,
         LoopStart,
         LoopDuration,
-        LoopCrossfade);
+        LoopCrossfade,
+        Modulators.Select(m => m.ToSpec()).ToList());
 
     /// <summary>Creates a layer from a spec, clamping values read from a file to sane ranges.</summary>
     public static Layer FromSpec(LayerSpec spec)
@@ -352,8 +363,27 @@ public sealed partial class Layer : ObservableObject
             LoopDuration = Math.Max(0, spec.LoopDuration),
             LoopCrossfade = Math.Clamp(spec.LoopCrossfade, 0, SampleTransform.MaxCrossfade)
         };
-        layer.Mod1.Apply(spec.Mod1);
-        layer.Mod2.Apply(spec.Mod2);
+
+        if (spec.Modulators is not null)
+        {
+            foreach (ModulatorSpec modulator in spec.Modulators)
+                layer.Modulators.Add(Modulator.From(modulator));
+        }
+        else
+        {
+            // A file of the older versions: two fixed modulators; the ones that were switched off and never touched are dropped.
+            foreach (ModulatorSpec? old in new[] { spec.Mod1, spec.Mod2 })
+            {
+                if (old is null || old.Target == ModTarget.None)
+                    continue;
+
+                bool untouched = old.Muted && old.Shape == ModShape.Sine && old.Target == ModTarget.Level
+                    && Math.Abs(old.RateHz - 0.1) < 1e-9 && Math.Abs(old.Depth - 0.5) < 1e-9;
+
+                if (!untouched)
+                    layer.Modulators.Add(Modulator.From(old));
+            }
+        }
         return layer;
     }
 
