@@ -66,6 +66,9 @@
                     <controls:HintIcon Margin="5,0,0,0" Text="{x:Static vm:HintTexts.Modulator}" />
                 </StackPanel>
                 <StackPanel Grid.Column="1" Margin="12,0,0,0" Orientation="Horizontal">
+                    <StackPanel.LayoutTransform>
+                        <ScaleTransform ScaleX="0.7" ScaleY="0.7" />
+                    </StackPanel.LayoutTransform>
                     <controls:IconDropdown
                         ItemsSource="{x:Static vm:Choices.ModTargets}"
                         ToolTip="What the modulator moves"

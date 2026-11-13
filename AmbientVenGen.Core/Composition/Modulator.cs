@@ -26,8 +26,8 @@ public sealed partial class Modulator : ObservableObject
     [ObservableProperty]
     private bool _muted = true;
 
-    /// <summary>"Level Modulator | Sine | 4.00 sec": what it moves, how, and the length of one cycle.</summary>
-    public string Title => $"{TargetName(Target)} Modulator | {Shape} | {PeriodText(RateHz)}";
+    /// <summary>"Reverb | 4.00 sec": what it moves and the length of one cycle (short, so it never widens the panel).</summary>
+    public string Title => $"{(Target == ModTarget.ReverbSend ? "Reverb" : TargetName(Target))} | {PeriodText(RateHz)}";
 
     public static string TargetName(ModTarget target) => target switch
     {
