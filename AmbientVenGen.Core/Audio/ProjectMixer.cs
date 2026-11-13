@@ -75,7 +75,7 @@ public sealed class ProjectMixer : ISampleProvider
                 MixLayer(layers[i], spec.Seed, blockTime, count, done);
         }
 
-        _reverb.Process(_mixLeft, _mixRight, _sendLeft, _sendRight, frames, (float)spec.ReverbMix, (float)spec.Shimmer);
+        _reverb.Process(_mixLeft, _mixRight, _sendLeft, _sendRight, frames, (float)spec.ReverbMix, (float)spec.Shimmer, spec.ShimmerSemitones);
 
         float peakLeft = 0f;
         float peakRight = 0f;

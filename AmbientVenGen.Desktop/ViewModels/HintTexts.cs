@@ -79,7 +79,7 @@ public static class HintTexts
 
     public const string Shimmer =
         "Shimmer: the tail of the reverb is lifted an octave and fed back into the reverb, so bright, glowing "
-        + "harmonics float above the sound. It needs Space (reverb) and layers with Reverb send.";
+        + "harmonics float above the sound. It needs Space (reverb) and layers with Reverb send. The interval (semitones, +12 = an octave) is set to the right.";
 
     public const string Reverb =
         "Amount of long reverb on the whole mix. More makes the sound vaster and more distant.";

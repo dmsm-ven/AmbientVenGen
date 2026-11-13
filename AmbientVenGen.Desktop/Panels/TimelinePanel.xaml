@@ -26,6 +26,7 @@
                         <ColumnDefinition Width="Auto" />
                         <ColumnDefinition Width="Auto" />
                         <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition Width="Auto" />
                     </Grid.ColumnDefinitions>
 
                     <ui:TextBlock
@@ -47,19 +48,20 @@
                         <ui:Button Command="{Binding ToggleSpectrogramCommand}" Style="{StaticResource SpectrogramButton}" />
                     </StackPanel>
 
-                    <!--  Space (reverb): horizontal  -->
+                    <!--  Space (reverb): shown when its button on the right is pressed  -->
                     <StackPanel
                         Grid.Column="3"
-                        Margin="0,0,20,0"
+                        Margin="0,0,16,0"
                         VerticalAlignment="Center"
-                        Orientation="Horizontal">
+                        Orientation="Horizontal"
+                        Visibility="{Binding IsChecked, ElementName=ReverbToggle, Converter={StaticResource BoolToVisibility}}">
                         <ui:TextBlock
-                            Margin="0"
+                            Margin="0,0,10,0"
                             VerticalAlignment="Center"
                             FontSize="12"
                             Foreground="#C9C8D6"
                             Text="Space (reverb)" />
-                        <controls:HintIcon Margin="5,0,8,0" Text="{x:Static vm:HintTexts.Reverb}" />
+                        <controls:HintIcon Margin="0,0,10,0" Text="{x:Static vm:HintTexts.Reverb}" />
                         <Slider
                             Width="110"
                             VerticalAlignment="Center"
@@ -76,19 +78,20 @@
                             Text="{Binding Project.ReverbMix, StringFormat={}{0:P0}}" />
                     </StackPanel>
 
-                    <!--  Shimmer: the reverb tail shifted an octave up and fed back  -->
+                    <!--  Shimmer: the reverb tail shifted up and fed back; the interval is right of the slider  -->
                     <StackPanel
                         Grid.Column="4"
-                        Margin="0,0,20,0"
+                        Margin="0,0,16,0"
                         VerticalAlignment="Center"
-                        Orientation="Horizontal">
+                        Orientation="Horizontal"
+                        Visibility="{Binding IsChecked, ElementName=ShimmerToggle, Converter={StaticResource BoolToVisibility}}">
                         <ui:TextBlock
-                            Margin="0"
+                            Margin="0,0,10,0"
                             VerticalAlignment="Center"
                             FontSize="12"
                             Foreground="#C9C8D6"
                             Text="Shimmer" />
-                        <controls:HintIcon Margin="5,0,8,0" Text="{x:Static vm:HintTexts.Shimmer}" />
+                        <controls:HintIcon Margin="0,0,10,0" Text="{x:Static vm:HintTexts.Shimmer}" />
                         <Slider
                             Width="110"
                             VerticalAlignment="Center"
@@ -98,30 +101,57 @@
                             Value="{Binding Project.Shimmer, Mode=TwoWay}" />
                         <ui:TextBlock
                             Width="36"
-                            Margin="8,0,0,0"
+                            Margin="8,0,8,0"
                             VerticalAlignment="Center"
                             FontSize="12"
                             Foreground="#B7AFE9"
                             Text="{Binding Project.Shimmer, StringFormat={}{0:P0}}" />
+                        <ComboBox
+                            Width="84"
+                            ItemsSource="{Binding ShimmerIntervals}"
+                            SelectedValue="{Binding Project.ShimmerSemitones, Mode=TwoWay}"
+                            Style="{StaticResource ChoiceCombo}"
+                            ToolTip="Shimmer interval in semitones (+12 = an octave up)" />
                     </StackPanel>
 
                     <!--  Track length: horizontal  -->
                     <StackPanel
                         Grid.Column="5"
+                        Margin="0,0,14,0"
                         VerticalAlignment="Center"
                         Orientation="Horizontal">
                         <ui:TextBlock
-                            Margin="0"
+                            Margin="0,0,10,0"
                             VerticalAlignment="Center"
                             FontSize="12"
                             Foreground="#C9C8D6"
                             Text="Track length" />
-                        <controls:HintIcon Margin="5,0,8,0" Text="{x:Static vm:HintTexts.TrackLength}" />
+                        <controls:HintIcon Margin="0,0,10,0" Text="{x:Static vm:HintTexts.TrackLength}" />
                         <ComboBox
                             Width="100"
                             ItemsSource="{Binding LengthOptions}"
                             SelectedValue="{Binding Project.DurationSeconds, Mode=TwoWay}"
                             Style="{StaticResource ChoiceCombo}" />
+                    </StackPanel>
+
+                    <!--  The two small buttons: they open the Space (reverb) and Shimmer sliders  -->
+                    <StackPanel
+                        Grid.Column="6"
+                        VerticalAlignment="Center"
+                        Orientation="Horizontal">
+                        <ToggleButton
+                            x:Name="ReverbToggle"
+                            Style="{StaticResource ToolIconToggleButton}"
+                            ToolTip="Space (reverb)">
+                            <ui:SymbolIcon Symbol="Speaker224" />
+                        </ToggleButton>
+                        <ToggleButton
+                            x:Name="ShimmerToggle"
+                            Margin="0"
+                            Style="{StaticResource ToolIconToggleButton}"
+                            ToolTip="Shimmer">
+                            <ui:SymbolIcon Symbol="Sparkle24" />
+                        </ToggleButton>
                     </StackPanel>
                 </Grid>
 

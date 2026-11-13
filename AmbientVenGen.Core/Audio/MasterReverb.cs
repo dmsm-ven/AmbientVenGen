@@ -46,7 +46,7 @@ internal sealed class MasterReverb
     /// Mixes the reverberated signal into the block. mix is 0..1. The reverb input is the sum of the layers'
     /// reverb sends (a layer with send 1 feeds it in full, with 0 it stays dry).
     /// </summary>
-    public void Process(float[] left, float[] right, float[] sendLeft, float[] sendRight, int count, float mix, float shimmer = 0f)
+    public void Process(float[] left, float[] right, float[] sendLeft, float[] sendRight, int count, float mix, float shimmer = 0f, int semitones = 12)
     {
         if (mix <= 0.0001f)
             return;
@@ -54,9 +54,10 @@ internal sealed class MasterReverb
         float dry = 1f - mix * 0.45f;
         float wet = mix * 0.9f;
 
-        // Shimmer: the tail of the reverb is shifted an octave up and goes back to its input, so every round adds
+        // Shimmer: the tail of the reverb is shifted up by the chosen interval (an octave by default) and goes back to its input, so every round adds
         // one more octave of high harmonics. The loop gain stays well below 1 and the signal is soft-clipped.
         float shimmerGain = Math.Clamp(shimmer, 0f, 1f) * MaxShimmerGain;
+        _shifter.SetSemitones(semitones);
 
         for (int i = 0; i < count; i++)
         {
@@ -147,6 +148,9 @@ internal sealed class MasterReverb
         private readonly float[] _buffer = new float[Window * 2];
         private int _write;
         private float _phase;
+        private float _ratio = 2f;
+
+        public void SetSemitones(int semitones) => _ratio = MathF.Pow(2f, Math.Clamp(semitones, -24, 24) / 12f);
 
         public float Process(float input)
         {
@@ -160,8 +164,9 @@ internal sealed class MasterReverb
                 if (phase >= 1f)
                     phase -= 1f;
 
-                // The delay shrinks by one sample per sample, so the tap reads twice as fast = +12 semitones.
-                float delay = Window * (1f - phase);
+                // Up: the delay shrinks while the tap reads faster than it is written (ratio 2 = +12 semitones).
+                // Down: the delay grows, the tap reads slower.
+                float delay = _ratio >= 1f ? Window * (1f - phase) : Window * phase;
                 float position = _write - delay;
                 if (position < 0)
                     position += _buffer.Length;
@@ -175,7 +180,7 @@ internal sealed class MasterReverb
                 output += (a + (b - a) * fraction) * gain;
             }
 
-            _phase += 1f / Window;
+            _phase += MathF.Abs(_ratio - 1f) / Window;
             if (_phase >= 1f)
                 _phase -= 1f;
 

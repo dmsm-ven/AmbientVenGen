@@ -29,6 +29,10 @@ public sealed partial class ProjectModel : ObservableObject
     [ObservableProperty]
     private double _shimmer;
 
+    /// <summary>The interval of the shimmer in semitones (12 = an octave up).</summary>
+    [ObservableProperty]
+    private int _shimmerSemitones = 12;
+
     public event Action? Changed;
 
     public ProjectModel()
@@ -40,6 +44,7 @@ public sealed partial class ProjectModel : ObservableObject
     partial void OnSeedChanged(int value) => RaiseChanged();
     partial void OnReverbMixChanged(double value) => RaiseChanged();
     partial void OnShimmerChanged(double value) => RaiseChanged();
+    partial void OnShimmerSemitonesChanged(int value) => RaiseChanged();
 
     public ProjectSpec ToSpec() => new(
         ProjectSpec.CurrentVersion,
@@ -47,7 +52,8 @@ public sealed partial class ProjectModel : ObservableObject
         Seed,
         ReverbMix,
         Layers.Select(layer => layer.ToSpec()).ToArray(),
-        Shimmer);
+        Shimmer,
+        ShimmerSemitones);
 
     /// <summary>
     /// Moves the layer up (negative offset) or down (positive) in the list; the order is the order of the
@@ -80,6 +86,7 @@ public sealed partial class ProjectModel : ObservableObject
             Seed = spec.Seed;
             ReverbMix = Math.Clamp(spec.ReverbMix, 0, 1);
             Shimmer = Math.Clamp(spec.Shimmer, 0, 1);
+            ShimmerSemitones = Math.Clamp(spec.ShimmerSemitones, -24, 24);
 
             foreach (LayerSpec layerSpec in spec.Layers)
                 Layers.Add(Layer.FromSpec(layerSpec));
