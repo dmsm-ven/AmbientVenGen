@@ -1,4 +1,4 @@
-<UserControl
+﻿<UserControl
     x:Class="AmbientVenGen.Desktop.Panels.NoisePanel"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
@@ -30,9 +30,9 @@
 
             <ListBox
                 Grid.Row="1"
-                VerticalAlignment="Top"
                 Width="420"
                 Padding="0"
+                VerticalAlignment="Top"
                 Background="Transparent"
                 BorderThickness="0"
                 ItemsSource="{x:Static vm:Choices.NoiseOptions}"
@@ -42,13 +42,13 @@
                 SelectedValuePath="Value">
                 <ListBox.ItemsPanel>
                     <ItemsPanelTemplate>
-                        <UniformGrid Columns="4" />
+                        <UniformGrid Columns="3" />
                     </ItemsPanelTemplate>
                 </ListBox.ItemsPanel>
                 <ListBox.ItemContainerStyle>
                     <Style TargetType="ListBoxItem">
                         <Setter Property="Margin" Value="2" />
-                        <Setter Property="Height" Value="27" />
+                        <Setter Property="Height" Value="32" />
                         <Setter Property="Padding" Value="0" />
                         <Setter Property="Cursor" Value="Hand" />
                         <Setter Property="HorizontalContentAlignment" Value="Stretch" />

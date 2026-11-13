@@ -1,7 +1,6 @@
-using AmbientVenGen.Core.Composition;
+﻿using AmbientVenGen.Core.Composition;
 using System.Globalization;
 using System.Windows;
-using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Threading;
 
@@ -198,7 +197,6 @@ public sealed partial class TimelineControl
 
             string detail = layer.Type switch
             {
-                LayerType.Noise => "Noise",
                 LayerType.FieldRecord => layer.TypeLabel,
                 LayerType.Noise => $"{layer.TypeLabel} · {NoiseLabel(layer.NoiseType)}",
                 _ => $"{layer.TypeLabel} · {layer.PitchHz:0.#} Hz"
