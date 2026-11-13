@@ -249,11 +249,16 @@ public partial class MainViewModel
 
         if (sample is null)
         {
-            // not decoded yet: ask again when it is
-            SampleLibrary.Request(path, SampleTransform.None).ContinueWith(
-                _ => System.Windows.Application.Current?.Dispatcher.BeginInvoke(new Action(RefreshPiece)),
-                TaskScheduler.Default);
-            SelectedPieceText = "";
+            SelectedPieceText = SampleLibrary.IsMissing(path) ? "File is missing" : "";
+
+            // not decoded yet: ask again when it is (a missing file is not asked for again: it would never end)
+            if (!SampleLibrary.IsMissing(path))
+            {
+                SampleLibrary.Request(path, SampleTransform.None).ContinueWith(
+                    task => { if (task.Result is not null) System.Windows.Application.Current?.Dispatcher.BeginInvoke(new Action(RefreshPiece)); },
+                    TaskScheduler.Default);
+            }
+
             return;
         }
 

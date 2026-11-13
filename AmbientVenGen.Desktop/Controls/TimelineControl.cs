@@ -1,3 +1,4 @@
+using AmbientVenGen.Core.Audio;
 using AmbientVenGen.Core.Composition;
 using AmbientVenGen.Desktop.Services;
 using System.Globalization;
@@ -176,6 +177,10 @@ public sealed partial class TimelineControl : FrameworkElement
 
     public TimelineControl()
     {
+        // A recording that turned out to be missing is written on its track.
+        Loaded += (_, _) => SampleLibrary.StateChanged += InvalidateContent;
+        Unloaded += (_, _) => SampleLibrary.StateChanged -= InvalidateContent;
+
         AddVisualChild(_contentVisual);
         AddVisualChild(_playheadVisual);
         InitAddSlot();

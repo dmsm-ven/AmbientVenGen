@@ -1,4 +1,5 @@
-﻿using AmbientVenGen.Core.Composition;
+using AmbientVenGen.Core.Audio;
+using AmbientVenGen.Core.Composition;
 using System.Globalization;
 using System.Windows;
 using System.Windows.Media;
@@ -197,7 +198,7 @@ public sealed partial class TimelineControl
 
             string detail = layer.Type switch
             {
-                LayerType.FieldRecord => layer.TypeLabel,
+                LayerType.FieldRecord => SampleLibrary.IsMissing(layer.SourcePath) ? $"{layer.TypeLabel} · missing" : layer.TypeLabel,
                 LayerType.Noise => $"{layer.TypeLabel} · {NoiseLabel(layer.NoiseType)}",
                 _ => $"{layer.TypeLabel} · {layer.PitchHz:0.#} Hz"
             };

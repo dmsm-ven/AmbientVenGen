@@ -64,6 +64,12 @@ public static class SampleLibrary
         return (jobs, jobs == 0 ? 0 : sum / jobs);
     }
 
+    // Recordings that could not be read (the file was moved or deleted, an unsupported format).
+    private static readonly ConcurrentDictionary<string, bool> Missing = new(StringComparer.OrdinalIgnoreCase);
+
+    /// <summary>True when the recording was tried and cannot be read (the layer then stays silent).</summary>
+    public static bool IsMissing(string? path) => !string.IsNullOrEmpty(path) && Missing.ContainsKey(path);
+
     /// <summary>Raised (on any thread) when a processed recording became ready or failed.</summary>
     public static event Action? StateChanged;
 
@@ -264,8 +270,24 @@ public static class SampleLibrary
 
     private static DecodedSample? Decode(string path)
     {
+        DecodedSample? result = DecodeCore(path);
+
+        if (result is null)
+            Missing[path] = true;
+        else
+            Missing.TryRemove(path, out _);
+
+        StateChanged?.Invoke();
+        return result;
+    }
+
+    private static DecodedSample? DecodeCore(string path)
+    {
         try
         {
+            if (!File.Exists(path))
+                return null;
+
             using var reader = new AudioFileReader(path);
 
             ISampleProvider source = reader;
