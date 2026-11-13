@@ -30,7 +30,7 @@
 
             <ListBox
                 Grid.Row="1"
-                Width="420"
+                Width="380"
                 Padding="0"
                 VerticalAlignment="Top"
                 Background="Transparent"
