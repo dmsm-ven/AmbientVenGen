@@ -20,7 +20,7 @@
                         </Style.Triggers>
                     </Style>
                 </Border.Style>
-                <StackPanel>
+                <StackPanel Width="380">
                     <StackPanel Margin="0,0,0,6" Orientation="Horizontal">
                         <TextBlock
                             VerticalAlignment="Center"
@@ -36,7 +36,7 @@
                             Visibility="{Binding DataContext.IsSelectedSourceProcessing, RelativeSource={RelativeSource AncestorType=Window}, Converter={StaticResource BoolToVisibility}}" />
                     </StackPanel>
                     <!--  3 rows of controls, 2 columns; the piece of the file that is played and looped  -->
-                    <Grid>
+                    <Grid HorizontalAlignment="Center">
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="Auto" />
                             <ColumnDefinition Width="Auto" />
@@ -121,15 +121,31 @@
                             Minimum="0"
                             Step="0.1"
                             Value="{Binding LoopCrossfade, Mode=TwoWay}" />
-                        <controls:TimeBox
+                        <StackPanel
                             Grid.Row="3"
                             Grid.Column="1"
                             Margin="6,6,0,0"
-                            Header="Loop start"
-                            Hint="{x:Static vm:HintTexts.LoopStart}"
-                            Maximum="{Binding DataContext.SelectedSourceSeconds, RelativeSource={RelativeSource AncestorType=Window}}"
-                            Minimum="0"
-                            Value="{Binding LoopStart, Mode=TwoWay}" />
+                            Orientation="Horizontal">
+                            <controls:TimeBox
+                                Header="Loop start"
+                                Hint="{x:Static vm:HintTexts.LoopStart}"
+                                Maximum="{Binding DataContext.SelectedSourceSeconds, RelativeSource={RelativeSource AncestorType=Window}}"
+                                Minimum="0"
+                                Value="{Binding LoopStart, Mode=TwoWay}" />
+                            <!--  Scissors: mark a piece on the layer in the timeline; a second click puts it into Loop start and duration  -->
+                            <ToggleButton
+                                Width="30"
+                                Height="30"
+                                Margin="8,0,0,0"
+                                Padding="0"
+                                VerticalAlignment="Bottom"
+                                Command="{Binding DataContext.ToggleLoopCutCommand, RelativeSource={RelativeSource AncestorType=Window}}"
+                                Cursor="Hand"
+                                IsChecked="{Binding DataContext.IsLoopCutMode, RelativeSource={RelativeSource AncestorType=Window}, Mode=OneWay}"
+                                ToolTip="Scissors: click, mark a piece of this layer in the timeline with the mouse, then click again to take it as Loop start and Loop duration">
+                                <ui:SymbolIcon FontSize="16" Symbol="Cut24" />
+                            </ToggleButton>
+                        </StackPanel>
                         <controls:TimeBox
                             Grid.Row="4"
                             Grid.Column="1"

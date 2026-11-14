@@ -60,6 +60,7 @@ public sealed partial class TimelineControl
         }
         dc.Pop();
 
+        DrawCutSelection(dc, project, trackArea);
         DrawHeaders(dc, project, laneCount);
 
         if (layerCount == 0)
@@ -76,6 +77,31 @@ public sealed partial class TimelineControl
 
         DrawRuler(dc, width);
         RenderAddSlot();
+    }
+
+    // Scissors mode: the marked piece is lit on the lane of the selected recording.
+    private void DrawCutSelection(DrawingContext dc, ProjectModel project, Rect trackArea)
+    {
+        if (!IsCutMode || SelectedLayer is not { Type: LayerType.FieldRecord } layer)
+            return;
+
+        int lane = project.Layers.IndexOf(layer);
+        if (lane < 0)
+            return;
+
+        Rect clip = ClipRect(layer, lane);
+        dc.PushClip(new RectangleGeometry(trackArea));
+
+        // The clip is outlined with a dashed line while the mode is on, so that it is clear where to drag.
+        dc.DrawRectangle(null, new Pen(BrushOf(Color.FromArgb(0xB0, 0xFF, 0xC1, 0x5C)), 1) { DashStyle = DashStyles.Dash }, clip);
+
+        if (!double.IsNaN(CutStart) && !double.IsNaN(CutEnd) && CutEnd > CutStart)
+        {
+            var piece = new Rect(TimeToX(CutStart), clip.Top, Math.Max(2, (CutEnd - CutStart) * PixelsPerSecond), clip.Height);
+            dc.DrawRectangle(BrushOf(Color.FromArgb(0x55, 0xFF, 0xC1, 0x5C)), new Pen(BrushOf(Color.FromRgb(0xFF, 0xC1, 0x5C)), 1.5), piece);
+        }
+
+        dc.Pop();
     }
 
     private void DrawLaneBackgrounds(DrawingContext dc, ProjectModel project, int laneCount, double width, double height)

@@ -172,7 +172,10 @@
                     VerticalScrollBarVisibility="Auto">
                     <controls:TimelineControl
                         x:Name="Timeline"
+                        CutEnd="{Binding LoopCutEnd, Mode=TwoWay}"
+                        CutStart="{Binding LoopCutStart, Mode=TwoWay}"
                         DeleteCommand="{Binding DeleteSelectedLayerCommand}"
+                        IsCutMode="{Binding IsLoopCutMode}"
                         NewLayerType="{Binding NewLayer.Type, Mode=OneWay}"
                         PlayheadSeconds="{Binding PlayheadSeconds}"
                         Project="{Binding Project}"

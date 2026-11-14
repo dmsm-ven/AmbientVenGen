@@ -59,6 +59,12 @@ public sealed partial class TimelineControl
         return (layer, lane, HitZone.Body);
     }
 
+    private double _cutAnchor;
+
+    // A marked piece stays inside the clip (the first play of the layer), rounded to 10 ms.
+    private static double ClampToClip(Layer layer, double seconds) =>
+        Math.Round(Math.Clamp(seconds, layer.StartSeconds, layer.StartSeconds + layer.DurationSeconds), 2);
+
     private static double Distance(Point a, Point b) => Math.Sqrt((a.X - b.X) * (a.X - b.X) + (a.Y - b.Y) * (a.Y - b.Y));
 
     private static double Snap(double seconds) =>
@@ -129,6 +135,20 @@ public sealed partial class TimelineControl
             return;
         }
 
+        // Scissors: a drag on the lane of the selected recording marks a piece of it (nothing is moved).
+        if (IsCutMode && SelectedLayer is { Type: LayerType.FieldRecord } cutLayer
+            && project.Layers.IndexOf(cutLayer) is var cutLane and >= 0
+            && point.Y >= LaneTop(cutLane) && point.Y < LaneTop(cutLane) + LaneHeight)
+        {
+            _dragLayer = cutLayer;
+            _cutAnchor = ClampToClip(cutLayer, XToTime(point.X));
+            _mode = DragMode.Cut;
+            CutStart = CutEnd = _cutAnchor;
+            CaptureMouse();
+            e.Handled = true;
+            return;
+        }
+
         var hit = HitTest(point);
 
         if (hit.Layer is null)
@@ -185,6 +205,14 @@ public sealed partial class TimelineControl
 
         switch (_mode)
         {
+            case DragMode.Cut:
+            {
+                double t = ClampToClip(layer, XToTime(point.X));
+                CutStart = Math.Min(_cutAnchor, t);
+                CutEnd = Math.Max(_cutAnchor, t);
+                break;
+            }
+
             case DragMode.Move:
             {
                 double start = Snap(_originalStart + (XToTime(point.X) - _dragStartTime));
@@ -330,6 +358,14 @@ public sealed partial class TimelineControl
         if (point.X < HeaderWidth)
         {
             Cursor = _hoverArrow != 0 || _hoverMute || _hoverSolo || IsOverAddControl(point) ? Cursors.Hand : Cursors.Arrow;
+            return;
+        }
+
+        if (IsCutMode && SelectedLayer is { Type: LayerType.FieldRecord } cutLayer && Project is { } cutProject
+            && cutProject.Layers.IndexOf(cutLayer) is var lane and >= 0
+            && point.Y >= LaneTop(lane) && point.Y < LaneTop(lane) + LaneHeight)
+        {
+            Cursor = Cursors.Cross;
             return;
         }
 

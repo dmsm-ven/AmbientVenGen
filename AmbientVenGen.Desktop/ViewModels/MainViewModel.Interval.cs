@@ -93,6 +93,9 @@ public partial class MainViewModel
         OnPropertyChanged(nameof(SelectedLayerTimeText));
         MoveSolo();
 
+        // The scissors mark a piece of one layer.
+        CancelLoopCut();
+
         // The panel is built for one selected layer.
         BuildIntervalPanel();
     }
