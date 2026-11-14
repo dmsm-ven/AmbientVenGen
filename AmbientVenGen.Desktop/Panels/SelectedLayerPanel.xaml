@@ -126,7 +126,7 @@
                             </StackPanel>
                         </StackPanel>
                         <ui:Button
-                            Margin="0,0,60,0"
+                            Margin="0,0,90,0"
                             HorizontalAlignment="Right"
                             Command="{Binding RandomizeSelectedLayerCommand}"
                             Style="{StaticResource ToolIconButton}"
@@ -136,7 +136,7 @@
                             </ui:Button.Icon>
                         </ui:Button>
                         <ui:Button
-                            Margin="0,0,30,0"
+                            Margin="0,0,60,0"
                             HorizontalAlignment="Right"
                             Command="{Binding ClearSelectedLayerCommand}"
                             Style="{StaticResource ToolIconButton}"
@@ -146,13 +146,23 @@
                             </ui:Button.Icon>
                         </ui:Button>
                         <ui:Button
-                            Margin="0"
+                            Margin="0,0,30,0"
                             HorizontalAlignment="Right"
                             Command="{Binding DeleteSelectedLayerCommand}"
                             Style="{StaticResource ToolIconButton}"
                             ToolTip="Remove layer (Del)">
                             <ui:Button.Icon>
                                 <ui:SymbolIcon Symbol="Delete24" />
+                            </ui:Button.Icon>
+                        </ui:Button>
+                        <ui:Button
+                            Margin="0"
+                            HorizontalAlignment="Right"
+                            Command="{Binding SaveSelectedLayerCommand}"
+                            Style="{StaticResource ToolIconButton}"
+                            ToolTip="Save this layer to a file (.aflay); it can be added to any project with Add layer - Open from file">
+                            <ui:Button.Icon>
+                                <ui:SymbolIcon Symbol="Save24" />
                             </ui:Button.Icon>
                         </ui:Button>
                     </Grid>

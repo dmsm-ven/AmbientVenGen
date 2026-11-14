@@ -45,7 +45,7 @@
                     <ui:Button
                         Command="{Binding AddLayerCommand}"
                         Style="{StaticResource TopToolButton}"
-                        ToolTip="Add layer (the type is chosen in the free row of the timeline)">
+                        ToolTip="Add layer">
                         <ui:Button.Icon>
                             <ui:SymbolIcon Symbol="Layer24" />
                         </ui:Button.Icon>

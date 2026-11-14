@@ -8,30 +8,16 @@ using System.Windows.Threading;
 namespace AmbientVenGen.Desktop.Controls;
 
 /// <summary>
-/// The "add layer" slot: the first free lane under the layers. Its header holds a big "+" and a type chooser.
-/// The slot is 25% opaque and only the "+" is shown; while the mouse is over its header it is fully opaque with the type chooser, and fades back in 0.15 s.
+/// The "add layer" slot: the first free lane under the layers. Its header holds a big "+".
+/// The slot is 25% opaque and while the mouse is over its header it is fully opaque, and fades back in 0.15 s.
 /// </summary>
 public sealed partial class TimelineControl
 {
     private const double RestOpacity = 0.25;
     private const double FadeBackSeconds = 0.15;
 
-    /// <summary>The type of the layer that "+" adds.</summary>
-    public static readonly DependencyProperty NewLayerTypeProperty = DependencyProperty.Register(
-        nameof(NewLayerType), typeof(LayerType), typeof(TimelineControl),
-        new FrameworkPropertyMetadata(LayerType.Drone, (d, _) => ((TimelineControl)d).RenderAddSlot()));
-
-    public LayerType NewLayerType
-    {
-        get => (LayerType)GetValue(NewLayerTypeProperty);
-        set => SetValue(NewLayerTypeProperty, value);
-    }
-
-    /// <summary>"+" was clicked: add a layer of the chosen type.</summary>
+    /// <summary>"+" was clicked: ask for the type of the new layer.</summary>
     public event Action? AddLayerRequested;
-
-    /// <summary>The type chooser was clicked; the argument is its rectangle in the coordinates of this control.</summary>
-    public event Action<Rect>? NewLayerTypeMenuRequested;
 
     private readonly DrawingVisual _addVisual = new();
     private readonly DispatcherTimer _addTimer = new() { Interval = TimeSpan.FromMilliseconds(16) };
@@ -51,8 +37,6 @@ public sealed partial class TimelineControl
 
     private static Rect PlusRect(int lane) => new(14, LaneTop(lane) + (LaneHeight - 40) / 2.0, 40, 40);
 
-    private static Rect TypeRect(int lane) => new(64, LaneTop(lane) + (LaneHeight - 30) / 2.0, HeaderWidth - 64 - 14, 30);
-
     private bool InAddHeader(Point point) =>
         Project is not null
         && point.X >= 0 && point.X < HeaderWidth
@@ -68,14 +52,12 @@ public sealed partial class TimelineControl
 
         if (PlusRect(lane).Contains(point))
             AddLayerRequested?.Invoke();
-        else if (TypeRect(lane).Contains(point))
-            NewLayerTypeMenuRequested?.Invoke(TypeRect(lane));
 
         return true;
     }
 
     private bool IsOverAddControl(Point point) =>
-        InAddHeader(point) && (PlusRect(AddSlotLane).Contains(point) || TypeRect(AddSlotLane).Contains(point));
+        InAddHeader(point) && PlusRect(AddSlotLane).Contains(point);
 
     private void SetAddHover(bool hover)
     {
@@ -112,9 +94,6 @@ public sealed partial class TimelineControl
         RenderAddSlot();
     }
 
-    private string NewLayerTypeLabel =>
-        Choices.LayerTypes.FirstOrDefault(c => c.Value == NewLayerType)?.Label ?? NewLayerType.ToString();
-
     private void RenderAddSlot()
     {
         using DrawingContext dc = _addVisual.RenderOpen();
@@ -124,7 +103,6 @@ public sealed partial class TimelineControl
 
         int lane = AddSlotLane;
         Rect plus = PlusRect(lane);
-        Rect type = TypeRect(lane);
 
         dc.PushOpacity(_addOpacity);
 
@@ -133,37 +111,6 @@ public sealed partial class TimelineControl
         Point c = new(plus.X + plus.Width / 2, plus.Y + plus.Height / 2);
         dc.DrawLine(pen, new Point(c.X - 14, c.Y), new Point(c.X + 14, c.Y));
         dc.DrawLine(pen, new Point(c.X, c.Y - 14), new Point(c.X, c.Y + 14));
-        dc.Pop();
-
-        // The type chooser is hidden at rest and appears (with the opacity) while the mouse is over the slot.
-        double shown = (_addOpacity - RestOpacity) / (1.0 - RestOpacity);
-
-        if (shown <= 0.01)
-            return;
-
-        dc.PushOpacity(shown);
-
-        // Combobox-like type chooser.
-        dc.DrawRoundedRectangle(
-            BrushOf(Color.FromArgb(0x1A, 0xFF, 0xFF, 0xFF)),
-            new Pen(BrushOf(Color.FromArgb(0x33, 0xFF, 0xFF, 0xFF)), 1),
-            type, 6, 6);
-
-        FormattedText label = MakeText(NewLayerTypeLabel, 12, Color.FromRgb(0xF2, 0xF2, 0xF8), false, type.Width - 32);
-        dc.DrawText(label, new Point(type.X + 10, type.Y + (type.Height - label.Height) / 2));
-
-        var arrow = new StreamGeometry();
-        using (StreamGeometryContext ctx = arrow.Open())
-        {
-            double ax = type.Right - 16;
-            double ay = type.Y + type.Height / 2 - 2;
-            ctx.BeginFigure(new Point(ax - 4, ay), true, true);
-            ctx.LineTo(new Point(ax + 4, ay), true, false);
-            ctx.LineTo(new Point(ax, ay + 5), true, false);
-        }
-        arrow.Freeze();
-        dc.DrawGeometry(BrushOf(Color.FromRgb(0xA9, 0xA7, 0xC2)), null, arrow);
-
         dc.Pop();
     }
 }

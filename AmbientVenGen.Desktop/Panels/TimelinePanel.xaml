@@ -173,7 +173,6 @@
                     <controls:TimelineControl
                         x:Name="Timeline"
                         DeleteCommand="{Binding DeleteSelectedLayerCommand}"
-                        NewLayerType="{Binding NewLayer.Type, Mode=OneWay}"
                         PlayheadSeconds="{Binding PlayheadSeconds}"
                         Project="{Binding Project}"
                         IsSoloActive="{Binding IsSoloActive}"

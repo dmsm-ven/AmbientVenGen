@@ -1,3 +1,4 @@
+using AmbientVenGen.Desktop.Views;
 using AmbientVenGen.Core.Audio;
 using AmbientVenGen.Core.Composition;
 using AmbientVenGen.Core.Export;
@@ -19,9 +20,29 @@ public partial class MainViewModel
 {
     // ---------------------------------------------------------------- layers and templates
 
+    private readonly LayerFileService _layerFiles = new();
+
     [RelayCommand]
     private void AddLayer()
     {
+        // A big window with the layer types (and "open from file"): a click on a tile adds that layer.
+        if (AddLayerWindow.Ask() is not { } choice)
+            return;
+
+        if (choice == AddLayerChoice.OpenFile)
+        {
+            OpenLayerFile();
+            return;
+        }
+
+        NewLayer.Type = choice switch
+        {
+            AddLayerChoice.Pad => LayerType.Pad,
+            AddLayerChoice.Noise => LayerType.Noise,
+            AddLayerChoice.FieldRecord => LayerType.FieldRecord,
+            _ => LayerType.Drone
+        };
+
         double total = Project.DurationSeconds;
         int number = Project.Layers.Count(layer => layer.Type == NewLayer.Type) + 1;
 
@@ -40,6 +61,53 @@ public partial class MainViewModel
         Project.Layers.Add(created);
         SelectedLayer = created;
         StatusMessage = $"Added layer: {created.Name}";
+    }
+
+    /// <summary>Saves the selected layer (only this one) into a .aflay file.</summary>
+    [RelayCommand(CanExecute = nameof(HasSelectedLayer))]
+    private void SaveSelectedLayer()
+    {
+        if (SelectedLayer is not { } layer)
+            return;
+
+        string? path = _fileDialogService.ChooseLayerSavePath(layer.Name);
+        if (path is null)
+            return;
+
+        try
+        {
+            _layerFiles.Save(path, layer.ToSpec());
+            StatusMessage = $"Layer saved: {Path.GetFileName(path)}";
+        }
+        catch (Exception ex)
+        {
+            _messageService.ShowError($"Cannot save the layer:\n{ex.Message}");
+        }
+    }
+
+    // The layer of the file is copied into the project as a new layer; the file itself stays as it is.
+    private void OpenLayerFile()
+    {
+        string? path = _fileDialogService.ChooseLayerToOpen();
+        if (path is null)
+            return;
+
+        try
+        {
+            Layer created = Layer.FromSpec(_layerFiles.Load(path));
+            double total = Project.DurationSeconds;
+
+            created.DurationSeconds = Math.Clamp(created.DurationSeconds, MinLayerSeconds, total);
+            created.StartSeconds = Math.Clamp(created.StartSeconds, 0, Math.Max(0, total - created.DurationSeconds));
+
+            Project.Layers.Add(created);
+            SelectedLayer = created;
+            StatusMessage = $"Added layer from file: {created.Name}";
+        }
+        catch (Exception ex)
+        {
+            _messageService.ShowError($"Cannot open the layer:\n{ex.Message}");
+        }
     }
 
     [RelayCommand(CanExecute = nameof(HasSelectedLayer))]

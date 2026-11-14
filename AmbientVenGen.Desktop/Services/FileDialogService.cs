@@ -80,6 +80,43 @@ public sealed class FileDialogService(AppSettings settings)
         return dialog.FileName;
     }
 
+    public string? ChooseLayerSavePath(string suggestedName)
+    {
+        var dialog = new SaveFileDialog
+        {
+            Title = "Save layer",
+            Filter = "Ambient Forge layer (*.aflay)|*.aflay",
+            FileName = SafeName(suggestedName),
+            InitialDirectory = ExistingOrNull(settings.LastLayerDirectory),
+            AddExtension = true,
+            DefaultExt = LayerFileService.Extension,
+            OverwritePrompt = true
+        };
+
+        if (dialog.ShowDialog() != true)
+            return null;
+
+        settings.LastLayerDirectory = Path.GetDirectoryName(dialog.FileName);
+        return dialog.FileName;
+    }
+
+    public string? ChooseLayerToOpen()
+    {
+        var dialog = new OpenFileDialog
+        {
+            Title = "Open layer",
+            Filter = "Ambient Forge layer (*.aflay)|*.aflay",
+            InitialDirectory = ExistingOrNull(settings.LastLayerDirectory),
+            CheckFileExists = true
+        };
+
+        if (dialog.ShowDialog() != true)
+            return null;
+
+        settings.LastLayerDirectory = Path.GetDirectoryName(dialog.FileName);
+        return dialog.FileName;
+    }
+
     private static string? ExistingOrNull(string? directory) =>
         !string.IsNullOrWhiteSpace(directory) && Directory.Exists(directory) ? directory : null;
 
