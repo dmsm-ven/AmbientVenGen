@@ -85,6 +85,7 @@ public partial class MainViewModel : ObservableObject, IDisposable
     [NotifyCanExecuteChangedFor(nameof(RandomizeSelectedLayerCommand))]
     [NotifyCanExecuteChangedFor(nameof(ClearSelectedLayerCommand))]
     [NotifyCanExecuteChangedFor(nameof(DuplicateSelectedLayerCommand))]
+    [NotifyCanExecuteChangedFor(nameof(SaveSelectedLayerCommand))]
     [NotifyCanExecuteChangedFor(nameof(ApplyIntervalCommand))]
     private Layer? _selectedLayer;
 
