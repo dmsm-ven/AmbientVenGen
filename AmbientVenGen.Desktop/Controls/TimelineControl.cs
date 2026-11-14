@@ -85,29 +85,6 @@ public sealed partial class TimelineControl : FrameworkElement
         nameof(IsSoloActive), typeof(bool), typeof(TimelineControl),
         new PropertyMetadata(false, (d, _) => ((TimelineControl)d).InvalidateContent()));
 
-    /// <summary>Scissors mode: a piece of the selected recording is marked by dragging on its lane.</summary>
-    public static readonly DependencyProperty IsCutModeProperty = DependencyProperty.Register(
-        nameof(IsCutMode), typeof(bool), typeof(TimelineControl),
-        new PropertyMetadata(false, (d, _) => ((TimelineControl)d).InvalidateContent()));
-
-    /// <summary>Start of the marked piece, project seconds (NaN: nothing is marked).</summary>
-    public static readonly DependencyProperty CutStartProperty = DependencyProperty.Register(
-        nameof(CutStart), typeof(double), typeof(TimelineControl),
-        new FrameworkPropertyMetadata(double.NaN, FrameworkPropertyMetadataOptions.BindsTwoWayByDefault,
-            (d, _) => ((TimelineControl)d).InvalidateContent()));
-
-    /// <summary>End of the marked piece, project seconds (NaN: nothing is marked).</summary>
-    public static readonly DependencyProperty CutEndProperty = DependencyProperty.Register(
-        nameof(CutEnd), typeof(double), typeof(TimelineControl),
-        new FrameworkPropertyMetadata(double.NaN, FrameworkPropertyMetadataOptions.BindsTwoWayByDefault,
-            (d, _) => ((TimelineControl)d).InvalidateContent()));
-
-    public bool IsCutMode { get => (bool)GetValue(IsCutModeProperty); set => SetValue(IsCutModeProperty, value); }
-
-    public double CutStart { get => (double)GetValue(CutStartProperty); set => SetValue(CutStartProperty, value); }
-
-    public double CutEnd { get => (double)GetValue(CutEndProperty); set => SetValue(CutEndProperty, value); }
-
     public ICommand? SoloCommand
     {
         get => (ICommand?)GetValue(SoloCommandProperty);
@@ -126,7 +103,7 @@ public sealed partial class TimelineControl : FrameworkElement
     /// <summary>Height of the ruler (the bottom copy of it is a <see cref="TimelineRuler"/>).</summary>
     public static double RulerStripHeight => RulerHeight;
 
-    private enum DragMode { None, Move, ResizeLeft, ResizeRight, FadeIn, FadeOut, Scrub, Cut }
+    private enum DragMode { None, Move, ResizeLeft, ResizeRight, FadeIn, FadeOut, Scrub }
 
     private enum HitZone { None, Body, LeftEdge, RightEdge, FadeInHandle, FadeOutHandle }
 

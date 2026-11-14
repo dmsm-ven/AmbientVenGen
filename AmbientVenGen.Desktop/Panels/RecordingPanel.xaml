@@ -142,7 +142,7 @@
                                 Command="{Binding DataContext.ToggleLoopCutCommand, RelativeSource={RelativeSource AncestorType=Window}}"
                                 Cursor="Hand"
                                 IsChecked="{Binding DataContext.IsLoopCutMode, RelativeSource={RelativeSource AncestorType=Window}, Mode=OneWay}"
-                                ToolTip="Scissors: click, mark a piece of this layer in the timeline with the mouse, then click again to take it as Loop start and Loop duration">
+                                ToolTip="Scissors: click to show the whole recording, mark the piece to loop on it with the mouse, then click again to take it as Loop start and Loop duration">
                                 <ui:SymbolIcon FontSize="16" Symbol="Cut24" />
                             </ToggleButton>
                         </StackPanel>
@@ -162,6 +162,39 @@
                         FontSize="11"
                         Foreground="#8F8DB0"
                         Text="{Binding DataContext.SelectedPieceText, RelativeSource={RelativeSource AncestorType=Window}}" />
+
+                    <!--  Scissors on: the whole file without repeats or stretch; drag on it to mark the loop piece  -->
+                    <StackPanel DataContext="{Binding DataContext, RelativeSource={RelativeSource AncestorType=Window}}" Margin="0,8,0,0">
+                        <StackPanel.Style>
+                            <Style TargetType="StackPanel">
+                                <Setter Property="Visibility" Value="Collapsed" />
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding IsLoopCutMode}" Value="True">
+                                        <Setter Property="Visibility" Value="Visible" />
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </StackPanel.Style>
+                        <Border
+                            Height="64"
+                            Background="#14FFFFFF"
+                            BorderBrush="#408F8DB0"
+                            BorderThickness="1"
+                            CornerRadius="5">
+                            <controls:RangeWaveform
+                                Margin="2"
+                                Duration="{Binding SelectedSourceSeconds}"
+                                Peaks="{Binding SourcePeaks}"
+                                RangeEnd="{Binding LoopCutEnd, Mode=TwoWay}"
+                                RangeStart="{Binding LoopCutStart, Mode=TwoWay}" />
+                        </Border>
+                        <TextBlock
+                            Margin="0,4,0,0"
+                            HorizontalAlignment="Center"
+                            FontSize="11"
+                            Foreground="#E6D25A"
+                            Text="{Binding LoopCutText}" />
+                    </StackPanel>
                 </StackPanel>
                 </Border>
 </UserControl>

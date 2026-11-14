@@ -1,30 +1,54 @@
+using AmbientVenGen.Core.Audio;
 using AmbientVenGen.Core.Composition;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 
 namespace AmbientVenGen.Desktop.ViewModels;
 
-/// <summary>Scissors of the Recording group: the loop piece is marked on the layer in the timeline.</summary>
+/// <summary>
+/// Scissors of the Recording group: the loop piece is marked on the waveform of the whole file (no repeats, no stretch),
+/// so the marked seconds are seconds of the file and go straight into Loop start and Loop duration.
+/// </summary>
 public partial class MainViewModel
 {
-    /// <summary>The scissors are on: the timeline lets the user mark a piece of the selected recording.</summary>
+    private const int PeakCount = 900;
+
+    /// <summary>The scissors are on: the waveform of the file is shown at the bottom of the Recording group.</summary>
     [ObservableProperty]
     private bool _isLoopCutMode;
 
-    /// <summary>The marked piece in project seconds (NaN: nothing is marked yet); set by the timeline.</summary>
+    /// <summary>The marked range in seconds of the file (NaN: nothing is marked).</summary>
     [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(LoopCutText))]
     private double _loopCutStart = double.NaN;
 
     [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(LoopCutText))]
     private double _loopCutEnd = double.NaN;
+
+    /// <summary>Peaks of the whole file for the waveform.</summary>
+    [ObservableProperty]
+    private float[]? _sourcePeaks;
+
+    public string LoopCutText => !double.IsNaN(LoopCutStart) && LoopCutEnd > LoopCutStart
+        ? $"{FormatClockTenths(LoopCutStart)} - {FormatClockTenths(LoopCutEnd)}  ({LoopCutEnd - LoopCutStart:0.0} s)"
+        : "Drag on the waveform to mark the piece to loop";
+
+    private static string FormatClockTenths(double seconds)
+    {
+        var span = TimeSpan.FromSeconds(seconds);
+        string tenths = (span.Milliseconds / 100).ToString();
+        return (span.TotalHours >= 1 ? span.ToString(@"h\:mm\:ss") : span.ToString(@"m\:ss")) + "." + tenths;
+    }
 
     private void CancelLoopCut()
     {
         IsLoopCutMode = false;
+        SourcePeaks = null;
         LoopCutStart = LoopCutEnd = double.NaN;
     }
 
-    /// <summary>First click: switch the marking on. Second click: put the marked piece into Loop start and Loop duration.</summary>
+    /// <summary>First click: show the waveform of the file. Second click: put the marked range into Loop start and duration.</summary>
     [RelayCommand]
     private void ToggleLoopCut()
     {
@@ -36,42 +60,68 @@ public partial class MainViewModel
 
         if (!IsLoopCutMode)
         {
-            LoopCutStart = LoopCutEnd = double.NaN;
+            DecodedSample? sample = layer.SourcePath is { } path ? SampleLibrary.TryGet(path) : null;
+
+            if (sample is null || sample.Frames < 2)
+            {
+                _messageService.ShowError("The recording is not loaded (yet), so it cannot be shown.");
+                return;
+            }
+
+            SourcePeaks = PeaksOf(sample);
+
+            // the range starts as the piece that loops now
+            double total = sample.Frames / (double)ProjectMixer.SampleRate;
+            LoopCutStart = Math.Min(layer.LoopStart, total);
+            LoopCutEnd = layer.LoopDuration > 0 ? Math.Min(total, layer.LoopStart + layer.LoopDuration) : total;
             IsLoopCutMode = true;
             return;
         }
 
-        bool marked = !double.IsNaN(LoopCutStart) && !double.IsNaN(LoopCutEnd) && LoopCutEnd > LoopCutStart;
         double start = LoopCutStart;
         double end = LoopCutEnd;
+        bool marked = !double.IsNaN(start) && end > start;
         CancelLoopCut();
 
-        if (marked)
-            ApplyLoopCut(layer, start - layer.StartSeconds, end - layer.StartSeconds);
-    }
+        if (!marked)
+            return;
 
-    // The layer plays its piece from the beginning of the piece at the speed of the layer; a stretched recording is
-    // longer by the stretch factor and a reversed one is played from the end of the piece.
-    private void ApplyLoopCut(Layer layer, double from, double to)
-    {
-        double speed = Math.Max(0.05, layer.Speed);
-        double stretch = Math.Max(1.0, layer.Stretch);
-        double piece = layer.LoopDuration > 0 ? layer.LoopDuration : Math.Max(SampleTransform.MinPieceSeconds, SelectedSourceSeconds - layer.LoopStart);
-
-        double a = Math.Clamp(from * speed / stretch, 0, piece);
-        double b = Math.Clamp(to * speed / stretch, 0, piece);
-
-        if (b - a < SampleTransform.MinPieceSeconds)
+        if (end - start < SampleTransform.MinPieceSeconds)
         {
-            _messageService.ShowError($"The marked piece is too short: a loop is at least {SampleTransform.MinPieceSeconds:0.#} s of the recording.");
+            _messageService.ShowError($"The marked piece is too short: a loop is at least {SampleTransform.MinPieceSeconds:0.#} s.");
             return;
         }
 
-        double start = layer.Reverse ? layer.LoopStart + piece - b : layer.LoopStart + a;
-        start = Math.Clamp(start, 0, Math.Max(0, SelectedSourceSeconds - SampleTransform.MinPieceSeconds));
-        double duration = Math.Min(b - a, Math.Max(SampleTransform.MinPieceSeconds, SelectedSourceSeconds - start));
-
         layer.LoopStart = Math.Round(start, 2);
-        layer.LoopDuration = Math.Round(duration, 2);
+        layer.LoopDuration = Math.Round(end - start, 2);
+    }
+
+    // The loudest moment of every part of the file, 0..1 (long files are looked at with a step, it is only a picture).
+    private static float[] PeaksOf(DecodedSample sample)
+    {
+        var peaks = new float[PeakCount];
+        float max = 0;
+
+        for (int p = 0; p < PeakCount; p++)
+        {
+            int from = (int)((long)p * sample.Frames / PeakCount);
+            int to = Math.Max(from + 1, (int)((long)(p + 1) * sample.Frames / PeakCount));
+            int step = Math.Max(1, (to - from) / 2000);
+
+            float peak = 0;
+            for (int i = from; i < to && i < sample.Frames; i += step)
+                peak = Math.Max(peak, Math.Max(Math.Abs(sample.Left[i]), Math.Abs(sample.Right[i])));
+
+            peaks[p] = peak;
+            max = Math.Max(max, peak);
+        }
+
+        if (max > 0)
+        {
+            for (int p = 0; p < PeakCount; p++)
+                peaks[p] /= max;
+        }
+
+        return peaks;
     }
 }
