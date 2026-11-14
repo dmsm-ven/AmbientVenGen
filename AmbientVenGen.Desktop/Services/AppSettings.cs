@@ -39,6 +39,23 @@ public sealed partial class AppSettings : ObservableObject
 
     private bool _intervalMathExpanded = false;
 
+    /// <summary>Whether the main group (unison, octave...) of the pitch interval panel is open.</summary>
+    public bool IntervalMainExpanded
+    {
+        get => _intervalMainExpanded;
+        set
+        {
+            if (_intervalMainExpanded == value)
+                return;
+
+            _intervalMainExpanded = value;
+            OnPropertyChanged();
+            Save();
+        }
+    }
+
+    private bool _intervalMainExpanded = true;
+
     /// <summary>Whether the spectrograms of the layers are drawn on the timeline.</summary>
     public bool ShowSpectrogram
     {
@@ -205,6 +222,7 @@ public sealed partial class AppSettings : ObservableObject
             {
                 _lastProjectPath = file.LastProjectPath;
                 _intervalMathExpanded = file.IntervalMathExpanded;
+                _intervalMainExpanded = file.IntervalMainExpanded;
                 _showSpectrogram = file.ShowSpectrogram;
                 _recentProjects = (file.RecentProjects ?? []).Where(p => !string.IsNullOrWhiteSpace(p)).Take(MaxRecent).ToList();
                 _recentDates = new Dictionary<string, DateTime>(file.RecentDates ?? [], StringComparer.OrdinalIgnoreCase);
@@ -228,7 +246,7 @@ public sealed partial class AppSettings : ObservableObject
         try
         {
             Directory.CreateDirectory(Path.GetDirectoryName(_path)!);
-            File.WriteAllText(_path, JsonSerializer.Serialize(new SettingsFile { LastProjectPath = LastProjectPath, IntervalMathExpanded = IntervalMathExpanded, ShowSpectrogram = ShowSpectrogram, SpectrogramColor = SpectrogramColor.ToString(), RecentProjects = _recentProjects, RecentDates = _recentDates, LastProjectDirectory = _lastProjectDirectory, LastExportDirectory = _lastExportDirectory, ExportOptions = _exportOptions, PresetVolume = _presetVolume }, Options));
+            File.WriteAllText(_path, JsonSerializer.Serialize(new SettingsFile { LastProjectPath = LastProjectPath, IntervalMathExpanded = IntervalMathExpanded, IntervalMainExpanded = IntervalMainExpanded, ShowSpectrogram = ShowSpectrogram, SpectrogramColor = SpectrogramColor.ToString(), RecentProjects = _recentProjects, RecentDates = _recentDates, LastProjectDirectory = _lastProjectDirectory, LastExportDirectory = _lastExportDirectory, ExportOptions = _exportOptions, PresetVolume = _presetVolume }, Options));
         }
         catch (Exception)
         {
@@ -240,6 +258,7 @@ public sealed partial class AppSettings : ObservableObject
     {
         public string? LastProjectPath { get; set; }
         public bool IntervalMathExpanded { get; set; } = true;
+        public bool IntervalMainExpanded { get; set; } = true;
         public bool ShowSpectrogram { get; set; }
         public string? SpectrogramColor { get; set; }
         public List<string>? RecentProjects { get; set; }

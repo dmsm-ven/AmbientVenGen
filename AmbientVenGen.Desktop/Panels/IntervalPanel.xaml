@@ -6,7 +6,7 @@
     xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
     xmlns:vm="clr-namespace:AmbientVenGen.Desktop.ViewModels">
     <!--  Drone and Pad layers only: set the pitch of the layer relative to another Drone / Pad layer  -->
-    <Border Margin="0,0,6,0">
+    <Border Margin="0,0,6,0" MaxHeight="{Binding ActualHeight, RelativeSource={RelativeSource AncestorType=ScrollViewer}}">
         <Border.Style>
             <Style BasedOn="{StaticResource SectionCard}" TargetType="Border">
                 <Setter Property="Visibility" Value="Collapsed" />
@@ -122,10 +122,16 @@
         <!--  One layer ticked: the classic table  -->
         <StackPanel Visibility="{Binding IsSingleMode, Converter={StaticResource BoolToVisibility}}">
             <!--  Body: all intervals at once; [name = link] | [multiplier] | [resulting pitch]  -->
-            <ItemsControl
-                Margin="14,8,14,6"
-                ItemTemplate="{StaticResource IntervalRowTemplate}"
-                ItemsSource="{Binding IntervalRows}" />
+            <Expander
+                Margin="10,4,10,0"
+                FontSize="11"
+                Header="Intervals"
+                IsExpanded="{Binding Settings.IntervalMainExpanded, Mode=TwoWay}">
+                <ItemsControl
+                    Margin="4,2,4,6"
+                    ItemTemplate="{StaticResource IntervalRowTemplate}"
+                    ItemsSource="{Binding IntervalRows}" />
+            </Expander>
             <Border Height="1" Background="#2EFFFFFF" />
             <!--  Second group: mathematical ratios, smallest first; open or closed state is remembered in the settings  -->
             <Expander
@@ -133,13 +139,10 @@
                 FontSize="11"
                 Header="Mathematical ratios"
                 IsExpanded="{Binding Settings.IntervalMathExpanded, Mode=TwoWay}">
-                <!--  Tall enough for the whole group; a scroll bar appears only on a very low screen and gets its own margin  -->
-                <ScrollViewer MaxHeight="520" VerticalScrollBarVisibility="Auto">
-                    <ItemsControl
-                        Margin="4,2,18,0"
-                        ItemTemplate="{StaticResource IntervalRowTemplate}"
-                        ItemsSource="{Binding MathIntervalRows}" />
-                </ScrollViewer>
+                <ItemsControl
+                    Margin="4,2,4,0"
+                    ItemTemplate="{StaticResource IntervalRowTemplate}"
+                    ItemsSource="{Binding MathIntervalRows}" />
             </Expander>
         </StackPanel>
 
