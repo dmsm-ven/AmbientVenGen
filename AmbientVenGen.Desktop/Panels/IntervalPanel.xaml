@@ -1,0 +1,185 @@
+<UserControl
+    x:Class="AmbientVenGen.Desktop.Panels.IntervalPanel"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:controls="clr-namespace:AmbientVenGen.Desktop.Controls"
+    xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
+    xmlns:vm="clr-namespace:AmbientVenGen.Desktop.ViewModels">
+    <!--  Drone and Pad layers only: set the pitch of the layer relative to another Drone / Pad layer  -->
+    <Border Margin="0,0,6,0">
+        <Border.Style>
+            <Style BasedOn="{StaticResource SectionCard}" TargetType="Border">
+                <Setter Property="Visibility" Value="Collapsed" />
+                <Style.Triggers>
+                    <DataTrigger Binding="{Binding SelectedLayer.Type}" Value="Drone">
+                        <Setter Property="Visibility" Value="Visible" />
+                    </DataTrigger>
+                    <DataTrigger Binding="{Binding SelectedLayer.Type}" Value="Pad">
+                        <Setter Property="Visibility" Value="Visible" />
+                    </DataTrigger>
+                </Style.Triggers>
+            </Style>
+        </Border.Style>
+        <Grid>
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="*" />
+            </Grid.RowDefinitions>
+
+            <TextBlock
+                Margin="0,0,0,6"
+                FontSize="14"
+                FontWeight="SemiBold"
+                Text="Pitch interval" />
+
+            <!--  The same width as the Recording and Noise type groups: the left side bar never changes its width  -->
+            <ScrollViewer
+                Grid.Row="1"
+                Width="380"
+                HorizontalScrollBarVisibility="Disabled"
+                VerticalScrollBarVisibility="Auto">
+                <StackPanel>
+        <!--  Header: the layer the pitch is taken from  -->
+        <StackPanel Margin="14,10,14,12">
+            <Grid Margin="0,0,0,6">
+                <TextBlock
+                    Margin="0"
+                    VerticalAlignment="Center"
+                    FontSize="12"
+                    Foreground="#C9C8D6"
+                    Text="Tick a layer to take the pitch from"
+                    ToolTip="One ticked layer: this layer gets an interval above it. Two ticked layers make three together with this one: choose the Root, the other two are set relative to it." />
+            </Grid>
+            <ItemsControl ItemsSource="{Binding IntervalLayers}">
+                <ItemsControl.ItemTemplate>
+                    <DataTemplate>
+                        <Grid Margin="0,1">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="26" />
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
+                            <CheckBox
+                                Width="22"
+                                MinWidth="0"
+                                HorizontalAlignment="Left"
+                                IsChecked="{Binding IsChecked, Mode=TwoWay}"
+                                IsEnabled="{Binding CanCheck}"
+                                Template="{StaticResource TickBoxTemplate}"
+                                Visibility="{Binding ShowCheck, Converter={StaticResource BoolToVisibility}}" />
+                            <TextBlock
+                                Grid.Column="1"
+                                Margin="0"
+                                VerticalAlignment="Center"
+                                FontSize="12"
+                                Text="{Binding Text}"
+                                TextTrimming="CharacterEllipsis" />
+                            <!--  Root: a small clickable mark; the root layer is outlined  -->
+                            <Border
+                                Grid.Column="2"
+                                Margin="6,0,0,0"
+                                Padding="7,1"
+                                VerticalAlignment="Center"
+                                BorderThickness="1"
+                                CornerRadius="4"
+                                Cursor="Hand"
+                                ToolTip="The layer that keeps its pitch: the other two are set relative to it">
+                                <Border.InputBindings>
+                                    <MouseBinding
+                                        Command="{Binding DataContext.SetIntervalRootCommand, RelativeSource={RelativeSource AncestorType=Window}}"
+                                        CommandParameter="{Binding}"
+                                        MouseAction="LeftClick" />
+                                </Border.InputBindings>
+                                <Border.Style>
+                                    <Style TargetType="Border">
+                                        <Setter Property="Visibility" Value="Collapsed" />
+                                        <Setter Property="Background" Value="#14FFFFFF" />
+                                        <Setter Property="BorderBrush" Value="#33FFFFFF" />
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding ShowRoot}" Value="True">
+                                                <Setter Property="Visibility" Value="Visible" />
+                                            </DataTrigger>
+                                            <DataTrigger Binding="{Binding IsRoot}" Value="True">
+                                                <Setter Property="Background" Value="#665B9BFF" />
+                                                <Setter Property="BorderBrush" Value="#FF5B9BFF" />
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </Border.Style>
+                                <TextBlock
+                                    Margin="0"
+                                    FontSize="10"
+                                    Foreground="#ECECF2"
+                                    Text="Root" />
+                            </Border>
+                        </Grid>
+                    </DataTemplate>
+                </ItemsControl.ItemTemplate>
+            </ItemsControl>
+        </StackPanel>
+        <Border Height="1" Background="#2EFFFFFF" />
+
+        <!--  One layer ticked: the classic table  -->
+        <StackPanel Visibility="{Binding IsSingleMode, Converter={StaticResource BoolToVisibility}}">
+            <!--  Body: all intervals at once; [name = link] | [multiplier] | [resulting pitch]  -->
+            <ItemsControl
+                Margin="14,8,14,6"
+                ItemTemplate="{StaticResource IntervalRowTemplate}"
+                ItemsSource="{Binding IntervalRows}" />
+            <Border Height="1" Background="#2EFFFFFF" />
+            <!--  Second group: mathematical ratios, smallest first; open or closed state is remembered in the settings  -->
+            <Expander
+                Margin="10,4,10,8"
+                FontSize="11"
+                Header="Mathematical ratios"
+                IsExpanded="{Binding Settings.IntervalMathExpanded, Mode=TwoWay}">
+                <!--  Tall enough for the whole group; a scroll bar appears only on a very low screen and gets its own margin  -->
+                <ScrollViewer MaxHeight="520" VerticalScrollBarVisibility="Auto">
+                    <ItemsControl
+                        Margin="4,2,18,0"
+                        ItemTemplate="{StaticResource IntervalRowTemplate}"
+                        ItemsSource="{Binding MathIntervalRows}" />
+                </ScrollViewer>
+            </Expander>
+        </StackPanel>
+
+        <!--  Two layers ticked: three layers around the root  -->
+        <StackPanel Visibility="{Binding IsChordMode, Converter={StaticResource BoolToVisibility}}">
+            <TextBlock
+                Margin="14,8,14,2"
+                FontSize="10"
+                Foreground="#8F8DB0"
+                Text="The root keeps its pitch; the lower and the higher of the other two get the pitches on the right."
+                TextWrapping="Wrap" />
+            <ItemsControl
+                Margin="14,4,14,8"
+                ItemTemplate="{StaticResource ChordRowTemplate}"
+                ItemsSource="{Binding ChordRows}" />
+        </StackPanel>
+
+        <!--  Nothing ticked  -->
+        <TextBlock
+            Margin="14,8,14,10"
+            FontSize="11"
+            Foreground="#8F8DB0"
+            Text="Tick one layer to take an interval above it, or two layers to tune all three together.">
+            <TextBlock.Style>
+                <Style BasedOn="{StaticResource {x:Type TextBlock}}" TargetType="TextBlock">
+                    <Setter Property="Visibility" Value="Collapsed" />
+                    <Style.Triggers>
+                        <MultiDataTrigger>
+                            <MultiDataTrigger.Conditions>
+                                <Condition Binding="{Binding IsSingleMode}" Value="False" />
+                                <Condition Binding="{Binding IsChordMode}" Value="False" />
+                            </MultiDataTrigger.Conditions>
+                            <Setter Property="Visibility" Value="Visible" />
+                        </MultiDataTrigger>
+                    </Style.Triggers>
+                </Style>
+            </TextBlock.Style>
+        </TextBlock>
+    </StackPanel>
+            </ScrollViewer>
+        </Grid>
+    </Border>
+</UserControl>

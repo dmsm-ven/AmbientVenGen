@@ -64,12 +64,6 @@ public partial class MainViewModel
             row.IsCurrent = current is { } hz && Math.Abs(row.Hz - hz) < 0.05;
     }
 
-    [RelayCommand]
-    private void CloseIntervalPanel() => IsIntervalPanelOpen = false;
-
-    [ObservableProperty]
-    private bool _isIntervalPanelOpen;
-
     [ObservableProperty]
     [NotifyCanExecuteChangedFor(nameof(ApplyIntervalCommand))]
     private IntervalSource? _intervalSource;
@@ -90,10 +84,7 @@ public partial class MainViewModel
 
     private bool _intervalUpdating;
 
-    // Needs a Drone / Pad selected and at least one other Drone / Pad to take the pitch from.
-    private bool CanOpenIntervalPanel() =>
-        SelectedLayer is { Type: LayerType.Drone or LayerType.Pad } selected
-        && Project.Layers.Any(l => !ReferenceEquals(l, selected) && l.Type is LayerType.Drone or LayerType.Pad);
+    private static bool IsIntervalLayer(Layer? layer) => layer is { Type: LayerType.Drone or LayerType.Pad };
 
     partial void OnSelectedLayerChanged(Layer? value)
     {
@@ -103,21 +94,30 @@ public partial class MainViewModel
         MoveSolo();
 
         // The panel is built for one selected layer.
-        if (IsIntervalPanelOpen)
-            IsIntervalPanelOpen = false;
+        BuildIntervalPanel();
     }
 
-    /// <summary>Opens the mini panel; the layer below the selected one is ticked by default.</summary>
-    [RelayCommand(CanExecute = nameof(CanOpenIntervalPanel))]
-    private void OpenIntervalPanel()
-    {
-        if (SelectedLayer is not { } target)
-            return;
+    // The layers of the panel are the Drone / Pad layers of the project: it is built again when they change.
+    private bool IntervalLayersOutdated() =>
+        !IsIntervalLayer(SelectedLayer)
+            ? IntervalLayers.Count > 0
+            : !IntervalLayers.Select(i => i.Layer).SequenceEqual(Project.Layers.Where(l => IsIntervalLayer(l)))
+                || IntervalLayers.FirstOrDefault(i => i.IsTarget)?.Layer != SelectedLayer;
 
+    /// <summary>Fills the Pitch interval panel; the layer below the selected one is ticked by default.</summary>
+    private void BuildIntervalPanel()
+    {
         foreach (IntervalLayerItem old in IntervalLayers)
             old.PropertyChanged -= OnIntervalItemChanged;
 
         IntervalLayers.Clear();
+
+        if (SelectedLayer is not { Type: LayerType.Drone or LayerType.Pad } target)
+        {
+            UpdateIntervalMode();
+            return;
+        }
+
         foreach (Layer layer in Project.Layers.Where(l => l.Type is LayerType.Drone or LayerType.Pad))
             IntervalLayers.Add(new IntervalLayerItem(layer, ReferenceEquals(layer, target)));
 
@@ -131,7 +131,6 @@ public partial class MainViewModel
             item.PropertyChanged += OnIntervalItemChanged;
 
         UpdateIntervalMode();
-        IsIntervalPanelOpen = true;
     }
 
     private void OnIntervalItemChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)

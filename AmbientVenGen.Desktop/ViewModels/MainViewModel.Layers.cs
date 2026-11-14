@@ -290,9 +290,9 @@ public partial class MainViewModel
 
     private void OnProjectChanged()
     {
-        OpenIntervalPanelCommand.NotifyCanExecuteChanged();
-
-        if (IsIntervalPanelOpen)
+        if (IntervalLayersOutdated())
+            BuildIntervalPanel();
+        else
             RefreshCurrentInterval();
 
         // Start decoding recordings as soon as a layer uses them, so playback does not wait.
