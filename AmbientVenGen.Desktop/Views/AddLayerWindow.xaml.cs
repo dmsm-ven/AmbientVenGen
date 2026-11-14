@@ -1,5 +1,4 @@
-using System.Windows;
-using System.Windows.Controls;
+﻿using System.Windows;
 using System.Windows.Input;
 using Wpf.Ui.Controls;
 
@@ -33,7 +32,7 @@ public partial class AddLayerWindow : FluentWindow
 
     private void OnTile(object sender, RoutedEventArgs e)
     {
-        if (sender is Button { Tag: string tag } && Enum.TryParse(tag, out AddLayerChoice choice))
+        if (sender is System.Windows.Controls.Button { Tag: string tag } && Enum.TryParse(tag, out AddLayerChoice choice))
         {
             _choice = choice;
             Close();
