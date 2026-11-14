@@ -108,9 +108,9 @@ public static class Choices
         new(NoiseType.Geiger, "Geiger / sparks",
             "Rare hard clicks at random intervals.",
             "Sounds like: a Geiger counter near a source, or sparks from a faulty cable."),
-        new(NoiseType.IceSinging, "Ice singing",
-            "Cracks running through ice: quick falling tones.",
-            "Sounds like: cracks running through the ice of a frozen lake, a ringing sci-fi laser shot."),
+        new(NoiseType.IceSinging, "Lake ice",
+            "Slow low groans, deep booms and dry cracks. Modulation = how often it speaks.",
+            "Sounds like: the ice of a frozen lake in winter, groaning and cracking under the surface."),
         new(NoiseType.EnergyShield, "Energy shield",
             "Detuned hum through a breathing filter.",
             "Sounds like: a sci-fi force field, a detuned hum that slowly breathes."),
@@ -120,7 +120,13 @@ public static class Choices
             "Sounds like: an old TV or a transformer in a quiet room, a thin high whine."),
         new(NoiseType.Gong, "Gong",
             "Rare strokes of a big gong: inharmonic partials that ring for seconds and slowly beat. Modulation = how often it is struck.",
-            "Sounds like: a temple gong, a big tam-tam, a slow ceremonial stroke fading in the hall.")
+            "Sounds like: a temple gong, a big tam-tam, a slow ceremonial stroke fading in the hall."),
+        new(NoiseType.Heartbeat, "Heartbeat",
+            "A heart through the chest: a deep \"lub-dub\". Modulation = the rate, Brightness = how clear.",
+            "Sounds like: a heartbeat heard from inside, calm and slow or quick and tense."),
+        new(NoiseType.CardiacMonitor, "Cardiac monitor",
+            "An even, clean beep like a patient monitor. Modulation = the rate, Brightness = the pitch.",
+            "Sounds like: the beeping of a heart monitor in a hospital room.")
     ];
 
     /// <summary>Three-layer relations (the arithmetic lives in Core: <see cref="PitchRelations"/>).</summary>

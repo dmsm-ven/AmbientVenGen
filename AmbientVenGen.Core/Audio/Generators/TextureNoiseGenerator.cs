@@ -4,7 +4,7 @@ namespace AmbientVenGen.Core.Audio;
 
 /// <summary>
 /// Noise textures made of events (clicks, drops, dropouts) and slow movement (gusts, tuning drift) on top of filtered
-/// noise: Crackle, Vinyl, RadioStatic, Wind, Rain, Ocean, ElectricalHum, TapeHiss, SpaceRumble, Geiger, IceSinging, HighVoltage, EnergyShield, CrtWhine, PlasmaArc and Gong. Every channel has its own random stream, so the left and the right
+/// noise: Crackle, Vinyl, RadioStatic, Wind, Rain, Ocean, ElectricalHum, TapeHiss, SpaceRumble, Geiger, IceSinging, HighVoltage, EnergyShield, CrtWhine, PlasmaArc, Gong, Heartbeat and CardiacMonitor. Every channel has its own random stream, so the left and the right
 /// side are different (wide). Brightness sets the tone, Modulation the density or the amount of movement.
 /// Everything is random-driven from the seed, so the sound is the same every time and can have any length.
 /// </summary>
@@ -16,8 +16,12 @@ internal sealed class TextureNoiseGenerator : LayerGenerator
     public TextureNoiseGenerator(int seed, NoiseType type)
     {
         var random = new Random(seed);
-        _left = CreateChannel(type, (uint)random.Next(1, int.MaxValue));
-        _right = CreateChannel(type, (uint)random.Next(1, int.MaxValue));
+        uint leftSeed = (uint)random.Next(1, int.MaxValue);
+        _left = CreateChannel(type, leftSeed);
+
+        // A heart and a monitor are one source: both channels must beat at the same moments.
+        bool oneSource = type is NoiseType.Heartbeat or NoiseType.CardiacMonitor;
+        _right = CreateChannel(type, oneSource ? leftSeed : (uint)random.Next(1, int.MaxValue));
     }
 
     public override void Render(in BlockParams p, Span<float> left, Span<float> right)
@@ -52,6 +56,8 @@ internal sealed class TextureNoiseGenerator : LayerGenerator
         NoiseType.CrtWhine => new WhineChannel(seed),
         NoiseType.PlasmaArc => new ArcChannel(seed),
         NoiseType.Gong => new GongChannel(seed),
+        NoiseType.Heartbeat => new HeartChannel(seed),
+        NoiseType.CardiacMonitor => new MonitorChannel(seed),
         _ => new CrackleChannel(seed)
     };
 
@@ -667,59 +673,193 @@ internal sealed class TextureNoiseGenerator : LayerGenerator
     }
 
     /// <summary>
-    /// Singing ice: rare cracks, each a quick falling tone (a "blaster shot"), now and then with an echo from the far side
-    /// of the lake and a low thump; a very faint creak below.
+    /// The ice of a lake: slow low groans that swell and sag in pitch (the ice flexing), deep booms that run away
+    /// under the surface and short dry cracks, sometimes in a quick run followed by a low thud. No high falling
+    /// tones: those make a "laser shot", not ice.
     /// </summary>
     private sealed class IceChannel : Channel
     {
         private Rng _rng;
-        private Chirp _crack, _echo;
-        private Clicker _thump;
-        private Svf _creak = new(260f, 1.2f);
-        private Wander _creakLevel;
-        private int _echoLeft;
-        private float _echoAmplitude, _echoFrom, _echoTo, _echoSweep, _echoRing;
+        private Clicker _crack, _boom, _thud;
+        private Svf _bed = new(70f, 0.8f);
+        private Wander _bedLevel;
+        private int _burstLeft, _burstGap, _thudLeft;
+
+        // one groan: a tone with a stick-slip pulse, a swell and a slow sag of the pitch
+        private float _groanPhase, _groanPulse, _groanHz, _groanSag, _groanPulseHz;
+        private bool _groanOn;
+        private Svf _groanBody = new(220f, 6f);
 
         public IceChannel(uint seed)
         {
             _rng = new Rng(seed);
-            _creakLevel = new Wander(seed ^ 0x9E3779B9u);
+            _bedLevel = new Wander(seed ^ 0x9E3779B9u);
         }
 
         public override float Next(float brightness, float modulation)
         {
-            if (_rng.Event(0.15f + 1.2f * modulation))
+            // groans: 1 in 3..12 seconds
+            if (!_groanOn && _rng.Event(0.08f + 0.35f * modulation))
             {
-                // thin ice rings high, thick ice lower
-                float from = (2500f + 5500f * brightness) * (0.75f + 0.5f * _rng.Next01());
-                float to = from * (0.06f + 0.09f * _rng.Next01());
-                float length = 0.08f + 0.32f * _rng.Next01();
-                float amplitude = 0.4f + 0.6f * _rng.Next01();
-
-                _crack.Trigger(amplitude, from, to, length / 3f, length * 0.8f);
-
-                if (_rng.Next01() < 0.5f)
-                {
-                    _echoLeft = (int)((0.03f + 0.09f * _rng.Next01()) * Sr);
-                    _echoAmplitude = amplitude * 0.35f;
-                    _echoFrom = from * 0.8f;
-                    _echoTo = to * 0.9f;
-                    _echoSweep = length / 2.5f;
-                    _echoRing = length;
-                }
-
-                if (_rng.Next01() < 0.4f)
-                    _thump.Trigger(0.8f, 90f, 1f, 0.06f);
+                _groanOn = true;
+                _groanHz = (65f + 170f * brightness) * (0.8f + 0.5f * _rng.Next01());
+                _groanSag = 0.78f + 0.2f * _rng.Next01();
+                _groanPulseHz = 9f + 24f * _rng.Next01();
+                _groanLength = (1.2f + 2.6f * _rng.Next01()) * Sr;
+                _groanAge = 0f;
             }
 
-            if (_echoLeft > 0 && --_echoLeft == 0)
-                _echo.Trigger(_echoAmplitude, _echoFrom, _echoTo, _echoSweep, _echoRing);
+            float groan = 0f;
+            if (_groanOn)
+            {
+                _groanAge += 1f;
+                float t = _groanAge / _groanLength;
 
-            _creak.Process(_rng.Signed(), out float creak, out _, out _);
+                if (t >= 1f)
+                    _groanOn = false;
 
-            return (_crack.Next() + _echo.Next()) * 0.45f
-                + _thump.Next(_rng.Signed()) * 1.5f
-                + creak * 0.1f * (0.3f + 0.7f * _creakLevel.Next(9f));
+                // swell (first 30%) and fade, the pitch sags towards the end
+                float envelope = t < 0.3f ? MathF.Sin(t / 0.3f * MathF.PI / 2f) : MathF.Cos((t - 0.3f) / 0.7f * MathF.PI / 2f);
+                float hz = _groanHz * Lerp(1f, _groanSag, t);
+
+                _groanPhase = (_groanPhase + hz / Sr) % 1f;
+                _groanPulse = (_groanPulse + _groanPulseHz / Sr) % 1f;
+
+                float pulse = 0.55f + 0.45f * MathF.Sin(_groanPulse * MathF.Tau);
+                float tone = MathF.Sin(_groanPhase * MathF.Tau) + 0.35f * MathF.Sin(_groanPhase * 2f * MathF.Tau);
+
+                _groanBody.Set(hz * 2.2f, 6f);
+                _groanBody.Process(_rng.Signed(), out _, out float body, out _);
+
+                groan = (tone * 0.5f + body * 0.9f) * pulse * envelope * envelope * 0.8f;
+            }
+
+            // booms from deep below
+            if (_rng.Event(0.05f + 0.4f * modulation))
+                _boom.Trigger(1.1f, 45f + 55f * _rng.Next01(), 1.4f, 0.25f + 0.35f * _rng.Next01());
+
+            // cracks: single ones or a quick run of them
+            if (_burstLeft == 0 && _rng.Event(0.2f + 2f * modulation))
+            {
+                _burstLeft = 1 + (int)(_rng.Next01() * 4.5f);
+                _burstGap = 0;
+            }
+
+            if (_burstLeft > 0 && --_burstGap <= 0)
+            {
+                _burstLeft--;
+                _burstGap = (int)((0.015f + 0.08f * _rng.Next01()) * Sr);
+
+                float loudness = 0.3f + 0.7f * _rng.Next01();
+                _crack.Trigger(loudness, (1100f + 3600f * brightness) * (0.6f + 0.8f * _rng.Next01()), 1.1f, 0.003f + 0.007f * _rng.Next01());
+
+                if (_burstLeft == 0 && _rng.Next01() < 0.6f)
+                    _thudLeft = (int)((0.06f + 0.22f * _rng.Next01()) * Sr);
+            }
+
+            if (_thudLeft > 0 && --_thudLeft == 0)
+                _thud.Trigger(0.9f, 70f + 50f * _rng.Next01(), 1.2f, 0.12f);
+
+            // a faint low movement under everything
+            _bed.Process(_rng.Signed(), out float low, out _, out _);
+
+            return groan * 0.9f
+                + _boom.Next(_rng.Signed()) * 2.2f
+                + _crack.Next(_rng.Signed()) * 2.4f
+                + _thud.Next(_rng.Signed()) * 2f
+                + low * 0.25f * (0.4f + 0.6f * _bedLevel.Next(7f));
+        }
+
+        private float _groanLength, _groanAge;
+    }
+
+    /// <summary>
+    /// A heart heard through the chest: "lub-dub", a deep thump and a shorter, higher one a little later. Modulation
+    /// sets the rate (about 45 to 120 beats a minute) and Brightness how clear it is (muffled or close).
+    /// </summary>
+    private sealed class HeartChannel : Channel
+    {
+        private Rng _rng;
+        private Chirp _lub, _dub;
+        private Clicker _lubBody, _dubBody;
+        private Wander _drift;
+        private int _toBeat, _toDub;
+
+        public HeartChannel(uint seed)
+        {
+            _rng = new Rng(seed);
+            _drift = new Wander(seed ^ 0x9E3779B9u);
+            _toBeat = (int)(0.2f * Sr);
+        }
+
+        public override float Next(float brightness, float modulation)
+        {
+            if (--_toBeat <= 0)
+            {
+                // the interval breathes a little from beat to beat
+                float bpm = (45f + 75f * modulation) * (0.95f + 0.1f * _drift.Next(6f));
+                float period = 60f / bpm;
+                _toBeat = (int)(period * Sr);
+
+                float loud = 0.85f + 0.15f * _rng.Next01();
+                _lub.Trigger(loud, 95f, 46f, 0.035f, 0.11f);
+                _lubBody.Trigger(loud * (0.3f + 0.9f * brightness), 130f + 160f * brightness, 0.9f, 0.05f);
+
+                _toDub = (int)(Math.Min(0.3f, 0.36f * period) * Sr);
+            }
+
+            if (_toDub > 0 && --_toDub == 0)
+            {
+                _dub.Trigger(0.6f, 120f, 62f, 0.025f, 0.08f);
+                _dubBody.Trigger(0.5f * (0.3f + 0.9f * brightness), 180f + 200f * brightness, 0.9f, 0.04f);
+            }
+
+            return (_lub.Next() + _dub.Next()) * 0.9f
+                + (_lubBody.Next(_rng.Signed()) + _dubBody.Next(_rng.Signed())) * 1.4f;
+        }
+    }
+
+    /// <summary>
+    /// The beep of a patient monitor: a clean, short high tone at an even rate, one for every heartbeat.
+    /// Modulation sets the rate (50 to 130 a minute), Brightness the pitch of the beep.
+    /// </summary>
+    private sealed class MonitorChannel : Channel
+    {
+        private const float BeepSeconds = 0.11f;
+
+        private Rng _rng;
+        private int _toBeat, _beepAge = int.MaxValue;
+        private float _phase;
+        private float _hz = 1000f;
+
+        public MonitorChannel(uint seed)
+        {
+            _rng = new Rng(seed);
+            _toBeat = (int)(0.3f * Sr);
+        }
+
+        public override float Next(float brightness, float modulation)
+        {
+            if (--_toBeat <= 0)
+            {
+                _toBeat = (int)(60f / (50f + 80f * modulation) * Sr);
+                _hz = 750f + 900f * brightness;
+                _beepAge = 0;
+            }
+
+            int length = (int)(BeepSeconds * Sr);
+            if (_beepAge >= length)
+                return 0f;
+
+            float t = _beepAge++ / (float)length;
+
+            // a short soft attack and a release so that it does not click
+            float envelope = Math.Min(1f, t / 0.04f) * Math.Min(1f, (1f - t) / 0.12f);
+
+            _phase = (_phase + _hz / Sr) % 1f;
+            float tone = MathF.Sin(_phase * MathF.Tau) + 0.18f * MathF.Sin(_phase * 3f * MathF.Tau);
+
+            return tone * envelope * 0.55f;
         }
     }
 

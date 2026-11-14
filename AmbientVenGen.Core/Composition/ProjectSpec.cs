@@ -36,7 +36,9 @@ public enum NoiseType
     EnergyShield,
     CrtWhine,
     PlasmaArc,
-    Gong
+    Gong,
+    Heartbeat,
+    CardiacMonitor
 }
 
 /// <summary>A parameter that moves from one value to another over the length of a layer.</summary>

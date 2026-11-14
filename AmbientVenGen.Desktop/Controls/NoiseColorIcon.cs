@@ -45,6 +45,8 @@ public sealed class NoiseColorIcon : FrameworkElement
         NoiseType.CrtWhine => (Color.FromRgb(0xB8, 0xC4, 0xD8), Color.FromRgb(0x3A, 0x45, 0x58)),
         NoiseType.PlasmaArc => (Color.FromRgb(0xFF, 0x9A, 0xF0), Color.FromRgb(0x8A, 0x2A, 0x8F)),
         NoiseType.Gong => (Color.FromRgb(0xE8, 0xC2, 0x5A), Color.FromRgb(0x7A, 0x4A, 0x14)),
+        NoiseType.Heartbeat => (Color.FromRgb(0xFF, 0x7A, 0x86), Color.FromRgb(0x7A, 0x12, 0x24)),
+        NoiseType.CardiacMonitor => (Color.FromRgb(0x7C, 0xFF, 0x9A), Color.FromRgb(0x0E, 0x3B, 0x2A)),
         _ => (Colors.Gray, Colors.Gray)
     };
 
