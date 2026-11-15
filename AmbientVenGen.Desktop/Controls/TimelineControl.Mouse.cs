@@ -129,6 +129,15 @@ public sealed partial class TimelineControl
             return;
         }
 
+        // The repeat sign between two plays opens the table of the repeat properties.
+        if (RepeatSignAt(point) is { } sign)
+        {
+            SetCurrentValue(SelectedLayerProperty, sign.Layer);
+            RepeatPropertiesRequested?.Invoke(sign.Layer, sign.Play);
+            e.Handled = true;
+            return;
+        }
+
         var hit = HitTest(point);
 
         if (hit.Layer is null)
@@ -330,6 +339,12 @@ public sealed partial class TimelineControl
         if (point.X < HeaderWidth)
         {
             Cursor = _hoverArrow != 0 || _hoverMute || _hoverSolo || IsOverAddControl(point) ? Cursors.Hand : Cursors.Arrow;
+            return;
+        }
+
+        if (RepeatSignAt(point) is not null)
+        {
+            Cursor = Cursors.Hand;
             return;
         }
 

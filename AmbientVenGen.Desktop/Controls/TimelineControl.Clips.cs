@@ -38,10 +38,12 @@ public sealed partial class TimelineControl
 
                 // The sign sits in the gap when it fits, otherwise on the joint of the two plays.
                 FormattedText sign = MakeText("\u21BB", 15, Color.FromArgb(0xFF, 0xFF, 0xFF, 0xFF), bold: true);
-                double cx = gap >= sign.Width + 6 ? left.Right + gap / 2.0 : left.Right;
-                var badge = new Rect(cx - sign.Width / 2.0 - 3, y - sign.Height / 2.0 - 1, sign.Width + 6, sign.Height + 2);
-                dc.DrawRoundedRectangle(BrushOf(WithAlpha(accent, 0xE0)), null, badge, 5, 5);
-                dc.DrawText(sign, new Point(cx - sign.Width / 2.0, y - sign.Height / 2.0));
+                Rect badge = RepeatSignRect(layer, lane, play);
+
+                // a white frame on the sign: the play after it has values of its own (click it to edit them)
+                bool own = layer.RepeatOverrides.Any(o => o.Repeat == play + 1);
+                dc.DrawRoundedRectangle(BrushOf(WithAlpha(accent, 0xE0)), own ? new Pen(Brushes.White, 1.5) : null, badge, 5, 5);
+                dc.DrawText(sign, new Point(badge.Left + 3, badge.Top + 1));
             }
 
             dc.Pop();
@@ -51,6 +53,39 @@ public sealed partial class TimelineControl
         }
 
         DrawClip(dc, layer, ClipRect(layer, lane), selected, 0);
+    }
+
+    /// <summary>The repeat sign after a play (in the gap when it fits, otherwise on the joint): a click opens the repeat properties.</summary>
+    private Rect RepeatSignRect(Layer layer, int lane, int play)
+    {
+        Rect left = PlayRect(layer, lane, play);
+        Rect right = PlayRect(layer, lane, play + 1);
+        double gap = right.Left - left.Right;
+        double y = left.Top + left.Height / 2.0;
+        FormattedText sign = MakeText("\u21BB", 15, Colors.White, bold: true);
+        double cx = gap >= sign.Width + 6 ? left.Right + gap / 2.0 : left.Right;
+        return new Rect(cx - sign.Width / 2.0 - 3, y - sign.Height / 2.0 - 1, sign.Width + 6, sign.Height + 2);
+    }
+
+    /// <summary>The repeat sign under the point, if any: the layer and the number of the play that follows the sign.</summary>
+    private (Layer Layer, int Play)? RepeatSignAt(Point point)
+    {
+        if (Project is not { } project || point.X < HeaderWidth)
+            return null;
+
+        int lane = (int)Math.Floor((point.Y - RulerHeight) / LaneHeight);
+        if (lane < 0 || lane >= project.Layers.Count)
+            return null;
+
+        Layer layer = project.Layers[lane];
+
+        for (int play = 0; play < Math.Max(1, layer.Repeats) - 1; play++)
+        {
+            if (RepeatSignRect(layer, lane, play).Contains(point))
+                return (layer, play + 1);
+        }
+
+        return null;
     }
 
     private void DrawClip(DrawingContext dc, Layer layer, Rect rect, bool selected, int play = 0)

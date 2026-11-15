@@ -171,6 +171,37 @@ public sealed partial class Layer : ObservableObject
     /// <summary>Slow modulators that move parameters of the layer around their set values (any number).</summary>
     public ObservableCollection<Modulator> Modulators { get; } = [];
 
+    /// <summary>
+    /// Own values of some properties for some plays (repeats) of the layer. Only the changed ones are here: a play
+    /// that has no entry for a property uses the value of the layer.
+    /// </summary>
+    public ObservableCollection<RepeatOverrideSpec> RepeatOverrides { get; } = [];
+
+    /// <summary>The own value of a property for a play (zero-based), or null when the play uses the layer's value.</summary>
+    public double? RepeatValue(int play, RepeatParam param)
+    {
+        foreach (RepeatOverrideSpec item in RepeatOverrides)
+        {
+            if (item.Repeat == play && item.Param == param)
+                return item.Value;
+        }
+
+        return null;
+    }
+
+    /// <summary>Gives a play its own value of a property; null takes it back to the value of the layer.</summary>
+    public void SetRepeatValue(int play, RepeatParam param, double? value)
+    {
+        for (int i = RepeatOverrides.Count - 1; i >= 0; i--)
+        {
+            if (RepeatOverrides[i].Repeat == play && RepeatOverrides[i].Param == param)
+                RepeatOverrides.RemoveAt(i);
+        }
+
+        if (value is { } v)
+            RepeatOverrides.Add(new RepeatOverrideSpec(play, param, v));
+    }
+
     /// <summary>Field record: play the recording backwards.</summary>
     [ObservableProperty]
     private bool _reverse;
@@ -215,6 +246,8 @@ public sealed partial class Layer : ObservableObject
 
             OnPropertyChanged(nameof(Modulators));
         };
+
+        RepeatOverrides.CollectionChanged += (_, _) => OnPropertyChanged(nameof(RepeatOverrides));
     }
 
     private void OnModulatorChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e) =>
@@ -314,7 +347,9 @@ public sealed partial class Layer : ObservableObject
         LoopStart,
         LoopDuration,
         LoopCrossfade,
-        Modulators.Select(m => m.ToSpec()).ToList());
+        Modulators.Select(m => m.ToSpec()).ToList(),
+        // saved only when at least one value was changed (and only for plays that still exist)
+        RepeatOverrides.Where(o => o.Repeat < Repeats).ToList() is { Count: > 0 } overrides ? overrides : null);
 
     /// <summary>Creates a layer from a spec, clamping values read from a file to sane ranges.</summary>
     public static Layer FromSpec(LayerSpec spec)
@@ -363,6 +398,12 @@ public sealed partial class Layer : ObservableObject
             LoopDuration = Math.Max(0, spec.LoopDuration),
             LoopCrossfade = Math.Clamp(spec.LoopCrossfade, 0, SampleTransform.MaxCrossfade)
         };
+
+        foreach (RepeatOverrideSpec item in spec.RepeatOverrides ?? [])
+        {
+            if (item.Repeat >= 0 && item.Repeat < MaxRepeats && Enum.IsDefined(item.Param) && double.IsFinite(item.Value))
+                layer.SetRepeatValue(item.Repeat, item.Param, item.Value);
+        }
 
         if (spec.Modulators is not null)
         {

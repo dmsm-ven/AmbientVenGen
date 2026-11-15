@@ -19,6 +19,9 @@ public sealed partial class TimelineControl
     /// <summary>"+" was clicked: ask for the type of the new layer.</summary>
     public event Action? AddLayerRequested;
 
+    /// <summary>The repeat sign was clicked: the layer and the number (zero-based) of the play after the sign.</summary>
+    public event Action<Layer, int>? RepeatPropertiesRequested;
+
     private readonly DrawingVisual _addVisual = new();
     private readonly DispatcherTimer _addTimer = new() { Interval = TimeSpan.FromMilliseconds(16) };
     private readonly Stopwatch _addClock = new();

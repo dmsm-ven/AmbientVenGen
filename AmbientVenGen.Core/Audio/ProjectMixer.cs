@@ -111,29 +111,37 @@ public sealed class ProjectMixer : ISampleProvider
         if (!_runtimes.TryGetValue(layer.Id, out LayerRuntime? runtime)
             || runtime.Type != layer.Type
             || runtime.SourcePath != layer.SourcePath
-            || runtime.NoiseType != layer.NoiseType
-            || runtime.Transform != layer.Transform)
+            || runtime.NoiseType != layer.NoiseType)
         {
             runtime = new LayerRuntime(
                 layer.Type,
                 layer.SourcePath,
-                LayerGenerator.Create(layer.Type, MixSeed(projectSeed, layer.Seed), layer.SourcePath, layer.NoiseType, layer.Transform),
+                LayerGenerator.Create(layer.Type, MixSeed(projectSeed, layer.Seed), layer.SourcePath, layer.NoiseType, layer.TransformFor(0)),
                 layer.NoiseType,
                 MixSeed(projectSeed, layer.Seed),
-                layer.Transform);
+                layer.TransformFor(0));
             _runtimes[layer.Id] = runtime;
         }
 
         double local = blockTime - layer.StartSeconds;
 
         // Repeats: time inside the current play (curves, fades and recordings restart with every play); a gap is silent.
-        bool inPlay = layer.TryGetPlayTime(local, out double within, out _);
+        bool inPlay = layer.TryGetPlayTime(local, out double within, out int play);
         bool active = !layer.Muted && inPlay;
+
+        // The processing of a recording may differ from play to play: the generator is changed at the start of the play
+        // (the effects stay, so an echo still rings out over the change).
+        SampleTransform transform = layer.TransformFor(play);
+        if (runtime.Transform != transform)
+        {
+            runtime.Generator = LayerGenerator.Create(layer.Type, runtime.Seed, layer.SourcePath, layer.NoiseType, transform);
+            runtime.Transform = transform;
+        }
 
         // The modulators move the level, the filter, the pan, the reverb send and the generator knobs around their set values.
         ModOffsets mod = ModOffsets.Evaluate(layer, runtime.Seed, blockTime);
 
-        float target = active ? (float)(layer.GainAt(within) * mod.LevelMultiplier) : 0f;
+        float target = active ? (float)(layer.GainAt(within, layer.OverrideOf(play, RepeatParam.Level)) * mod.LevelMultiplier) : 0f;
 
         bool silent = target <= 0f && runtime.Gain < 1e-5f;
 
@@ -157,11 +165,11 @@ public sealed class ProjectMixer : ISampleProvider
             float pitchFactor = (float)Math.Pow(2.0, drift / 12.0);
 
             var block = new BlockParams(
-                (float)Math.Clamp(layer.BrightnessAt(curveTime) + mod.Brightness, 0.0, 1.0),
-                (float)Math.Clamp(layer.ModulationAt(curveTime) + mod.Modulation, 0.0, 1.0),
-                (float)layer.PitchHz * pitchFactor,
+                (float)Math.Clamp((layer.OverrideOf(play, RepeatParam.Brightness) ?? layer.BrightnessAt(curveTime)) + mod.Brightness, 0.0, 1.0),
+                (float)Math.Clamp((layer.OverrideOf(play, RepeatParam.Modulation) ?? layer.ModulationAt(curveTime)) + mod.Modulation, 0.0, 1.0),
+                (float)(layer.OverrideOf(play, RepeatParam.Pitch) ?? layer.PitchHz) * pitchFactor,
                 Math.Max(0.0, (inPlay ? within : local) - count * 0.5 / SampleRate),
-                (float)layer.Speed * pitchFactor);
+                (float)(layer.OverrideOf(play, RepeatParam.Speed) ?? layer.Speed) * pitchFactor);
 
             runtime.Generator.Render(in block, _scratchLeft.AsSpan(0, count), _scratchRight.AsSpan(0, count));
 
@@ -183,17 +191,17 @@ public sealed class ProjectMixer : ISampleProvider
             _scratchLeft,
             _scratchRight,
             count,
-            Math.Clamp(layer.FilterCutoffHz * mod.CutoffFactor, Layer.MinCutoffHz, Layer.MaxCutoffHz),
-            layer.FilterResonance,
-            layer.DelaySeconds,
-            layer.DelayFeedback);
+            Math.Clamp((layer.OverrideOf(play, RepeatParam.Cutoff) ?? layer.FilterCutoffHz) * mod.CutoffFactor, Layer.MinCutoffHz, Layer.MaxCutoffHz),
+            layer.OverrideOf(play, RepeatParam.Resonance) ?? layer.FilterResonance,
+            layer.OverrideOf(play, RepeatParam.DelayTime) ?? layer.DelaySeconds,
+            layer.OverrideOf(play, RepeatParam.DelayFeedback) ?? layer.DelayFeedback);
 
         // Constant-power pan (with a slow random wandering); the centre position keeps unity gain.
-        double pan = Math.Clamp(layer.Pan + mod.Pan + layer.PanDrift * 0.6 * runtime.PanWander.At(blockTime), -1.0, 1.0);
+        double pan = Math.Clamp((layer.OverrideOf(play, RepeatParam.Pan) ?? layer.Pan) + mod.Pan + layer.PanDrift * 0.6 * runtime.PanWander.At(blockTime), -1.0, 1.0);
         float angle = (float)((pan + 1.0) * Math.PI / 4.0);
         float panLeft = MathF.Cos(angle) * 1.4142f;
         float panRight = MathF.Sin(angle) * 1.4142f;
-        float send = (float)Math.Clamp(layer.ReverbSend + mod.ReverbSend, 0.0, 1.0);
+        float send = (float)Math.Clamp((layer.OverrideOf(play, RepeatParam.ReverbSend) ?? layer.ReverbSend) + mod.ReverbSend, 0.0, 1.0);
 
         for (int i = 0; i < count; i++)
         {
@@ -243,9 +251,9 @@ public sealed class ProjectMixer : ISampleProvider
     {
         public LayerType Type { get; }
         public int Seed { get; }
-        public SampleTransform Transform { get; }
+        public SampleTransform Transform { get; set; }
         public string? SourcePath { get; }
-        public LayerGenerator Generator { get; }
+        public LayerGenerator Generator { get; set; }
         public float Gain { get; set; }
 
         public NoiseType NoiseType { get; }

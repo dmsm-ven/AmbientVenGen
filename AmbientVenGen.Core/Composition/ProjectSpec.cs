@@ -1,4 +1,4 @@
-﻿namespace AmbientVenGen.Core.Composition;
+namespace AmbientVenGen.Core.Composition;
 
 public enum LayerType
 {
@@ -39,6 +39,31 @@ public enum NoiseType
     Heartbeat,
     CardiacMonitor
 }
+
+/// <summary>A property of a layer that can get its own value for a repeat (see <see cref="RepeatOverrideSpec"/>).</summary>
+public enum RepeatParam
+{
+    Level,
+    Brightness,
+    Modulation,
+    Pan,
+    Cutoff,
+    Resonance,
+    ReverbSend,
+    DelayTime,
+    DelayFeedback,
+
+    /// <summary>The pitch of a Drone or Pad, Hz.</summary>
+    Pitch,
+
+    // Field record only
+    Speed,
+    PitchShift,
+    Stretch
+}
+
+/// <summary>A value of one property for one play of a layer (zero-based): the plays that have none use the layer's own value.</summary>
+public sealed record RepeatOverrideSpec(int Repeat, RepeatParam Param, double Value);
 
 /// <summary>A parameter that moves from one value to another over the length of a layer.</summary>
 public sealed record CurveSpec(double From, double To, Easing Easing)
@@ -87,8 +112,55 @@ public sealed record LayerSpec(
     double LoopStart = 0.0,
     double LoopDuration = 0.0,
     double LoopCrossfade = SampleTransform.DefaultCrossfade,
-    IReadOnlyList<ModulatorSpec>? Modulators = null)
+    IReadOnlyList<ModulatorSpec>? Modulators = null,
+    IReadOnlyList<RepeatOverrideSpec>? RepeatOverrides = null)
 {
+    /// <summary>The own value of a property for the given play, or null when that play uses the value of the layer.</summary>
+    public double? OverrideOf(int play, RepeatParam param)
+    {
+        if (RepeatOverrides is not { Count: > 0 } list)
+            return null;
+
+        for (int i = 0; i < list.Count; i++)
+        {
+            RepeatOverrideSpec item = list[i];
+            if (item.Repeat == play && item.Param == param)
+                return item.Value;
+        }
+
+        return null;
+    }
+
+    /// <summary>What is done to the recording in the given play (the repeats may have their own speed-independent settings).</summary>
+    public SampleTransform TransformFor(int play)
+    {
+        SampleTransform t = Transform;
+
+        if (Type != LayerType.FieldRecord || RepeatOverrides is not { Count: > 0 })
+            return t;
+
+        double stretch = OverrideOf(play, RepeatParam.Stretch) ?? Stretch;
+        double shift = OverrideOf(play, RepeatParam.PitchShift) ?? PitchShift;
+
+        return t with
+        {
+            Stretch = Math.Clamp(stretch < 1 ? 1 : stretch, 1, SampleTransform.MaxStretch),
+            PitchSemitones = Math.Clamp(shift, -SampleTransform.MaxPitchSemitones, SampleTransform.MaxPitchSemitones)
+        };
+    }
+
+    /// <summary>Every different processing of the recording over all plays (to be prepared before playing or exporting).</summary>
+    public IEnumerable<SampleTransform> AllTransforms()
+    {
+        var seen = new HashSet<SampleTransform>();
+
+        for (int play = 0; play < PlayCount; play++)
+        {
+            if (seen.Add(TransformFor(play)))
+                yield return TransformFor(play);
+        }
+    }
+
     /// <summary>What is done to the recording of a Field record layer (nothing for the other types).</summary>
     [System.Text.Json.Serialization.JsonIgnore]
     public SampleTransform Transform => Type == LayerType.FieldRecord
@@ -156,6 +228,10 @@ public sealed record LayerSpec(
 
     /// <summary>Level multiplied by the fades: what the listener actually hears.</summary>
     public double GainAt(double localSeconds) => LevelAt(localSeconds) * FadeGainAt(localSeconds);
+
+    /// <summary>The same with a level of its own for this play (a fixed level instead of the curve).</summary>
+    public double GainAt(double localSeconds, double? levelOverride) =>
+        (levelOverride ?? LevelAt(localSeconds)) * FadeGainAt(localSeconds);
 }
 
 public sealed record ProjectSpec(

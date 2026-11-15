@@ -367,7 +367,13 @@ public partial class MainViewModel
         foreach (Layer layer in Project.Layers)
         {
             if (layer.Type == LayerType.FieldRecord && !layer.Muted && !string.IsNullOrEmpty(layer.SourcePath))
+            {
                 SampleLibrary.Request(layer.SourcePath, layer.Transform);
+
+                // the repeats may be processed in their own way: start those too
+                foreach (SampleTransform extra in layer.ToSpec().AllTransforms().Skip(1))
+                    SampleLibrary.Request(layer.SourcePath, extra);
+            }
         }
 
         RefreshProcessing();

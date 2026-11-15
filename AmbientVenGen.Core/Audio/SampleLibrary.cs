@@ -156,7 +156,7 @@ public static class SampleLibrary
 
     private static IEnumerable<(string Path, SampleTransform Transform)> SourcesOf(ProjectSpec spec) => spec.Layers
         .Where(layer => layer.Type == LayerType.FieldRecord && !layer.Muted && !string.IsNullOrEmpty(layer.SourcePath))
-        .Select(layer => (layer.SourcePath!, layer.Transform.ForProcessing()))
+        .SelectMany(layer => layer.AllTransforms().Select(t => (layer.SourcePath!, t.ForProcessing())))
         .Distinct();
 
     private static string ProcessedKey(string path, SampleTransform t) =>
