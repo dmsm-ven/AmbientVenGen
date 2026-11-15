@@ -1,4 +1,4 @@
-using AmbientVenGen.Core.Composition;
+﻿using AmbientVenGen.Core.Composition;
 using AmbientVenGen.Desktop.Services;
 using System.ComponentModel;
 using System.Windows;
@@ -127,7 +127,7 @@ public partial class RepeatPropertiesWindow : FluentWindow
 
     private static void AddText(Grid grid, string text, int row, int column, bool center, bool bold)
     {
-        var block = new TextBlock
+        var block = new System.Windows.Controls.TextBlock
         {
             Text = text,
             Margin = new Thickness(0, 0, 14, 0),
@@ -155,7 +155,7 @@ public partial class RepeatPropertiesWindow : FluentWindow
             ContextMenu = new ContextMenu()
         };
 
-        var reset = new MenuItem { Header = "Back to the value of the layer" };
+        var reset = new System.Windows.Controls.MenuItem { Header = "Back to the value of the layer" };
         reset.Click += (_, _) => Commit(box, clear: true);
         box.ContextMenu.Items.Add(reset);
 

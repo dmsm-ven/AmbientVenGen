@@ -1,12 +1,12 @@
-<ui:FluentWindow
+﻿<ui:FluentWindow
     x:Class="AmbientVenGen.Desktop.Views.RepeatPropertiesWindow"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:controls="clr-namespace:AmbientVenGen.Desktop.Controls"
     xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
     Title="Repeat properties"
-    Width="760"
-    Height="520"
+    Width="491"
+    Height="622"
     MinWidth="420"
     MinHeight="300"
     Background="#E617171D"
@@ -16,7 +16,7 @@
     KeyDown="OnKeyDown"
     ShowInTaskbar="False"
     WindowBackdropType="Mica"
-    WindowStartupLocation="CenterOwner">
+    WindowStartupLocation="CenterScreen">
     <Grid>
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto" />
@@ -45,7 +45,7 @@
                 Margin="0,2,0,0"
                 FontSize="11"
                 Foreground="#A9A7C2"
-                Text="A faint value is the value of the layer. Type another one to give that play its own value; type the layer's value (or press Delete) to take it back. Only changed values are saved in the project." />
+                Text="A faint value is the value of the layer." />
         </StackPanel>
 
         <!--  The names of the rows stay in place, the plays scroll sideways  -->
