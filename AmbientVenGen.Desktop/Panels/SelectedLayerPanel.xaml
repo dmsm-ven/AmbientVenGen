@@ -287,7 +287,7 @@
                                         Grid.Row="1"
                                         Grid.ColumnSpan="3"
                                         HorizontalAlignment="Center">
-                                        <WrapPanel Margin="0,30,0,0" HorizontalAlignment="Center" Orientation="Horizontal">
+                                        <StackPanel Margin="0,30,0,0" HorizontalAlignment="Center" Orientation="Horizontal">
                                             <controls:KnobPair Icon="Level" Margin="4,0,4,6"><controls:KnobPair.Primary><controls:RangeParam
                                                 Easing="{Binding LevelEasing, Mode=TwoWay}"
                                                 End="{Binding LevelTo, Mode=TwoWay}"
@@ -319,6 +319,14 @@
                                                 Start="{Binding ModulationFrom, Mode=TwoWay}"
                                                 Step="0.01" /></controls:KnobPair.Primary></controls:KnobPair>
                                             <controls:KnobPair Icon="ReverbSend" Margin="4,0,4,6" LinkToolTip="Shimmer send">
+                                                <controls:KnobPair.Style>
+                                                    <Style BasedOn="{StaticResource {x:Type controls:KnobPair}}" TargetType="controls:KnobPair">
+                                                        <Style.Triggers>
+                                                            <DataTrigger Binding="{Binding Type}" Value="Noise"><Setter Property="Visibility" Value="Collapsed" /></DataTrigger>
+                                                            <DataTrigger Binding="{Binding Type}" Value="FieldRecord"><Setter Property="Visibility" Value="Collapsed" /></DataTrigger>
+                                                        </Style.Triggers>
+                                                    </Style>
+                                                </controls:KnobPair.Style>
                                                 <controls:KnobPair.Primary>
                                                     <controls:LabeledSlider
                                                         Format="{}{0:P0}"
@@ -342,6 +350,8 @@
                                                     </Border>
                                                 </controls:KnobPair.Secondary>
                                             </controls:KnobPair>
+                                        </StackPanel>
+                                        <StackPanel HorizontalAlignment="Center" Orientation="Horizontal">
                                             <controls:KnobPair Icon="Fade" Margin="4,0,4,6" LinkToolTip="Fade in and fade out">
                                                 <controls:KnobPair.Primary><controls:RangeParam
                                                     AllowRange="False"
@@ -364,8 +374,75 @@
                                                     Start="{Binding FadeOutSeconds, Mode=TwoWay}"
                                                     Step="1" /></controls:KnobPair.Secondary>
                                             </controls:KnobPair>
-                                        </WrapPanel>
-                                        <WrapPanel HorizontalAlignment="Center" Orientation="Horizontal">
+                                            <controls:KnobPair Icon="Delay"
+                                                Margin="4,0,4,6"
+                                                LinkToolTip="Feedback">
+                                                <controls:KnobPair.Style>
+                                                    <Style BasedOn="{StaticResource {x:Type controls:KnobPair}}" TargetType="controls:KnobPair">
+                                                        <Style.Triggers>
+                                                            <DataTrigger Binding="{Binding Type}" Value="Noise"><Setter Property="Visibility" Value="Collapsed" /></DataTrigger>
+                                                            <DataTrigger Binding="{Binding Type}" Value="FieldRecord"><Setter Property="Visibility" Value="Collapsed" /></DataTrigger>
+                                                        </Style.Triggers>
+                                                    </Style>
+                                                </controls:KnobPair.Style>
+                                                <controls:KnobPair.Primary>
+                                                    <controls:LabeledSlider
+                                                        Format="{}{0:0.00} s"
+                                                        Header="Delay"
+                                                        Hint="{x:Static vm:HintTexts.Delay}"
+                                                        Maximum="2"
+                                                        Minimum="0"
+                                                        Step="0.01"
+                                                        Value="{Binding DelaySeconds, Mode=TwoWay}" />
+                                                </controls:KnobPair.Primary>
+                                                <controls:KnobPair.Secondary>
+                                                    <Border>
+                                                        <controls:LabeledSlider
+                                                            Format="{}{0:P0}"
+                                                            Header="Feedback"
+                                                            Hint="{x:Static vm:HintTexts.Feedback}"
+                                                            Maximum="0.92"
+                                                            Minimum="0"
+                                                            Step="0.01"
+                                                            Value="{Binding DelayFeedback, Mode=TwoWay}" />
+                                                    </Border>
+                                                </controls:KnobPair.Secondary>
+                                            </controls:KnobPair>
+                                            <controls:KnobPair Icon="ReverbSend" Margin="4,0,4,6" LinkToolTip="Shimmer send">
+                                                <controls:KnobPair.Style>
+                                                    <Style BasedOn="{StaticResource {x:Type controls:KnobPair}}" TargetType="controls:KnobPair">
+                                                        <Setter Property="Visibility" Value="Collapsed" />
+                                                        <Style.Triggers>
+                                                            <DataTrigger Binding="{Binding Type}" Value="Noise"><Setter Property="Visibility" Value="Visible" /></DataTrigger>
+                                                            <DataTrigger Binding="{Binding Type}" Value="FieldRecord"><Setter Property="Visibility" Value="Visible" /></DataTrigger>
+                                                        </Style.Triggers>
+                                                    </Style>
+                                                </controls:KnobPair.Style>
+                                                <controls:KnobPair.Primary>
+                                                    <controls:LabeledSlider
+                                                        Format="{}{0:P0}"
+                                                        Header="Reverb send"
+                                                        Hint="{x:Static vm:HintTexts.ReverbSend}"
+                                                        Maximum="1"
+                                                        Minimum="0"
+                                                        Step="0.01"
+                                                        Value="{Binding ReverbSend, Mode=TwoWay}" />
+                                                </controls:KnobPair.Primary>
+                                                <controls:KnobPair.Secondary>
+                                                    <Border>
+                                                        <controls:LabeledSlider
+                                                            Format="{}{0:P0}"
+                                                            Header="Shimmer send"
+                                                            Hint="{x:Static vm:HintTexts.ShimmerSend}"
+                                                            Maximum="1"
+                                                            Minimum="0"
+                                                            Step="0.01"
+                                                            Value="{Binding ShimmerSend, Mode=TwoWay}" />
+                                                    </Border>
+                                                </controls:KnobPair.Secondary>
+                                            </controls:KnobPair>
+                                        </StackPanel>
+                                        <StackPanel HorizontalAlignment="Center" Orientation="Horizontal">
                                             <controls:KnobPair Icon="Pitch"
                                                 Margin="4,0,4,6"
                                                 LinkToolTip="Pitch drift">
@@ -461,6 +538,15 @@
                                             <controls:KnobPair Icon="Delay"
                                                 Margin="4,0,4,6"
                                                 LinkToolTip="Feedback">
+                                                <controls:KnobPair.Style>
+                                                    <Style BasedOn="{StaticResource {x:Type controls:KnobPair}}" TargetType="controls:KnobPair">
+                                                        <Setter Property="Visibility" Value="Collapsed" />
+                                                        <Style.Triggers>
+                                                            <DataTrigger Binding="{Binding Type}" Value="Noise"><Setter Property="Visibility" Value="Visible" /></DataTrigger>
+                                                            <DataTrigger Binding="{Binding Type}" Value="FieldRecord"><Setter Property="Visibility" Value="Visible" /></DataTrigger>
+                                                        </Style.Triggers>
+                                                    </Style>
+                                                </controls:KnobPair.Style>
                                                 <controls:KnobPair.Primary>
                                                     <controls:LabeledSlider
                                                         Format="{}{0:0.00} s"
@@ -484,7 +570,7 @@
                                                     </Border>
                                                 </controls:KnobPair.Secondary>
                                             </controls:KnobPair>
-                                        </WrapPanel>
+                                        </StackPanel>
 
                                     </StackPanel>
                                 </Grid>
