@@ -33,7 +33,8 @@ public sealed record RepeatParamInfo(
         new(RepeatParam.Resonance, "Resonance", "%", 0, 1, 100, 0, l => l.FilterResonance, Always),
         new(RepeatParam.DelayTime, "Delay", "s", 0, Layer.MaxDelaySeconds, 1, 2, l => l.DelaySeconds, Always),
         new(RepeatParam.DelayFeedback, "Feedback", "%", 0, Layer.MaxFeedback, 100, 0, l => l.DelayFeedback, Always),
-        new(RepeatParam.ReverbSend, "Reverb send", "%", 0, 1, 100, 0, l => l.ReverbSend, Always)
+        new(RepeatParam.ReverbSend, "Reverb send", "%", 0, 1, 100, 0, l => l.ReverbSend, Always),
+        new(RepeatParam.ShimmerSend, "Shimmer send", "%", 0, 1, 100, 0, l => l.ShimmerSend, Always)
     ];
 
     public string Format(double value) =>

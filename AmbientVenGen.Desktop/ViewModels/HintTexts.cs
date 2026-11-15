@@ -78,8 +78,8 @@ public static class HintTexts
         "Shape of the fades. Linear: constant speed. Sine and Ease in-out: soft start and end. Exponential: slow, then sudden.";
 
     public const string Shimmer =
-        "Shimmer: the tail of the reverb is lifted an octave and fed back into the reverb, so bright, glowing "
-        + "harmonics float above the sound. It needs Space (reverb) and layers with Reverb send. The interval (semitones, +12 = an octave) is set to the right.";
+        "Shimmer: the tail of the shimmer reverb (fed by the Shimmer send of the layers) is lifted by the chosen interval and fed back into it, so bright, glowing "
+        + "harmonics float above the sound. It needs Space (reverb) and layers with Shimmer send. The interval (semitones, +12 = an octave) is set to the right.";
 
     public const string Reverb =
         "Amount of long reverb on the whole mix. More makes the sound vaster and more distant.";
@@ -101,6 +101,10 @@ public static class HintTexts
 
     public const string ReverbSend =
         "How much of this layer goes into the project reverb (the Space slider on the timeline). 100% = as before, 0% = this layer stays dry.";
+
+    public const string ShimmerSend =
+        "How much of this layer goes to the shimmer reverb: its tail is lifted by the shimmer interval and fed back, so the layer glows. "
+        + "0% = no shimmer for this layer. Needs the Shimmer button on the timeline to be on.";
 
     public const string PitchDrift =
         "Slow random wandering of the pitch (a recording: of its speed), up to about half a semitone. Makes tones breathe and feel alive.";

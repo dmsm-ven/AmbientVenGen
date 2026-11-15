@@ -156,6 +156,10 @@ public sealed partial class Layer : ObservableObject
     [ObservableProperty]
     private double _reverbSend = 1.0;
 
+    /// <summary>How much of the layer goes to the shimmer reverb (0 = the layer does not shimmer).</summary>
+    [ObservableProperty]
+    private double _shimmerSend = 0.0;
+
     /// <summary>Slow random wandering of the pitch (Drone, Pad) or the speed (recording), 0..1.</summary>
     [ObservableProperty]
     private double _pitchDrift;
@@ -349,7 +353,8 @@ public sealed partial class Layer : ObservableObject
         LoopCrossfade,
         Modulators.Select(m => m.ToSpec()).ToList(),
         // saved only when at least one value was changed (and only for plays that still exist)
-        RepeatOverrides.Where(o => o.Repeat < Repeats).ToList() is { Count: > 0 } overrides ? overrides : null);
+        RepeatOverrides.Where(o => o.Repeat < Repeats).ToList() is { Count: > 0 } overrides ? overrides : null,
+        ShimmerSend);
 
     /// <summary>Creates a layer from a spec, clamping values read from a file to sane ranges.</summary>
     public static Layer FromSpec(LayerSpec spec)
@@ -389,6 +394,7 @@ public sealed partial class Layer : ObservableObject
             DelaySeconds = Math.Clamp(spec.DelaySeconds, 0, MaxDelaySeconds),
             DelayFeedback = Math.Clamp(spec.DelayFeedback, 0, MaxFeedback),
             ReverbSend = Unit(spec.ReverbSend),
+            ShimmerSend = Unit(spec.ShimmerSendValue),
             PitchDrift = Unit(spec.PitchDrift),
             PanDrift = Unit(spec.PanDrift),
             Reverse = spec.Reverse,

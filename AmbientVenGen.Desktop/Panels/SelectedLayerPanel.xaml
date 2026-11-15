@@ -318,14 +318,30 @@
                                                 Minimum="0"
                                                 Start="{Binding ModulationFrom, Mode=TwoWay}"
                                                 Step="0.01" /></controls:KnobPair.Primary></controls:KnobPair>
-                                            <controls:KnobPair Icon="ReverbSend" Margin="4,0,4,6"><controls:KnobPair.Primary><controls:LabeledSlider
-                                                Format="{}{0:P0}"
-                                                Header="Reverb send"
-                                                Hint="{x:Static vm:HintTexts.ReverbSend}"
-                                                Maximum="1"
-                                                Minimum="0"
-                                                Step="0.01"
-                                                Value="{Binding ReverbSend, Mode=TwoWay}" /></controls:KnobPair.Primary></controls:KnobPair>
+                                            <controls:KnobPair Icon="ReverbSend" Margin="4,0,4,6" LinkToolTip="Shimmer send">
+                                                <controls:KnobPair.Primary>
+                                                    <controls:LabeledSlider
+                                                        Format="{}{0:P0}"
+                                                        Header="Reverb send"
+                                                        Hint="{x:Static vm:HintTexts.ReverbSend}"
+                                                        Maximum="1"
+                                                        Minimum="0"
+                                                        Step="0.01"
+                                                        Value="{Binding ReverbSend, Mode=TwoWay}" />
+                                                </controls:KnobPair.Primary>
+                                                <controls:KnobPair.Secondary>
+                                                    <Border>
+                                                        <controls:LabeledSlider
+                                                            Format="{}{0:P0}"
+                                                            Header="Shimmer send"
+                                                            Hint="{x:Static vm:HintTexts.ShimmerSend}"
+                                                            Maximum="1"
+                                                            Minimum="0"
+                                                            Step="0.01"
+                                                            Value="{Binding ShimmerSend, Mode=TwoWay}" />
+                                                    </Border>
+                                                </controls:KnobPair.Secondary>
+                                            </controls:KnobPair>
                                             <controls:KnobPair Icon="Fade" Margin="4,0,4,6" LinkToolTip="Fade in and fade out">
                                                 <controls:KnobPair.Primary><controls:RangeParam
                                                     AllowRange="False"

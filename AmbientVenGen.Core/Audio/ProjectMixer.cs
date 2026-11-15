@@ -18,6 +18,7 @@ public sealed class ProjectMixer : ISampleProvider
 
     private readonly MasterAnalyzer? _analyzer;
     private readonly MasterReverb _reverb = new();
+    private readonly MasterReverb _shimmerReverb = new();   // its own room: only the layers with a shimmer send feed it
     private readonly Dictionary<Guid, LayerRuntime> _runtimes = new();
     private readonly float[] _scratchLeft = new float[BlockFrames];
     private readonly float[] _scratchRight = new float[BlockFrames];
@@ -26,6 +27,8 @@ public sealed class ProjectMixer : ISampleProvider
     private float[] _mixRight = new float[4096];
     private float[] _sendLeft = new float[4096];   // what the layers send to the reverb
     private float[] _sendRight = new float[4096];
+    private float[] _shimmerLeft = new float[4096];  // what the layers send to the shimmer reverb
+    private float[] _shimmerRight = new float[4096];
     private ProjectSpec _spec;
     private long _positionFrames;
 
@@ -63,6 +66,8 @@ public sealed class ProjectMixer : ISampleProvider
         Array.Clear(_mixRight, 0, frames);
         Array.Clear(_sendLeft, 0, frames);
         Array.Clear(_sendRight, 0, frames);
+        Array.Clear(_shimmerLeft, 0, frames);
+        Array.Clear(_shimmerRight, 0, frames);
 
         LayerSpec[] layers = spec.Layers;
 
@@ -75,7 +80,21 @@ public sealed class ProjectMixer : ISampleProvider
                 MixLayer(layers[i], spec.Seed, blockTime, count, done);
         }
 
-        _reverb.Process(_mixLeft, _mixRight, _sendLeft, _sendRight, frames, (float)spec.ReverbMix, (float)spec.Shimmer, spec.ShimmerSemitones);
+        // Two rooms: the plain reverb (Reverb send) and the shimmer reverb (Shimmer send, lifted by the shimmer interval).
+        float reverbMix = (float)spec.ReverbMix;
+        if (reverbMix > 0.0001f)
+        {
+            float dry = 1f - reverbMix * 0.45f;
+
+            for (int i = 0; i < frames; i++)
+            {
+                _mixLeft[i] *= dry;
+                _mixRight[i] *= dry;
+            }
+
+            _reverb.AddWet(_mixLeft, _mixRight, _sendLeft, _sendRight, frames, reverbMix);
+            _shimmerReverb.AddWet(_mixLeft, _mixRight, _shimmerLeft, _shimmerRight, frames, reverbMix, (float)spec.Shimmer, spec.ShimmerSemitones);
+        }
 
         float peakLeft = 0f;
         float peakRight = 0f;
@@ -202,6 +221,7 @@ public sealed class ProjectMixer : ISampleProvider
         float panLeft = MathF.Cos(angle) * 1.4142f;
         float panRight = MathF.Sin(angle) * 1.4142f;
         float send = (float)Math.Clamp((layer.OverrideOf(play, RepeatParam.ReverbSend) ?? layer.ReverbSend) + mod.ReverbSend, 0.0, 1.0);
+        float shimmerSend = (float)Math.Clamp(layer.OverrideOf(play, RepeatParam.ShimmerSend) ?? layer.ShimmerSendValue, 0.0, 1.0);
 
         for (int i = 0; i < count; i++)
         {
@@ -212,6 +232,8 @@ public sealed class ProjectMixer : ISampleProvider
             _mixRight[offset + i] += outRight;
             _sendLeft[offset + i] += outLeft * send;
             _sendRight[offset + i] += outRight * send;
+            _shimmerLeft[offset + i] += outLeft * shimmerSend;
+            _shimmerRight[offset + i] += outRight * shimmerSend;
         }
     }
 
@@ -224,6 +246,8 @@ public sealed class ProjectMixer : ISampleProvider
         _mixRight = new float[frames];
         _sendLeft = new float[frames];
         _sendRight = new float[frames];
+        _shimmerLeft = new float[frames];
+        _shimmerRight = new float[frames];
     }
 
     // Deterministic (string/Hash randomization would break "same seed, same sound").

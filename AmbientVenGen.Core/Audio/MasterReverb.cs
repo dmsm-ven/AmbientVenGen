@@ -52,6 +52,25 @@ internal sealed class MasterReverb
             return;
 
         float dry = 1f - mix * 0.45f;
+
+        for (int i = 0; i < count; i++)
+        {
+            left[i] *= dry;
+            right[i] *= dry;
+        }
+
+        AddWet(left, right, sendLeft, sendRight, count, mix, shimmer, semitones);
+    }
+
+    /// <summary>
+    /// Adds only the reverberated signal to the block (the dry part is scaled by the caller, once for all the reverbs).
+    /// The input is the sum of the sends; with shimmer above 0 the tail also goes through the pitch shifter and back.
+    /// </summary>
+    public void AddWet(float[] left, float[] right, float[] sendLeft, float[] sendRight, int count, float mix, float shimmer = 0f, int semitones = 12)
+    {
+        if (mix <= 0.0001f)
+            return;
+
         float wet = mix * 0.9f;
 
         // Shimmer: the tail of the reverb is shifted up by the chosen interval (an octave by default) and goes back to its input, so every round adds
@@ -91,8 +110,8 @@ internal sealed class MasterReverb
 
             _lastWet = (outL + outR) * 0.5f;
 
-            left[i] = left[i] * dry + outL * wet;
-            right[i] = right[i] * dry + outR * wet;
+            left[i] += outL * wet;
+            right[i] += outR * wet;
         }
     }
 

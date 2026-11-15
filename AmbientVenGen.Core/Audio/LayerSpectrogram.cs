@@ -36,7 +36,8 @@ public static class LayerSpectrogram
         Repeats = 1,
         RepeatGapSeconds = 0,
         Muted = false,
-        ReverbSend = 0
+        ReverbSend = 0,
+        ShimmerSend = 0
     };
 
     // A long layer is rendered by several threads, every one its own part of the time line; each part starts a little

@@ -59,7 +59,10 @@ public enum RepeatParam
     // Field record only
     Speed,
     PitchShift,
-    Stretch
+    Stretch,
+
+    /// <summary>How much of the layer goes to the shimmer reverb.</summary>
+    ShimmerSend
 }
 
 /// <summary>A value of one property for one play of a layer (zero-based): the plays that have none use the layer's own value.</summary>
@@ -113,8 +116,16 @@ public sealed record LayerSpec(
     double LoopDuration = 0.0,
     double LoopCrossfade = SampleTransform.DefaultCrossfade,
     IReadOnlyList<ModulatorSpec>? Modulators = null,
-    IReadOnlyList<RepeatOverrideSpec>? RepeatOverrides = null)
+    IReadOnlyList<RepeatOverrideSpec>? RepeatOverrides = null,
+    double? ShimmerSend = null)
 {
+    /// <summary>
+    /// How much of the layer goes to the shimmer reverb. Projects saved before the shimmer had its own send fed it from the
+    /// reverb send of every layer, so for them the reverb send is the shimmer send.
+    /// </summary>
+    [System.Text.Json.Serialization.JsonIgnore]
+    public double ShimmerSendValue => ShimmerSend ?? ReverbSend;
+
     /// <summary>The own value of a property for the given play, or null when that play uses the value of the layer.</summary>
     public double? OverrideOf(int play, RepeatParam param)
     {

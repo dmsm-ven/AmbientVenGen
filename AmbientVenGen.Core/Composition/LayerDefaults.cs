@@ -110,6 +110,7 @@ public static class LayerDefaults
         layer.DelaySeconds = fresh.DelaySeconds;
         layer.DelayFeedback = fresh.DelayFeedback;
         layer.ReverbSend = fresh.ReverbSend;
+        layer.ShimmerSend = fresh.ShimmerSend;
         layer.NoiseType = fresh.NoiseType;
         layer.Modulators.Clear();
         layer.Reverse = false;
@@ -140,6 +141,7 @@ public static class LayerDefaults
             layer.DelaySeconds = 0.0;
             layer.DelayFeedback = 0.0;
             layer.ReverbSend = 0.0;
+            layer.ShimmerSend = 0.0;
             layer.FadeInSeconds = 0.0;
             layer.FadeOutSeconds = 0.0;
             layer.LoopCrossfade = 0.0;
