@@ -1,4 +1,4 @@
-namespace AmbientVenGen.Core.Composition;
+﻿namespace AmbientVenGen.Core.Composition;
 
 public enum LayerType
 {
@@ -31,7 +31,6 @@ public enum NoiseType
     TapeHiss,
     SpaceRumble,
     Geiger,
-    IceSinging,
     HighVoltage,
     EnergyShield,
     CrtWhine,

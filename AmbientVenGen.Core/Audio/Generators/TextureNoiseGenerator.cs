@@ -1,4 +1,4 @@
-using AmbientVenGen.Core.Composition;
+﻿using AmbientVenGen.Core.Composition;
 
 namespace AmbientVenGen.Core.Audio;
 
@@ -50,7 +50,6 @@ internal sealed class TextureNoiseGenerator : LayerGenerator
         NoiseType.TapeHiss => new TapeChannel(seed),
         NoiseType.SpaceRumble => new RumbleChannel(seed),
         NoiseType.Geiger => new GeigerChannel(seed),
-        NoiseType.IceSinging => new IceChannel(seed),
         NoiseType.HighVoltage => new HighVoltageChannel(seed),
         NoiseType.EnergyShield => new ShieldChannel(seed),
         NoiseType.CrtWhine => new WhineChannel(seed),

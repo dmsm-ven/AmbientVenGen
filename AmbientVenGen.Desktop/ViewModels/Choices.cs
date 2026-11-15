@@ -1,4 +1,4 @@
-using AmbientVenGen.Core.Composition;
+﻿using AmbientVenGen.Core.Composition;
 
 namespace AmbientVenGen.Desktop.ViewModels;
 
@@ -108,9 +108,6 @@ public static class Choices
         new(NoiseType.Geiger, "Geiger / sparks",
             "Rare hard clicks at random intervals.",
             "Sounds like: a Geiger counter near a source, or sparks from a faulty cable."),
-        new(NoiseType.IceSinging, "Lake ice",
-            "Slow low groans, deep booms and dry cracks. Modulation = how often it speaks.",
-            "Sounds like: the ice of a frozen lake in winter, groaning and cracking under the surface."),
         new(NoiseType.EnergyShield, "Energy shield",
             "Detuned hum through a breathing filter.",
             "Sounds like: a sci-fi force field, a detuned hum that slowly breathes."),
