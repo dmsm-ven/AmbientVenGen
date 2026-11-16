@@ -55,17 +55,25 @@
 
         <panels:ToolbarPanel Grid.Row="1" />
 
-        <!--  Top row: three groups side by side. Recording and Modulators logically belong to the selected layer.  -->
-        <ScrollViewer Grid.Row="2" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
-            <ScrollViewer.Style>
-                <Style TargetType="ScrollViewer">
+        <!--
+            The editor groups are created only when a project is opened (Content is set then): until that the start
+            screen is all there is, and nothing of the editor or the timeline is loaded.
+        -->
+        <ContentControl Grid.Row="2" IsTabStop="False">
+            <ContentControl.Style>
+                <Style TargetType="ContentControl">
+                    <Setter Property="Visibility" Value="Collapsed" />
                     <Style.Triggers>
-                        <DataTrigger Binding="{Binding ShowStartScreen}" Value="True">
-                            <Setter Property="Visibility" Value="Collapsed" />
+                        <DataTrigger Binding="{Binding ShowStartScreen}" Value="False">
+                            <Setter Property="Visibility" Value="Visible" />
+                            <Setter Property="Content" Value="{Binding}" />
                         </DataTrigger>
                     </Style.Triggers>
                 </Style>
-            </ScrollViewer.Style>
+            </ContentControl.Style>
+            <ContentControl.ContentTemplate>
+                <DataTemplate>
+                    <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
             <Grid Margin="10,6,10,0">
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="Auto" />
@@ -78,11 +86,15 @@
                 <panels:SelectedLayerPanel Grid.Column="1" />
                 <panels:ModulatorsPanel Grid.Column="2" />
             </Grid>
-        </ScrollViewer>
+                    </ScrollViewer>
+                </DataTemplate>
+            </ContentControl.ContentTemplate>
+        </ContentControl>
 
         <!--  Start screen: the recent projects instead of the editor groups until a project is opened  -->
         <panels:StartScreenPanel
             Grid.Row="2"
+            Grid.RowSpan="3"
             Visibility="{Binding ShowStartScreen, Converter={StaticResource BoolToVisibility}}" />
 
         <!--  The only splitter: the height of the top groups against the timeline  -->
@@ -95,8 +107,35 @@
             Cursor="SizeNS"
             ResizeBehavior="PreviousAndNext"
             ResizeDirection="Rows"
-            ShowsPreview="False" />
+            ShowsPreview="False">
+            <GridSplitter.Style>
+                <Style TargetType="GridSplitter">
+                    <Style.Triggers>
+                        <DataTrigger Binding="{Binding ShowStartScreen}" Value="True">
+                            <Setter Property="Visibility" Value="Collapsed" />
+                        </DataTrigger>
+                    </Style.Triggers>
+                </Style>
+            </GridSplitter.Style>
+        </GridSplitter>
 
-        <panels:TimelinePanel Grid.Row="4" />
+        <ContentControl Grid.Row="4" IsTabStop="False">
+            <ContentControl.Style>
+                <Style TargetType="ContentControl">
+                    <Setter Property="Visibility" Value="Collapsed" />
+                    <Style.Triggers>
+                        <DataTrigger Binding="{Binding ShowStartScreen}" Value="False">
+                            <Setter Property="Visibility" Value="Visible" />
+                            <Setter Property="Content" Value="{Binding}" />
+                        </DataTrigger>
+                    </Style.Triggers>
+                </Style>
+            </ContentControl.Style>
+            <ContentControl.ContentTemplate>
+                <DataTemplate>
+                    <panels:TimelinePanel />
+                </DataTemplate>
+            </ContentControl.ContentTemplate>
+        </ContentControl>
     </Grid>
 </ui:FluentWindow>
