@@ -297,7 +297,10 @@ public sealed partial class Layer : ObservableObject
 
     private async Task ReadSourceLengthAsync(string path)
     {
-        double seconds = await SourceLengthCache.ReadAsync(path).ConfigureAwait(false);
+        // No ConfigureAwait(false): the continuation must return to the thread that asked (the UI thread). On a pool thread
+        // the change below ran the whole project-changed chain concurrently with a project being loaded, which corrupted
+        // the collections ("concurrent update" / "key not present" errors on opening).
+        double seconds = await SourceLengthCache.ReadAsync(path);
 
         // The file may have been changed while it was being read.
         if (SourcePath == path)

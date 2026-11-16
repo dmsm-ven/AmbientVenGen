@@ -144,7 +144,7 @@ public partial class MainViewModel
     /// <summary>The recent projects for the start screen, the newest first (files that no longer exist are left out).</summary>
     public IReadOnlyList<RecentProjectTile> RecentTiles { get; private set; } = [];
 
-    // The last project is not loaded at startup any more: the start screen offers the recent ones instead.
+    // The last project is not loaded at startup any more: the start screen offers a new project and the recent ones instead.
     private void PrepareStartScreen()
     {
         RecentTiles = Settings.RecentProjects
@@ -156,7 +156,7 @@ public partial class MainViewModel
                 Settings.RecentProjectDate(path)?.ToString("d MMM yyyy, HH:mm") ?? ""))
             .ToList();
         OnPropertyChanged(nameof(RecentTiles));
-        ShowStartScreen = RecentTiles.Count > 0;
+        ShowStartScreen = true;
     }
 
     private void LoadSpec(ProjectSpec spec, string? path)
