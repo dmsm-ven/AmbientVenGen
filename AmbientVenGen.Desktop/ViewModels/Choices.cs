@@ -1,4 +1,4 @@
-﻿using AmbientVenGen.Core.Composition;
+using AmbientVenGen.Core.Composition;
 
 namespace AmbientVenGen.Desktop.ViewModels;
 
@@ -123,7 +123,10 @@ public static class Choices
             "Sounds like: a heartbeat heard from inside, calm and slow or quick and tense."),
         new(NoiseType.CardiacMonitor, "Cardiac monitor",
             "An even, clean beep like a patient monitor. Modulation = the rate, Brightness = the pitch.",
-            "Sounds like: the beeping of a heart monitor in a hospital room.")
+            "Sounds like: the beeping of a heart monitor in a hospital room."),
+        new(NoiseType.Fog, "Fog",
+            "Damp, muffled air that slowly thickens and thins. Brightness = how clear the air is, Modulation = how deep the slow breathing is.",
+            "Sounds like: a heavy fog over a lake at dawn, a soft hush with no events in it.")
     ];
 
     /// <summary>Three-layer relations (the arithmetic lives in Core: <see cref="PitchRelations"/>).</summary>

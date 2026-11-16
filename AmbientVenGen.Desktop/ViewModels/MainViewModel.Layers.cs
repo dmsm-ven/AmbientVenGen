@@ -117,6 +117,10 @@ public partial class MainViewModel
         if (layer is null)
             return;
 
+        // The single-layer playback ends with its layer (the other layers get their Mute state back first).
+        if (IsSoloActive)
+            IsSoloActive = false;
+
         int index = Project.Layers.IndexOf(layer);
 
         SelectedLayer = null;

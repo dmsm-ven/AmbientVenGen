@@ -1,10 +1,10 @@
-﻿using AmbientVenGen.Core.Composition;
+using AmbientVenGen.Core.Composition;
 
 namespace AmbientVenGen.Core.Audio;
 
 /// <summary>
 /// Noise textures made of events (clicks, drops, dropouts) and slow movement (gusts, tuning drift) on top of filtered
-/// noise: Crackle, Vinyl, RadioStatic, Wind, Rain, Ocean, ElectricalHum, TapeHiss, SpaceRumble, Geiger, IceSinging, HighVoltage, EnergyShield, CrtWhine, PlasmaArc, Gong, Heartbeat and CardiacMonitor. Every channel has its own random stream, so the left and the right
+/// noise: Crackle, Vinyl, RadioStatic, Wind, Rain, Ocean, ElectricalHum, TapeHiss, SpaceRumble, Geiger, IceSinging, HighVoltage, EnergyShield, CrtWhine, PlasmaArc, Gong, Heartbeat, CardiacMonitor and Fog. Every channel has its own random stream, so the left and the right
 /// side are different (wide). Brightness sets the tone, Modulation the density or the amount of movement.
 /// Everything is random-driven from the seed, so the sound is the same every time and can have any length.
 /// </summary>
@@ -57,6 +57,7 @@ internal sealed class TextureNoiseGenerator : LayerGenerator
         NoiseType.Gong => new GongChannel(seed),
         NoiseType.Heartbeat => new HeartChannel(seed),
         NoiseType.CardiacMonitor => new MonitorChannel(seed),
+        NoiseType.Fog => new FogChannel(seed),
         _ => new CrackleChannel(seed)
     };
 
@@ -402,6 +403,54 @@ internal sealed class TextureNoiseGenerator : LayerGenerator
             _rumble.Process(_rng.Signed(), out float low, out _, out _);
 
             return _leveler.Next(band) * 0.3f * gain + low * 1.5f * (0.3f + 0.7f * gust);
+        }
+    }
+
+    /// <summary>
+    /// Fog: damp, muffled air. A soft low body and a thin veil of high air, both drifting very slowly
+    /// (the cut-off and the loudness wander over tens of seconds, never a sudden event).
+    /// Brightness = how clear the air is, Modulation = how deep the slow breathing is.
+    /// </summary>
+    private sealed class FogChannel : Channel
+    {
+        private Rng _rng;
+        private readonly NoiseColor _pink = new(NoiseType.Pink);
+        private readonly NoiseColor _brown = new(NoiseType.Brown);
+        private Svf _body = new(250f, 0.6f);
+        private Svf _veil = new(1400f, 0.8f);
+        private Wander _driftA, _driftB, _veilDrift;
+        private Leveler _bodyLevel, _veilLevel;
+        private int _tick;
+
+        public FogChannel(uint seed)
+        {
+            _rng = new Rng(seed);
+            _driftA = new Wander(seed ^ 0x9E3779B9u);
+            _driftB = new Wander(seed ^ 0x85EBCA6Bu);
+            _veilDrift = new Wander(seed ^ 0xC2B2AE35u);
+        }
+
+        public override float Next(float brightness, float modulation)
+        {
+            float breath = 0.6f * _driftA.Next(17f) + 0.4f * _driftB.Next(41f);
+            float veilMove = _veilDrift.Next(23f);
+
+            if ((_tick++ & 31) == 0)
+            {
+                _body.Set((110f + 650f * brightness) * (0.7f + 0.6f * breath), 0.6f);
+                _veil.Set(900f + 1800f * brightness * (0.6f + 0.8f * veilMove), 0.8f);
+            }
+
+            float depth = 0.2f + 0.7f * modulation;
+            float gain = (1f - depth) + depth * (0.25f + 1.1f * breath);
+
+            _body.Process(0.6f * _brown.Next(_rng.Signed()) + 0.4f * _pink.Next(_rng.Signed()), out float low, out _, out _);
+            _veil.Process(_pink.Next(_rng.Signed()), out _, out float band, out _);
+
+            float body = _bodyLevel.Next(low) * 0.32f * gain;
+            float veil = _veilLevel.Next(band) * (0.025f + 0.07f * brightness) * (0.5f + veilMove);
+
+            return body + veil;
         }
     }
 

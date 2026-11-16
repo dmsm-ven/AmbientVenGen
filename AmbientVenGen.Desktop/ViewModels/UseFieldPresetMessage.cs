@@ -13,3 +13,9 @@ public sealed record FieldRecordTargetMessage(string? LayerName);
 
 /// <summary>Asked by the preset library when it opens: which Field record layer would get the file (the reply is its name, or null).</summary>
 public sealed class FieldRecordTargetRequest : RequestMessage<string?>;
+
+/// <summary>Sent by the main window when the start page is shown or closed: with the start page there is no project to put a recording into.</summary>
+public sealed record EditorAvailabilityMessage(bool IsAvailable);
+
+/// <summary>Asked by the preset library when it opens: is a project (and not the start page) in front of the user?</summary>
+public sealed class EditorAvailabilityRequest : RequestMessage<bool>;

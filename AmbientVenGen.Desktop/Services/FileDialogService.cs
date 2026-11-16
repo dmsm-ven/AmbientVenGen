@@ -37,10 +37,16 @@ public sealed class FileDialogService(AppSettings settings)
             Title = "Add field recordings",
             Filter = "Audio and video (*.flac;*.mp3;*.wav;*.m4a;*.mp4)|*.flac;*.mp3;*.wav;*.m4a;*.mp4|All files (*.*)|*.*",
             CheckFileExists = true,
+            InitialDirectory = ExistingOrNull(settings.LastPresetDirectory),
             Multiselect = true
         };
 
-        return dialog.ShowDialog() == true ? dialog.FileNames : [];
+        if (dialog.ShowDialog() != true)
+            return [];
+
+        // The next "+" opens in the folder of the file that was added last.
+        settings.LastPresetDirectory = Path.GetDirectoryName(dialog.FileNames[^1]);
+        return dialog.FileNames;
     }
 
     public string? ChooseProjectToOpen()

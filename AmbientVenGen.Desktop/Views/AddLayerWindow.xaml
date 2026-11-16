@@ -91,11 +91,9 @@
             </ui:TitleBar.TrailingContent>
         </ui:TitleBar>
 
-        <WrapPanel
-            Grid.Row="1"
-            Width="780"
-            Margin="18,12,18,18"
-            HorizontalAlignment="Center">
+        <StackPanel Grid.Row="1" Margin="18,12,18,18" HorizontalAlignment="Center">
+        <!--  The four base layers: a 2x2 table  -->
+        <UniformGrid Columns="2" HorizontalAlignment="Center">
             <Button Click="OnTile" Style="{StaticResource LayerTile}" Tag="Drone">
                 <StackPanel>
                     <Path Data="M6,48 C16,18 28,18 38,48 S60,78 70,48 S88,18 96,40 M6,84 L94,84" Style="{StaticResource TileIcon}" />
@@ -124,13 +122,39 @@
                     <TextBlock Style="{StaticResource TileHint}" Text="a recording from the library" />
                 </StackPanel>
             </Button>
-            <Button Click="OnTile" Style="{StaticResource LayerTile}" Tag="OpenFile">
-                <StackPanel>
-                    <Path Data="M6,24 H36 L44,34 H94 V84 H6 Z M6,44 H94" Style="{StaticResource TileIcon}" />
-                    <TextBlock Style="{StaticResource TileTitle}" Text="Open from file" />
-                    <TextBlock Style="{StaticResource TileHint}" Text="a layer saved earlier (.aflay)" />
-                </StackPanel>
-            </Button>
-        </WrapPanel>
+        </UniformGrid>
+
+        <!--  Opening a saved layer is not a base layer: a wide horizontal button under the table (as wide as two tiles)  -->
+        <Button
+            Width="492"
+            Height="56"
+            Margin="6"
+            HorizontalAlignment="Center"
+            Click="OnTile"
+            Style="{StaticResource LayerTile}"
+            Tag="OpenFile">
+            <StackPanel HorizontalAlignment="Center" Orientation="Horizontal">
+                <Path
+                    Width="30"
+                    Height="30"
+                    Margin="0,0,12,0"
+                    Data="M6,24 H36 L44,34 H94 V84 H6 Z M6,44 H94"
+                    Stretch="Uniform"
+                    Stroke="#9CC2FF"
+                    StrokeThickness="4"
+                    StrokeLineJoin="Round" />
+                <TextBlock
+                    VerticalAlignment="Center"
+                    FontSize="16"
+                    FontWeight="SemiBold"
+                    Text="Open from file" />
+                <TextBlock
+                    Margin="12,0,0,0"
+                    VerticalAlignment="Center"
+                    Style="{StaticResource TileHint}"
+                    Text="a layer saved earlier (.aflay)" />
+            </StackPanel>
+        </Button>
+        </StackPanel>
     </Grid>
 </ui:FluentWindow>

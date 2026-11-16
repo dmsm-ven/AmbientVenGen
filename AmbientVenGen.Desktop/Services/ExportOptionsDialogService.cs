@@ -1,6 +1,7 @@
 using AmbientVenGen.Core.Export;
 using AmbientVenGen.Desktop.ViewModels;
 using AmbientVenGen.Desktop.Views;
+using AmbientVenGen.Core.Export;
 using System.Windows;
 
 namespace AmbientVenGen.Desktop.Services;
@@ -8,11 +9,15 @@ namespace AmbientVenGen.Desktop.Services;
 public sealed class ExportOptionsDialogService
 {
     /// <summary>
-    /// Shows the export options dialog. Returns null when the user cancels.
+    /// Shows the export window: the options first, then (after "Export...") the progress of <paramref name="runner"/>.
+    /// The window closes by itself when the runner returns true.
     /// </summary>
-    public ExportOptions? Show(string trackLengthText, ExportOptions? previous)
+    public void Show(
+        string trackLengthText,
+        ExportOptions? previous,
+        Func<ExportOptions, ExportOptionsViewModel, CancellationToken, Task<bool>> runner)
     {
-        var viewModel = new ExportOptionsViewModel(trackLengthText, previous);
+        var viewModel = new ExportOptionsViewModel(trackLengthText, previous, runner);
 
         var window = new ExportOptionsWindow
         {
@@ -20,6 +25,6 @@ public sealed class ExportOptionsDialogService
             Owner = Application.Current.MainWindow
         };
 
-        return window.ShowDialog() == true ? viewModel.ToOptions() : null;
+        window.ShowDialog();
     }
 }

@@ -38,7 +38,6 @@ public partial class MainViewModel : ObservableObject, IDisposable
     // Set while the library is open to choose a new file for an existing Field record layer.
 
     private ExportOptions? _lastExportOptions;
-    private CancellationTokenSource? _exportCts;
     private int _clipHoldTicks;
     private bool _loading;
 
@@ -94,9 +93,6 @@ public partial class MainViewModel : ObservableObject, IDisposable
 
     [ObservableProperty]
     private bool _isExporting;
-
-    [ObservableProperty]
-    private double _exportProgress;
 
     [ObservableProperty]
     private string _statusMessage = "Ready";
@@ -181,6 +177,9 @@ public partial class MainViewModel : ObservableObject, IDisposable
         WeakReferenceMessenger.Default.Register<MainViewModel, FieldRecordTargetRequest>(
             this,
             static (viewModel, request) => request.Reply(viewModel.FieldRecordTargetName));
+        WeakReferenceMessenger.Default.Register<MainViewModel, EditorAvailabilityRequest>(
+            this,
+            static (viewModel, request) => request.Reply(!viewModel.ShowStartScreen));
         _playbackService.PlaybackEnded += OnPlaybackEnded;
 
         // Start with a ready-made composition so there is something to hear and see right away.
@@ -236,7 +235,6 @@ public partial class MainViewModel : ObservableObject, IDisposable
         Project.Changed -= OnProjectChanged;
         _playbackService.PlaybackEnded -= OnPlaybackEnded;
 
-        _exportCts?.Cancel();
         _playbackService.Stop();
     }
 }

@@ -8,6 +8,7 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using CommunityToolkit.Mvvm.Messaging;
 using System.Collections.ObjectModel;
+using System.Diagnostics;
 using System.IO;
 using System.Windows;
 using System.Windows.Threading;
@@ -30,7 +31,7 @@ public partial class MainViewModel
     private bool CanExport() => !IsExporting;
 
     [RelayCommand(CanExecute = nameof(CanExport))]
-    private async Task ExportAsync()
+    private void Export()
     {
         if (Project.Layers.Count == 0)
         {
@@ -38,32 +39,32 @@ public partial class MainViewModel
             return;
         }
 
-        ExportOptions? options = _exportOptionsDialogService.Show(
-            FormatTime(Project.DurationSeconds),
-            _lastExportOptions);
+        IsExporting = true;
 
-        if (options is null)
-            return;
+        try
+        {
+            // The window shows the options and then the progress; it calls RunExportAsync and closes itself afterwards.
+            _exportOptionsDialogService.Show(FormatTime(Project.DurationSeconds), _lastExportOptions, RunExportAsync);
+        }
+        finally
+        {
+            IsExporting = false;
+        }
+    }
 
+    /// <summary>Asks for the file and renders into it. True when the export completed (the window closes then).</summary>
+    private async Task<bool> RunExportAsync(ExportOptions options, ExportOptionsViewModel dialog, CancellationToken token)
+    {
         _lastExportOptions = options;
         Settings.ExportOptions = options;
 
         string? path = _fileDialogService.ChooseExportPath(options.Format == ExportFormat.Mp3, ProjectName);
         if (string.IsNullOrWhiteSpace(path))
-            return;
+            return false;
 
-        using var cancellation = new CancellationTokenSource();
-        _exportCts = cancellation;
-
-        ExportProgress = 0;
-        IsExporting = true;
         StatusMessage = "Rendering composition...";
-
-        var progress = new Progress<double>(value =>
-        {
-            if (IsExporting)
-                ExportProgress = value;
-        });
+        var clock = Stopwatch.StartNew();
+        var progress = new Progress<double>(value => dialog.ReportProgress(value, clock));
 
         try
         {
@@ -76,8 +77,9 @@ public partial class MainViewModel
                 spec = spec with { DurationSeconds = Math.Clamp(Math.Ceiling(end), 1, spec.DurationSeconds) };
             }
 
-            await _exportService.ExportAsync(path, spec, options, progress, cancellation.Token);
+            await _exportService.ExportAsync(path, spec, options, progress, token);
             StatusMessage = $"Export completed: {path}";
+            return true;
         }
         catch (OperationCanceledException)
         {
@@ -86,15 +88,9 @@ public partial class MainViewModel
         catch (Exception ex)
         {
             StatusMessage = $"Export error: {ex.Message}";
+            _messageService.ShowError($"Export error:\n{ex.Message}");
         }
-        finally
-        {
-            _exportCts = null;
-            IsExporting = false;
-            ExportProgress = 0;
-        }
-    }
 
-    [RelayCommand]
-    private void CancelExport() => _exportCts?.Cancel();
+        return false;
+    }
 }

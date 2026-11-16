@@ -150,6 +150,15 @@ public sealed partial class AppSettings : ObservableObject
 
     private string? _lastExportDirectory;
 
+    /// <summary>The folder of the recording that was added to the preset library last (the "+" dialog opens there).</summary>
+    public string? LastPresetDirectory
+    {
+        get => _lastPresetDirectory;
+        set { if (_lastPresetDirectory != value) { _lastPresetDirectory = value; OnPropertyChanged(); Save(); } }
+    }
+
+    private string? _lastPresetDirectory;
+
     /// <summary>The folder of the last saved or opened layer file (.aflay).</summary>
     public string? LastLayerDirectory
     {
@@ -237,6 +246,7 @@ public sealed partial class AppSettings : ObservableObject
                 _recentDates = new Dictionary<string, DateTime>(file.RecentDates ?? [], StringComparer.OrdinalIgnoreCase);
                 _lastProjectDirectory = file.LastProjectDirectory;
                 _lastExportDirectory = file.LastExportDirectory;
+                _lastPresetDirectory = file.LastPresetDirectory;
                 _lastLayerDirectory = file.LastLayerDirectory;
                 _exportOptions = file.ExportOptions;
                 _presetVolume = Math.Clamp(file.PresetVolume ?? 0.8, 0, 1);
@@ -256,7 +266,7 @@ public sealed partial class AppSettings : ObservableObject
         try
         {
             Directory.CreateDirectory(Path.GetDirectoryName(_path)!);
-            File.WriteAllText(_path, JsonSerializer.Serialize(new SettingsFile { LastProjectPath = LastProjectPath, IntervalMathExpanded = IntervalMathExpanded, IntervalMainExpanded = IntervalMainExpanded, ShowSpectrogram = ShowSpectrogram, SpectrogramColor = SpectrogramColor.ToString(), RecentProjects = _recentProjects, RecentDates = _recentDates, LastProjectDirectory = _lastProjectDirectory, LastExportDirectory = _lastExportDirectory, LastLayerDirectory = _lastLayerDirectory, ExportOptions = _exportOptions, PresetVolume = _presetVolume }, Options));
+            File.WriteAllText(_path, JsonSerializer.Serialize(new SettingsFile { LastProjectPath = LastProjectPath, IntervalMathExpanded = IntervalMathExpanded, IntervalMainExpanded = IntervalMainExpanded, ShowSpectrogram = ShowSpectrogram, SpectrogramColor = SpectrogramColor.ToString(), RecentProjects = _recentProjects, RecentDates = _recentDates, LastProjectDirectory = _lastProjectDirectory, LastExportDirectory = _lastExportDirectory, LastPresetDirectory = _lastPresetDirectory, LastLayerDirectory = _lastLayerDirectory, ExportOptions = _exportOptions, PresetVolume = _presetVolume }, Options));
         }
         catch (Exception)
         {
@@ -275,6 +285,7 @@ public sealed partial class AppSettings : ObservableObject
         public Dictionary<string, DateTime>? RecentDates { get; set; }
         public string? LastProjectDirectory { get; set; }
         public string? LastExportDirectory { get; set; }
+        public string? LastPresetDirectory { get; set; }
         public string? LastLayerDirectory { get; set; }
         public ExportOptions? ExportOptions { get; set; }
         public double? PresetVolume { get; set; }

@@ -88,6 +88,12 @@ public partial class PresetLibraryViewModel : ObservableObject
     [NotifyCanExecuteChangedFor(nameof(ReplaceInLayerCommand))]
     private bool _hasReplaceTarget;
 
+    /// <summary>False while the start page is shown: there is no project to add a recording to or to replace one in.</summary>
+    [ObservableProperty]
+    [NotifyCanExecuteChangedFor(nameof(UsePresetCommand))]
+    [NotifyCanExecuteChangedFor(nameof(ReplaceInLayerCommand))]
+    private bool _isEditorAvailable = true;
+
     public PresetLibraryViewModel(
         FieldPresetRepository repository,
         AudioFileAnalyzer analyzer,
@@ -113,6 +119,12 @@ public partial class PresetLibraryViewModel : ObservableObject
             static (viewModel, message) => viewModel.HasReplaceTarget = message.LayerName is not null);
         FieldRecordTargetRequest target = WeakReferenceMessenger.Default.Send(new FieldRecordTargetRequest());
         HasReplaceTarget = target.HasReceivedResponse && target.Response is not null;
+
+        WeakReferenceMessenger.Default.Register<PresetLibraryViewModel, EditorAvailabilityMessage>(
+            this,
+            static (viewModel, message) => viewModel.IsEditorAvailable = message.IsAvailable);
+        EditorAvailabilityRequest editor = WeakReferenceMessenger.Default.Send(new EditorAvailabilityRequest());
+        IsEditorAvailable = !editor.HasReceivedResponse || editor.Response;
 
         // The table shows only the presets that have every switched-on tag.
         CollectionViewSource.GetDefaultView(Presets).Filter = MatchesTagFilter;
@@ -660,7 +672,7 @@ public partial class PresetLibraryViewModel : ObservableObject
     private FieldPresetItem CreateItem(FieldPreset preset) =>
         new(preset) { ThumbnailLoader = LoadThumbnailAsync };
 
-    private bool CanUsePreset() => SelectedPreset is { IsUnavailable: false };
+    private bool CanUsePreset() => IsEditorAvailable && SelectedPreset is { IsUnavailable: false };
 
     /// <summary>Adds the selected recording to the project as a "Field record" layer.</summary>
     [RelayCommand(CanExecute = nameof(CanUsePreset))]
@@ -689,7 +701,7 @@ public partial class PresetLibraryViewModel : ObservableObject
         }
     }
 
-    private bool CanReplace() => HasReplaceTarget && SelectedPreset is { IsUnavailable: false };
+    private bool CanReplace() => IsEditorAvailable && HasReplaceTarget && SelectedPreset is { IsUnavailable: false };
 
     /// <summary>Puts the selected recording into the selected Field record layer instead of its current file.</summary>
     [RelayCommand(CanExecute = nameof(CanReplace))]
@@ -706,6 +718,51 @@ public partial class PresetLibraryViewModel : ObservableObject
 
     /// <summary>The rows selected in the table (the table allows several).</summary>
     public void SetSelection(List<FieldPresetItem> items) => _selection = items;
+
+    /// <summary>Looks for library records whose file is gone from the disk and offers to remove them from the library.</summary>
+    [RelayCommand]
+    private async Task CheckFilesAsync()
+    {
+        List<FieldPresetItem> missing = await Task.Run(() => Presets.ToList().Where(p => !File.Exists(p.FilePath)).ToList());
+
+        if (missing.Count == 0)
+        {
+            _messageService.ShowInfo("All files of the library exist on the disk.");
+            return;
+        }
+
+        string names = string.Join("\n", missing.Take(8).Select(p => "  " + p.Name)) + (missing.Count > 8 ? $"\n  ... and {missing.Count - 8} more" : "");
+
+        if (!_messageService.Confirm($"{missing.Count} file(s) of the library are missing on the disk:\n{names}\n\nRemove them from the library?", "Remove", "Keep"))
+            return;
+
+        var failed = new List<string>();
+
+        foreach (FieldPresetItem item in missing)
+        {
+            try
+            {
+                await _repository.DeleteAsync(item.Id);
+            }
+            catch (Exception ex)
+            {
+                failed.Add($"{item.Name}: {ex.Message}");
+                continue;
+            }
+
+            if (ReferenceEquals(item, _playingItem))
+                StopPreview();
+
+            Presets.Remove(item);
+        }
+
+        SelectedPreset = null;
+        _selection = [];
+        RebuildTagFilters();
+
+        if (failed.Count > 0)
+            _messageService.ShowError("Cannot delete:\n" + string.Join("\n", failed));
+    }
 
     private bool CanDeletePreset() => SelectedPreset is not null;
 

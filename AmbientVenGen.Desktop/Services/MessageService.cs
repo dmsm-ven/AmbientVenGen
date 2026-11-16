@@ -11,6 +11,9 @@ public sealed class MessageService
     public void ShowError(string message) =>
         DialogWindow.Show(Caption, message, DialogKind.Error, "OK");
 
+    public void ShowInfo(string message) =>
+        DialogWindow.Show(Caption, message, DialogKind.Info, "OK");
+
     public bool Confirm(string message, string yesText = "Yes", string noText = "No") =>
         DialogWindow.Show(Caption, message, DialogKind.Question, yesText, null, noText) == DialogChoice.Primary;
 

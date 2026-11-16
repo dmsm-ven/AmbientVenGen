@@ -60,7 +60,7 @@
             </ui:TitleBar.TrailingContent>
         </ui:TitleBar>
 
-        <StackPanel Grid.Row="1" Margin="16,12,16,0">
+        <StackPanel Grid.Row="1" Margin="16,12,16,0" IsEnabled="{Binding IsNotBusy}">
             <ui:TextBlock FontWeight="SemiBold" Text="Format" />
             <ComboBox ItemsSource="{Binding Formats}" SelectedValue="{Binding Format, Mode=TwoWay}" />
 
@@ -108,22 +108,35 @@
             <ui:TextBlock Foreground="#AAA9BB" Text="{Binding TrackLengthText, StringFormat=Track length: {0} (set in the main window)}" />
         </StackPanel>
 
+        <StackPanel Grid.Row="2" Margin="16">
+        <StackPanel Margin="0,0,0,12" Visibility="{Binding IsBusy, Converter={StaticResource BoolToVisibility}}">
+            <ProgressBar
+                Height="8"
+                Maximum="1"
+                Minimum="0"
+                Value="{Binding Progress, Mode=OneWay}" />
+            <ui:TextBlock
+                Margin="0,6,0,0"
+                HorizontalAlignment="Center"
+                Foreground="#B7AFE9"
+                Text="{Binding ProgressText}" />
+        </StackPanel>
         <StackPanel
-            Grid.Row="2"
-            Margin="16"
             HorizontalAlignment="Right"
             Orientation="Horizontal">
             <ui:Button
                 MinWidth="84"
                 Margin="0,0,8,0"
+                Click="OnCancelClick"
                 Content="Cancel"
                 IsCancel="True" />
             <ui:Button
                 MinWidth="104"
                 Appearance="Primary"
-                Click="OnExportClick"
+                Command="{Binding StartCommand}"
                 Content="Export..."
                 IsDefault="True" />
+        </StackPanel>
         </StackPanel>
     </Grid>
 </ui:FluentWindow>

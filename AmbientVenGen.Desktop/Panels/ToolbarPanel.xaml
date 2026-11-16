@@ -108,30 +108,6 @@
                             Minimum="0"
                             Value="{Binding RebuildProgress, Mode=OneWay}" />
                     </StackPanel>
-                    <StackPanel Orientation="Horizontal" Visibility="{Binding IsExporting, Converter={StaticResource BoolToVisibility}}">
-                        <TextBlock
-                            Margin="0,0,10,0"
-                            VerticalAlignment="Center"
-                            Foreground="#B7AFE9"
-                            Text="Export" />
-                        <ProgressBar
-                            Width="160"
-                            Height="6"
-                            Margin="0,0,6,0"
-                            VerticalAlignment="Center"
-                            Maximum="1"
-                            Minimum="0"
-                            Value="{Binding ExportProgress, Mode=OneWay}" />
-                        <ui:Button
-                            Margin="0"
-                            Command="{Binding CancelExportCommand}"
-                            Style="{StaticResource ToolIconButton}"
-                            ToolTip="Cancel export">
-                            <ui:Button.Icon>
-                                <ui:SymbolIcon Symbol="Dismiss24" />
-                            </ui:Button.Icon>
-                        </ui:Button>
-                    </StackPanel>
                 </StackPanel>
 
                 <StackPanel

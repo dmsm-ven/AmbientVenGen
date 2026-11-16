@@ -1,4 +1,4 @@
-﻿<ui:FluentWindow
+<ui:FluentWindow
     x:Class="AmbientVenGen.Desktop.Views.PresetLibraryWindow"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
@@ -277,6 +277,14 @@
                         ToolTip="Add file">
                         <ui:Button.Icon>
                             <ui:SymbolIcon Symbol="Add24" />
+                        </ui:Button.Icon>
+                    </ui:Button>
+                    <ui:Button
+                        Command="{Binding CheckFilesCommand}"
+                        Style="{StaticResource ToolIconButton}"
+                        ToolTip="Check the files: find library records whose file is missing on the disk">
+                        <ui:Button.Icon>
+                            <ui:SymbolIcon Symbol="DocumentCheckmark24" />
                         </ui:Button.Icon>
                     </ui:Button>
                     <ui:Button

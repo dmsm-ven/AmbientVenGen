@@ -141,6 +141,9 @@ public partial class MainViewModel
     [ObservableProperty]
     private bool _showStartScreen;
 
+    partial void OnShowStartScreenChanged(bool value) =>
+        WeakReferenceMessenger.Default.Send(new EditorAvailabilityMessage(!value));
+
     /// <summary>The recent projects for the start screen, the newest first (files that no longer exist are left out).</summary>
     public IReadOnlyList<RecentProjectTile> RecentTiles { get; private set; } = [];
 

@@ -1,4 +1,4 @@
-﻿using AmbientVenGen.Core.Composition;
+using AmbientVenGen.Core.Composition;
 using System.Windows;
 using System.Windows.Media;
 
@@ -46,6 +46,7 @@ public sealed class NoiseColorIcon : FrameworkElement
         NoiseType.Gong => (Color.FromRgb(0xE8, 0xC2, 0x5A), Color.FromRgb(0x7A, 0x4A, 0x14)),
         NoiseType.Heartbeat => (Color.FromRgb(0xFF, 0x7A, 0x86), Color.FromRgb(0x7A, 0x12, 0x24)),
         NoiseType.CardiacMonitor => (Color.FromRgb(0x7C, 0xFF, 0x9A), Color.FromRgb(0x0E, 0x3B, 0x2A)),
+        NoiseType.Fog => (Color.FromRgb(0xD6, 0xDE, 0xE6), Color.FromRgb(0x6B, 0x7A, 0x8A)),
         _ => (Colors.Gray, Colors.Gray)
     };
 

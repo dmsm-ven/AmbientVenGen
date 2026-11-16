@@ -37,7 +37,8 @@ public enum NoiseType
     PlasmaArc,
     Gong,
     Heartbeat,
-    CardiacMonitor
+    CardiacMonitor,
+    Fog
 }
 
 /// <summary>A property of a layer that can get its own value for a repeat (see <see cref="RepeatOverrideSpec"/>).</summary>
