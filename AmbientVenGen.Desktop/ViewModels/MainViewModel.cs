@@ -185,7 +185,7 @@ public partial class MainViewModel : ObservableObject, IDisposable
 
         // Start with a ready-made composition so there is something to hear and see right away.
         LoadSpec(templateService.Default.Build(), null);
-        TryOpenLastProject();
+        PrepareStartScreen();
 
         _timer = new DispatcherTimer(DispatcherPriority.Render) { Interval = TimeSpan.FromMilliseconds(33) };
         _timer.Tick += OnTimerTick;

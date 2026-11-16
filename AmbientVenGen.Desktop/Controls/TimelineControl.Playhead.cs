@@ -51,7 +51,7 @@ public sealed partial class TimelineControl
     }
 
     // The playhead on the bottom ruler: a line and a small triangle pointing up.
-    internal void DrawPlayheadMarker(DrawingContext dc, double height)
+    internal void DrawPlayheadMarker(DrawingContext dc, double height, bool top = false)
     {
         if (Project is null)
             return;
@@ -61,11 +61,22 @@ public sealed partial class TimelineControl
         if (x < HeaderWidth || x > ActualWidth - RightPadding + 1)
             return;
 
-        dc.DrawLine(new Pen(BrushOf(Color.FromArgb(0xF0, 0xFF, 0xFF, 0xFF)), 1.5), new Point(x, 0), new Point(x, height - 8));
-
+        var markerPen = new Pen(BrushOf(Color.FromArgb(0xF0, 0xFF, 0xFF, 0xFF)), 1.5);
         var marker = new StreamGeometry();
-        using (StreamGeometryContext ctx = marker.Open())
+
+        if (top)
         {
+            // The pinned top ruler: the triangle points down, the line goes to the bottom edge.
+            dc.DrawLine(markerPen, new Point(x, 2), new Point(x, height));
+            using StreamGeometryContext topCtx = marker.Open();
+            topCtx.BeginFigure(new Point(x - 6, 2), true, true);
+            topCtx.LineTo(new Point(x + 6, 2), true, false);
+            topCtx.LineTo(new Point(x, 13), true, false);
+        }
+        else
+        {
+            dc.DrawLine(markerPen, new Point(x, 0), new Point(x, height - 8));
+            using StreamGeometryContext ctx = marker.Open();
             ctx.BeginFigure(new Point(x - 6, height - 2), true, true);
             ctx.LineTo(new Point(x + 6, height - 2), true, false);
             ctx.LineTo(new Point(x, height - 12), true, false);

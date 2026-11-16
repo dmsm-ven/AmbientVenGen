@@ -20,6 +20,17 @@ public sealed class TimelineRuler : FrameworkElement
         set => SetValue(TimelineProperty, value);
     }
 
+    /// <summary>True for the pinned top ruler (laid over the scrolling timeline), false for the bottom one.</summary>
+    public static readonly DependencyProperty IsTopProperty = DependencyProperty.Register(
+        nameof(IsTop), typeof(bool), typeof(TimelineRuler),
+        new FrameworkPropertyMetadata(false, FrameworkPropertyMetadataOptions.AffectsRender));
+
+    public bool IsTop
+    {
+        get => (bool)GetValue(IsTopProperty);
+        set => SetValue(IsTopProperty, value);
+    }
+
     private bool _scrubbing;
 
     public TimelineRuler()
@@ -48,8 +59,12 @@ public sealed class TimelineRuler : FrameworkElement
 
         // Transparent background: the whole strip takes the mouse, not only the ticks.
         dc.DrawRectangle(Brushes.Transparent, null, new Rect(0, 0, ActualWidth, ActualHeight));
-        Timeline?.DrawRuler(dc, ActualWidth, bottom: true);
-        Timeline?.DrawPlayheadMarker(dc, ActualHeight);
+        // The pinned ruler lies over scrolling lanes: an opaque backing, otherwise they show through.
+        if (IsTop)
+            dc.DrawRectangle(new SolidColorBrush(Color.FromRgb(0x17, 0x17, 0x1D)), null, new Rect(0, 0, ActualWidth, ActualHeight));
+
+        Timeline?.DrawRuler(dc, ActualWidth, bottom: !IsTop);
+        Timeline?.DrawPlayheadMarker(dc, ActualHeight, top: IsTop);
     }
 
     protected override void OnMouseLeftButtonDown(MouseButtonEventArgs e)

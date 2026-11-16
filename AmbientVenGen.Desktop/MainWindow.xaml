@@ -57,6 +57,15 @@
 
         <!--  Top row: three groups side by side. Recording and Modulators logically belong to the selected layer.  -->
         <ScrollViewer Grid.Row="2" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+            <ScrollViewer.Style>
+                <Style TargetType="ScrollViewer">
+                    <Style.Triggers>
+                        <DataTrigger Binding="{Binding ShowStartScreen}" Value="True">
+                            <Setter Property="Visibility" Value="Collapsed" />
+                        </DataTrigger>
+                    </Style.Triggers>
+                </Style>
+            </ScrollViewer.Style>
             <Grid Margin="10,6,10,0">
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="Auto" />
@@ -70,6 +79,11 @@
                 <panels:ModulatorsPanel Grid.Column="2" />
             </Grid>
         </ScrollViewer>
+
+        <!--  Start screen: the recent projects instead of the editor groups until a project is opened  -->
+        <panels:StartScreenPanel
+            Grid.Row="2"
+            Visibility="{Binding ShowStartScreen, Converter={StaticResource BoolToVisibility}}" />
 
         <!--  The only splitter: the height of the top groups against the timeline  -->
         <GridSplitter

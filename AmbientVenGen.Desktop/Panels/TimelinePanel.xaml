@@ -184,6 +184,16 @@
                         Spectrograms="{Binding Spectrograms}" />
                 </ScrollViewer>
 
+                <!--  The top ruler is pinned: it lies over the scrolling timeline (and its own ruler) and stays in sight  -->
+                <controls:TimelineRuler
+                    Grid.Row="1"
+                    Width="{Binding ActualWidth, ElementName=Timeline}"
+                    HorizontalAlignment="Left"
+                    VerticalAlignment="Top"
+                    IsTop="True"
+                    Panel.ZIndex="2"
+                    Timeline="{Binding ElementName=Timeline}" />
+
                 <!--  The second ruler: always visible, even when the layers scroll  -->
                 <controls:TimelineRuler
                     Grid.Row="2"

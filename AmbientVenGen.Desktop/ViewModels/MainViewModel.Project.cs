@@ -137,26 +137,31 @@ public partial class MainViewModel
         }
     }
 
-    // Reopens the project that was used last time; a missing or broken file silently leaves the default composition.
-    private void TryOpenLastProject()
-    {
-        string? path = Settings.LastProjectPath;
-        if (string.IsNullOrEmpty(path) || !File.Exists(path))
-            return;
+    /// <summary>True while the start screen (the recent projects as big tiles) is shown instead of the editor.</summary>
+    [ObservableProperty]
+    private bool _showStartScreen;
 
-        try
-        {
-            LoadSpec(_projectFileService.Load(path), path);
-            StatusMessage = $"Opened {Path.GetFileName(path)}";
-        }
-        catch (Exception)
-        {
-            // Keep the default composition.
-        }
+    /// <summary>The recent projects for the start screen, the newest first (files that no longer exist are left out).</summary>
+    public IReadOnlyList<RecentProjectTile> RecentTiles { get; private set; } = [];
+
+    // The last project is not loaded at startup any more: the start screen offers the recent ones instead.
+    private void PrepareStartScreen()
+    {
+        RecentTiles = Settings.RecentProjects
+            .Where(File.Exists)
+            .Select(path => new RecentProjectTile(
+                path,
+                Path.GetFileNameWithoutExtension(path),
+                Path.GetDirectoryName(path) ?? "",
+                Settings.RecentProjectDate(path)?.ToString("d MMM yyyy, HH:mm") ?? ""))
+            .ToList();
+        OnPropertyChanged(nameof(RecentTiles));
+        ShowStartScreen = RecentTiles.Count > 0;
     }
 
     private void LoadSpec(ProjectSpec spec, string? path)
     {
+        ShowStartScreen = false;
         StopPlaybackSilently();
         SelectedLayer = null;
         ResetSolo();
@@ -186,3 +191,6 @@ public partial class MainViewModel
         OnPropertyChanged(nameof(TimeText));
     }
 }
+
+/// <summary>A tile of the start screen.</summary>
+public sealed record RecentProjectTile(string Path, string Name, string Folder, string DateText);
