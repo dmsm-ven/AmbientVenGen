@@ -24,7 +24,7 @@ public enum ModTarget
     Brightness,
     Modulation,
 
-    /// <summary>How much of the layer feeds the echo (the dry sound is not touched): at the low part of the cycle only the echo tail rings.</summary>
+    /// <summary>A gate before the echo: at the low part of the cycle the layer is silent (as if the playhead left the clip) and only the echo that is already running rings out. Needs Delay time and Feedback.</summary>
     DelayInput
 }
 

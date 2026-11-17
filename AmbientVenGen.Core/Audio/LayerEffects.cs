@@ -18,7 +18,7 @@ internal sealed class LayerEffects
     private int _write;
     private double _delaySamples; // smoothed delay length, so moving the knob does not click
     private float _echoEnergy;
-    private float _inputGain = 1f;   // how much of the layer feeds the echo (smoothed: a gate must not click)
+    private float _inputGain = 1f;   // the gate: how much of the layer (dry and into the echo) passes; smoothed, a gate must not click
 
     /// <summary>True while an echo is still audible after the layer itself went silent.</summary>
     public bool HasTail => _echoEnergy > TailLevel;
@@ -77,12 +77,14 @@ internal sealed class LayerEffects
             float echoL = _delayL[index] + (_delayL[next] - _delayL[index]) * frac;
             float echoR = _delayR[index] + (_delayR[next] - _delayR[index]) * frac;
 
-            float inL = left[i];
-            float inR = right[i];
+            // The gate closes the layer itself, dry sound included, exactly as if it were silent there (the playhead left
+            // the clip): only the echo that is already running keeps ringing. With the dry sound left in, the tail was masked.
+            float inL = left[i] * _inputGain;
+            float inR = right[i] * _inputGain;
 
             // Feed the echo back crosswise (L -> R -> L): a wider, ping-pong-like space.
-            _delayL[_write] = inL * _inputGain + echoR * fb;
-            _delayR[_write] = inR * _inputGain + echoL * fb;
+            _delayL[_write] = inL + echoR * fb;
+            _delayR[_write] = inR + echoL * fb;
 
             left[i] = inL + echoL * DelayWet;
             right[i] = inR + echoR * DelayWet;
