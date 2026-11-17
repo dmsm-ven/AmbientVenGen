@@ -231,6 +231,38 @@ public partial class MainViewModel
         StatusMessage = $"{layer.Name}: {Path.GetFileName(path)}";
     }
 
+    // ---- copy / paste of the format (the sound settings) of a layer
+
+    private LayerSpec? _layerFormat;
+
+    [ObservableProperty]
+    [NotifyCanExecuteChangedFor(nameof(PasteLayerFormatCommand))]
+    private bool _hasLayerFormat;
+
+    /// <summary>Remembers all settings of the selected layer; "Paste format" in the menu of another layer applies them.</summary>
+    [RelayCommand(CanExecute = nameof(HasSelectedLayer))]
+    private void CopyLayerFormat()
+    {
+        if (SelectedLayer is not { } layer)
+            return;
+
+        _layerFormat = layer.ToSpec();
+        HasLayerFormat = true;
+        StatusMessage = $"Format of \"{layer.Name}\" copied: right-click another layer on the timeline - Paste format";
+    }
+
+    private bool CanPasteLayerFormat(Layer? layer) => _layerFormat is not null && layer is not null;
+
+    [RelayCommand(CanExecute = nameof(CanPasteLayerFormat))]
+    private void PasteLayerFormat(Layer? layer)
+    {
+        if (_layerFormat is null || layer is null)
+            return;
+
+        layer.ApplyFormat(_layerFormat);
+        StatusMessage = $"Format pasted into \"{layer.Name}\"";
+    }
+
     /// <summary>Lets the user pick another audio file for the selected Field record layer.</summary>
     [RelayCommand]
     private void ChangeSource()

@@ -85,6 +85,7 @@ public partial class MainViewModel : ObservableObject, IDisposable
     [NotifyCanExecuteChangedFor(nameof(ClearSelectedLayerCommand))]
     [NotifyCanExecuteChangedFor(nameof(DuplicateSelectedLayerCommand))]
     [NotifyCanExecuteChangedFor(nameof(SaveSelectedLayerCommand))]
+    [NotifyCanExecuteChangedFor(nameof(CopyLayerFormatCommand))]
     [NotifyCanExecuteChangedFor(nameof(ApplyIntervalCommand))]
     private Layer? _selectedLayer;
 
@@ -177,6 +178,9 @@ public partial class MainViewModel : ObservableObject, IDisposable
         WeakReferenceMessenger.Default.Register<MainViewModel, FieldRecordTargetRequest>(
             this,
             static (viewModel, request) => request.Reply(viewModel.FieldRecordTargetName));
+        WeakReferenceMessenger.Default.Register<MainViewModel, FieldRecordPathRequest>(
+            this,
+            static (viewModel, request) => request.Reply(viewModel.SelectedLayer is { Type: LayerType.FieldRecord } layer ? layer.SourcePath : null));
         WeakReferenceMessenger.Default.Register<MainViewModel, EditorAvailabilityRequest>(
             this,
             static (viewModel, request) => request.Reply(!viewModel.ShowStartScreen));

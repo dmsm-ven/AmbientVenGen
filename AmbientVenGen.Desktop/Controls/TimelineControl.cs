@@ -61,6 +61,16 @@ public sealed partial class TimelineControl : FrameworkElement
     public static readonly DependencyProperty DeleteCommandProperty = DependencyProperty.Register(
         nameof(DeleteCommand), typeof(ICommand), typeof(TimelineControl), new PropertyMetadata(null));
 
+    /// <summary>"Paste format" in the right-click menu of a layer header (the parameter is the layer).</summary>
+    public static readonly DependencyProperty PasteFormatCommandProperty = DependencyProperty.Register(
+        nameof(PasteFormatCommand), typeof(ICommand), typeof(TimelineControl), new PropertyMetadata(null));
+
+    public ICommand? PasteFormatCommand
+    {
+        get => (ICommand?)GetValue(PasteFormatCommandProperty);
+        set => SetValue(PasteFormatCommandProperty, value);
+    }
+
     /// <summary>Source of the spectrogram pictures of the layers.</summary>
     public static readonly DependencyProperty SpectrogramsProperty = DependencyProperty.Register(
         nameof(Spectrograms), typeof(SpectrogramService), typeof(TimelineControl),

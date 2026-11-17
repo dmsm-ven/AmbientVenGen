@@ -359,6 +359,44 @@ public sealed partial class Layer : ObservableObject
         RepeatOverrides.Where(o => o.Repeat < Repeats).ToList() is { Count: > 0 } overrides ? overrides : null,
         ShimmerSend);
 
+    /// <summary>
+    /// "Paste format": takes the sound settings of <paramref name="format"/>. Not touched: the name, the type, the pitch
+    /// (Drone / Pad), the file and its loop (Field record), the noise type, the start, the duration, the repeats and the gap.
+    /// </summary>
+    public void ApplyFormat(LayerSpec format)
+    {
+        FadeInSeconds = Math.Clamp(format.FadeInSeconds, 0, DurationSeconds);
+        FadeOutSeconds = Math.Clamp(format.FadeOutSeconds, 0, DurationSeconds);
+        FadeEasing = format.FadeEasing;
+        FadeOutEasing = format.FadeOutCurve;
+        LevelFrom = Unit(format.Level.From);
+        LevelTo = Unit(format.Level.To);
+        LevelEasing = format.Level.Easing;
+        BrightnessFrom = Unit(format.Brightness.From);
+        BrightnessTo = Unit(format.Brightness.To);
+        BrightnessEasing = format.Brightness.Easing;
+        ModulationFrom = Unit(format.Modulation.From);
+        ModulationTo = Unit(format.Modulation.To);
+        ModulationEasing = format.Modulation.Easing;
+        Pan = Math.Clamp(format.Pan, -1, 1);
+        PanDrift = Unit(format.PanDrift);
+        PitchDrift = Unit(format.PitchDrift);
+        FilterCutoffHz = Math.Clamp(format.FilterCutoffHz <= 0 ? MaxCutoffHz : format.FilterCutoffHz, MinCutoffHz, MaxCutoffHz);
+        FilterResonance = Unit(format.FilterResonance);
+        DelaySeconds = Math.Clamp(format.DelaySeconds, 0, MaxDelaySeconds);
+        DelayFeedback = Math.Clamp(format.DelayFeedback, 0, MaxFeedback);
+        ReverbSend = Unit(format.ReverbSend);
+        ShimmerSend = Unit(format.ShimmerSendValue);
+        Speed = Math.Clamp(format.Speed <= 0 ? 1.0 : format.Speed, MinSpeed, MaxSpeed);
+        Reverse = format.Reverse;
+        Stretch = Math.Clamp(format.Stretch < 1 ? 1 : format.Stretch, 1, SampleTransform.MaxStretch);
+        PitchShift = Math.Clamp(format.PitchShift, -SampleTransform.MaxPitchSemitones, SampleTransform.MaxPitchSemitones);
+
+        Modulators.Clear();
+        foreach (ModulatorSpec modulator in format.Modulators ?? [])
+            Modulators.Add(Modulator.From(modulator));
+    }
+
     /// <summary>Creates a layer from a spec, clamping values read from a file to sane ranges.</summary>
     public static Layer FromSpec(LayerSpec spec)
     {

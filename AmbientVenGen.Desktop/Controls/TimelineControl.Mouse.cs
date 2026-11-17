@@ -1,6 +1,7 @@
 using AmbientVenGen.Core.Composition;
 using System.Globalization;
 using System.Windows;
+using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Threading;
@@ -63,6 +64,32 @@ public sealed partial class TimelineControl
 
     private static double Snap(double seconds) =>
         Keyboard.Modifiers.HasFlag(ModifierKeys.Alt) ? seconds : Math.Round(seconds);
+
+    // A right click on a layer header: the menu with "Paste format".
+    protected override void OnMouseRightButtonUp(MouseButtonEventArgs e)
+    {
+        base.OnMouseRightButtonUp(e);
+
+        Point point = e.GetPosition(this);
+        if (Project is not { } project || point.X >= HeaderWidth || point.Y < RulerHeight)
+            return;
+
+        int lane = (int)Math.Floor((point.Y - RulerHeight) / LaneHeight);
+        if (lane < 0 || lane >= project.Layers.Count)
+            return;
+
+        Layer layer = project.Layers[lane];
+        SetCurrentValue(SelectedLayerProperty, layer);
+
+        var paste = new MenuItem { Header = "Paste format" };
+        paste.IsEnabled = PasteFormatCommand?.CanExecute(layer) == true;
+        paste.Click += (_, _) => PasteFormatCommand?.Execute(layer);
+
+        var menu = new ContextMenu { PlacementTarget = this, IsOpen = false };
+        menu.Items.Add(paste);
+        menu.IsOpen = true;
+        e.Handled = true;
+    }
 
     protected override void OnMouseLeftButtonDown(MouseButtonEventArgs e)
     {

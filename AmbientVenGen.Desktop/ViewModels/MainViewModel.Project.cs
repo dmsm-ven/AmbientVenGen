@@ -147,6 +147,19 @@ public partial class MainViewModel
     /// <summary>The recent projects for the start screen, the newest first (files that no longer exist are left out).</summary>
     public IReadOnlyList<RecentProjectTile> RecentTiles { get; private set; } = [];
 
+    private static string AgeText(DateTime when)
+    {
+        int days = (int)Math.Floor((DateTime.Now.Date - when.Date).TotalDays);
+
+        return days switch
+        {
+            <= 0 => "today",
+            1 => "yesterday",
+            <= 60 => $"{days} days ago",
+            _ => $"{days / 30} months ago"
+        };
+    }
+
     // The last project is not loaded at startup any more: the start screen offers a new project and the recent ones instead.
     private void PrepareStartScreen()
     {
@@ -156,7 +169,8 @@ public partial class MainViewModel
                 path,
                 Path.GetFileNameWithoutExtension(path),
                 Path.GetDirectoryName(path) ?? "",
-                Settings.RecentProjectDate(path)?.ToString("d MMM yyyy, HH:mm") ?? ""))
+                Settings.RecentProjectDate(path) is { } date ? $"{date:d MMM yyyy, HH:mm}" : "",
+                Settings.RecentProjectDate(path) is { } when ? AgeText(when) : ""))
             .ToList();
         OnPropertyChanged(nameof(RecentTiles));
         ShowStartScreen = true;
@@ -196,4 +210,4 @@ public partial class MainViewModel
 }
 
 /// <summary>A tile of the start screen.</summary>
-public sealed record RecentProjectTile(string Path, string Name, string Folder, string DateText);
+public sealed record RecentProjectTile(string Path, string Name, string Folder, string DateText, string AgeText);

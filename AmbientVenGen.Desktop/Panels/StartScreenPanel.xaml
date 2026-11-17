@@ -114,11 +114,18 @@
                                     TextTrimming="CharacterEllipsis"
                                     TextWrapping="Wrap"
                                     MaxHeight="48" />
-                                <TextBlock
-                                    Grid.Row="2"
-                                    FontSize="12"
-                                    Foreground="#B7AFE9"
-                                    Text="{Binding DateText}" />
+                                <StackPanel Grid.Row="2" Orientation="Horizontal">
+                                    <TextBlock
+                                        FontSize="12"
+                                        FontWeight="SemiBold"
+                                        Foreground="#9CC2FF"
+                                        Text="{Binding AgeText}" />
+                                    <TextBlock
+                                        Margin="8,0,0,0"
+                                        FontSize="12"
+                                        Foreground="#B7AFE9"
+                                        Text="{Binding DateText}" />
+                                </StackPanel>
                                 <TextBlock
                                     Grid.Row="3"
                                     Margin="0,2,0,0"

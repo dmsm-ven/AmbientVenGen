@@ -19,3 +19,9 @@ public sealed record EditorAvailabilityMessage(bool IsAvailable);
 
 /// <summary>Asked by the preset library when it opens: is a project (and not the start page) in front of the user?</summary>
 public sealed class EditorAvailabilityRequest : RequestMessage<bool>;
+
+/// <summary>The path of the file of the selected Field record layer (null when another kind of layer is selected).</summary>
+public sealed class FieldRecordPathRequest : RequestMessage<string?>;
+
+/// <summary>Asks an already open preset library to show the file of the selected Field record layer.</summary>
+public sealed record LocateFieldRecordMessage;

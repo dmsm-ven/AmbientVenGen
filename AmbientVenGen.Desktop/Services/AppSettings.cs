@@ -124,7 +124,7 @@ public sealed partial class AppSettings : ObservableObject
 
     private List<string> _recentProjects = [];
 
-    private const int MaxRecent = 6;
+    private const int MaxRecent = 8;
 
     private Dictionary<string, DateTime> _recentDates = new(StringComparer.OrdinalIgnoreCase);
 

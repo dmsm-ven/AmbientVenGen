@@ -125,7 +125,7 @@ public static class Choices
             "An even, clean beep like a patient monitor. Modulation = the rate, Brightness = the pitch.",
             "Sounds like: the beeping of a heart monitor in a hospital room."),
         new(NoiseType.Fog, "Fog",
-            "Damp, muffled air that slowly thickens and thins. Brightness = how clear the air is, Modulation = how deep the slow breathing is.",
+            "A very quiet, dark, muffled air that slowly thickens and thins. Brightness = how clear the air is, Modulation = how deep the slow breathing is.",
             "Sounds like: a heavy fog over a lake at dawn, a soft hush with no events in it.")
     ];
 

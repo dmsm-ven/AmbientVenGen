@@ -1,4 +1,6 @@
+using AmbientVenGen.Desktop.ViewModels;
 using AmbientVenGen.Desktop.Views;
+using CommunityToolkit.Mvvm.Messaging;
 using Microsoft.Extensions.DependencyInjection;
 using System.Windows;
 
@@ -23,6 +25,7 @@ public sealed class PresetLibraryWindowService(IServiceProvider services)
                 _window.WindowState = WindowState.Normal;
 
             _window.Activate();
+            WeakReferenceMessenger.Default.Send(new LocateFieldRecordMessage());
             return;
         }
 

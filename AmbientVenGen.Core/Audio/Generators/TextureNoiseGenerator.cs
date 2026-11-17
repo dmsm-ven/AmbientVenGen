@@ -407,17 +407,16 @@ internal sealed class TextureNoiseGenerator : LayerGenerator
     }
 
     /// <summary>
-    /// Fog: damp, muffled air. A soft low body and a thin veil of high air, both drifting very slowly
-    /// (the cut-off and the loudness wander over tens of seconds, never a sudden event).
+    /// Fog: damp, muffled air, very quiet and dark. A soft low body (brown noise through a steep low-pass) and an almost
+    /// inaudible veil, both drifting over tens of seconds: no hiss, no events.
     /// Brightness = how clear the air is, Modulation = how deep the slow breathing is.
     /// </summary>
     private sealed class FogChannel : Channel
     {
         private Rng _rng;
-        private readonly NoiseColor _pink = new(NoiseType.Pink);
         private readonly NoiseColor _brown = new(NoiseType.Brown);
-        private Svf _body = new(250f, 0.6f);
-        private Svf _veil = new(1400f, 0.8f);
+        private Svf _body1 = new(200f, 0.55f), _body2 = new(200f, 0.55f);
+        private Svf _veil = new(700f, 1.2f);
         private Wander _driftA, _driftB, _veilDrift;
         private Leveler _bodyLevel, _veilLevel;
         private int _tick;
@@ -432,23 +431,27 @@ internal sealed class TextureNoiseGenerator : LayerGenerator
 
         public override float Next(float brightness, float modulation)
         {
-            float breath = 0.6f * _driftA.Next(17f) + 0.4f * _driftB.Next(41f);
-            float veilMove = _veilDrift.Next(23f);
+            float breath = 0.6f * _driftA.Next(19f) + 0.4f * _driftB.Next(47f);
+            float veilMove = _veilDrift.Next(29f);
 
             if ((_tick++ & 31) == 0)
             {
-                _body.Set((110f + 650f * brightness) * (0.7f + 0.6f * breath), 0.6f);
-                _veil.Set(900f + 1800f * brightness * (0.6f + 0.8f * veilMove), 0.8f);
+                float cut = (70f + 280f * brightness) * (0.75f + 0.5f * breath);
+                _body1.Set(cut, 0.55f);
+                _body2.Set(cut, 0.55f);
+                _veil.Set(380f + 700f * brightness * (0.6f + 0.8f * veilMove), 1.2f);
             }
 
-            float depth = 0.2f + 0.7f * modulation;
-            float gain = (1f - depth) + depth * (0.25f + 1.1f * breath);
+            float depth = 0.25f + 0.65f * modulation;
+            float gain = (1f - depth) + depth * (0.2f + 1.1f * breath);
 
-            _body.Process(0.6f * _brown.Next(_rng.Signed()) + 0.4f * _pink.Next(_rng.Signed()), out float low, out _, out _);
-            _veil.Process(_pink.Next(_rng.Signed()), out _, out float band, out _);
+            // two low-pass stages in a row: a steep slope, so nothing hissy is left
+            _body1.Process(_brown.Next(_rng.Signed()), out float stage, out _, out _);
+            _body2.Process(stage, out float low, out _, out _);
+            _veil.Process(_brown.Next(_rng.Signed()), out _, out float band, out _);
 
-            float body = _bodyLevel.Next(low) * 0.32f * gain;
-            float veil = _veilLevel.Next(band) * (0.025f + 0.07f * brightness) * (0.5f + veilMove);
+            float body = _bodyLevel.Next(low) * 0.13f * gain;
+            float veil = _veilLevel.Next(band) * (0.004f + 0.012f * brightness) * (0.5f + veilMove);
 
             return body + veil;
         }

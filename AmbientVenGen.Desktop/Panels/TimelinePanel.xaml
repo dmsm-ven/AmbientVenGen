@@ -173,6 +173,7 @@
                     <controls:TimelineControl
                         x:Name="Timeline"
                         DeleteCommand="{Binding DeleteSelectedLayerCommand}"
+                        PasteFormatCommand="{Binding PasteLayerFormatCommand}"
                         PlayheadSeconds="{Binding PlayheadSeconds}"
                         Project="{Binding Project}"
                         IsSoloActive="{Binding IsSoloActive}"

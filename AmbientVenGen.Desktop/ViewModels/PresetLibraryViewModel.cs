@@ -73,6 +73,9 @@ public partial class PresetLibraryViewModel : ObservableObject
     /// <summary>Raised after a new record was added: the table must show its top (the newest record is the first row).</summary>
     public event Action? ScrollToTopRequested;
 
+    /// <summary>The window scrolls the table to this row.</summary>
+    public event Action<FieldPresetItem>? ScrollToItemRequested;
+
     /// <summary>One switch for all rows: repeat the previewed file or play it once.</summary>
     [ObservableProperty]
     private bool _loop;
@@ -120,6 +123,9 @@ public partial class PresetLibraryViewModel : ObservableObject
         FieldRecordTargetRequest target = WeakReferenceMessenger.Default.Send(new FieldRecordTargetRequest());
         HasReplaceTarget = target.HasReceivedResponse && target.Response is not null;
 
+        WeakReferenceMessenger.Default.Register<PresetLibraryViewModel, LocateFieldRecordMessage>(
+            this,
+            static (viewModel, _) => viewModel.LocateLayerFile());
         WeakReferenceMessenger.Default.Register<PresetLibraryViewModel, EditorAvailabilityMessage>(
             this,
             static (viewModel, message) => viewModel.IsEditorAvailable = message.IsAvailable);
@@ -502,6 +508,27 @@ public partial class PresetLibraryViewModel : ObservableObject
         RebuildTagFilters();
 
         // Waveforms are built only for files that were played (see TogglePreview).
+
+        LocateLayerFile();
+    }
+
+    /// <summary>Selects the row of the file that the selected Field record layer plays and scrolls the table to it.</summary>
+    private void LocateLayerFile()
+    {
+        FieldRecordPathRequest request = WeakReferenceMessenger.Default.Send(new FieldRecordPathRequest());
+        if (!request.HasReceivedResponse || request.Response is not { Length: > 0 } path)
+            return;
+
+        string full = Path.GetFullPath(path);
+        FieldPresetItem? item = Presets.FirstOrDefault(p => string.Equals(Path.GetFullPath(p.FilePath), full, StringComparison.OrdinalIgnoreCase));
+        if (item is null)
+            return;
+
+        if (HasTagFilter && !MatchesTagFilter(item))
+            ClearTagFilter();
+
+        SelectedPreset = item;
+        ScrollToItemRequested?.Invoke(item);
     }
 
     /// <summary>Adds one or several files: each is read, saved and gets the existing tags that its name mentions.</summary>

@@ -126,6 +126,16 @@
                             </StackPanel>
                         </StackPanel>
                         <ui:Button
+                            Margin="0,0,120,0"
+                            HorizontalAlignment="Right"
+                            Command="{Binding CopyLayerFormatCommand}"
+                            Style="{StaticResource ToolIconButton}"
+                            ToolTip="Copy the format (all sound settings) of this layer; then right-click another layer on the timeline - Paste format">
+                            <ui:Button.Icon>
+                                <ui:SymbolIcon Symbol="PaintBrush24" />
+                            </ui:Button.Icon>
+                        </ui:Button>
+                        <ui:Button
                             Margin="0,0,90,0"
                             HorizontalAlignment="Right"
                             Command="{Binding RandomizeSelectedLayerCommand}"

@@ -14,9 +14,11 @@ public partial class PresetLibraryWindow : FluentWindow
         DataContext = viewModel;
 
         viewModel.ScrollToTopRequested += OnScrollToTopRequested;
+        viewModel.ScrollToItemRequested += OnScrollToItemRequested;
         Closed += (_, _) =>
         {
             viewModel.ScrollToTopRequested -= OnScrollToTopRequested;
+            viewModel.ScrollToItemRequested -= OnScrollToItemRequested;
             viewModel.Shutdown();
         };
     }
@@ -29,6 +31,13 @@ public partial class PresetLibraryWindow : FluentWindow
 
         PresetsGrid.UpdateLayout();
         PresetsGrid.ScrollIntoView(PresetsGrid.Items[0]);
+    }
+
+    // The file of the current Field record layer: the table scrolls to its row.
+    private void OnScrollToItemRequested(FieldPresetItem item)
+    {
+        PresetsGrid.UpdateLayout();
+        PresetsGrid.ScrollIntoView(item);
     }
 
     // Several rows can be selected (to remove them at once); the view model keeps the whole selection.
