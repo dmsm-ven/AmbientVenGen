@@ -159,19 +159,24 @@ public sealed partial class TimelineControl
         if (pass < 6 || rect.Width <= 0)
             return;
 
-        var pen = new Pen(BrushOf(Color.FromArgb(0x4A, 0xFF, 0xFF, 0xFF)), 1);
-        pen.Freeze();
+        // A light line with a dark shadow beside it: visible both on the bright spectrogram bars (their colour is
+        // the one of the setting) and on the dim bottom of a clip without them.
+        var light = new Pen(BrushOf(Color.FromArgb(0xE0, 0xFF, 0xFF, 0xFF)), 1);
+        var shadow = new Pen(BrushOf(Color.FromArgb(0xB0, 0x00, 0x00, 0x00)), 1);
+        light.Freeze();
+        shadow.Freeze();
 
         double first = Math.Max(rect.Left, HeaderWidth);
         int from = Math.Max(1, (int)Math.Ceiling((first - rect.Left) / pass));
 
         for (int k = from; ; k++)
         {
-            double x = rect.Left + k * pass;
-            if (x >= rect.Right - 1 || x > ActualWidth)
+            double x = Math.Round(rect.Left + k * pass) + 0.5;
+            if (x >= rect.Right - 2 || x > ActualWidth)
                 break;
 
-            dc.DrawLine(pen, new Point(x, rect.Bottom - 7), new Point(x, rect.Bottom - 1));
+            dc.DrawLine(shadow, new Point(x + 1, rect.Bottom - 4.6), new Point(x + 1, rect.Bottom - 1));
+            dc.DrawLine(light, new Point(x, rect.Bottom - 4.6), new Point(x, rect.Bottom - 1));
         }
     }
 
