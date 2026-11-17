@@ -73,6 +73,23 @@ public sealed partial class AppSettings : ObservableObject
 
     private bool _showSpectrogram = false;
 
+    /// <summary>Faint ticks at the bottom of a Field record clip where a new pass of its loop begins.</summary>
+    public bool ShowLoopMarks
+    {
+        get => _showLoopMarks;
+        set
+        {
+            if (_showLoopMarks == value)
+                return;
+
+            _showLoopMarks = value;
+            OnPropertyChanged();
+            Save();
+        }
+    }
+
+    private bool _showLoopMarks = true;
+
     /// <summary>Colours offered for the bars of the timeline spectrogram.</summary>
     public static IReadOnlyList<Color> SpectrogramPalette { get; } =
     [
@@ -242,6 +259,7 @@ public sealed partial class AppSettings : ObservableObject
                 _intervalMathExpanded = file.IntervalMathExpanded;
                 _intervalMainExpanded = file.IntervalMainExpanded;
                 _showSpectrogram = file.ShowSpectrogram;
+                _showLoopMarks = file.ShowLoopMarks;
                 _recentProjects = (file.RecentProjects ?? []).Where(p => !string.IsNullOrWhiteSpace(p)).Take(MaxRecent).ToList();
                 _recentDates = new Dictionary<string, DateTime>(file.RecentDates ?? [], StringComparer.OrdinalIgnoreCase);
                 _lastProjectDirectory = file.LastProjectDirectory;
@@ -266,7 +284,7 @@ public sealed partial class AppSettings : ObservableObject
         try
         {
             Directory.CreateDirectory(Path.GetDirectoryName(_path)!);
-            File.WriteAllText(_path, JsonSerializer.Serialize(new SettingsFile { LastProjectPath = LastProjectPath, IntervalMathExpanded = IntervalMathExpanded, IntervalMainExpanded = IntervalMainExpanded, ShowSpectrogram = ShowSpectrogram, SpectrogramColor = SpectrogramColor.ToString(), RecentProjects = _recentProjects, RecentDates = _recentDates, LastProjectDirectory = _lastProjectDirectory, LastExportDirectory = _lastExportDirectory, LastPresetDirectory = _lastPresetDirectory, LastLayerDirectory = _lastLayerDirectory, ExportOptions = _exportOptions, PresetVolume = _presetVolume }, Options));
+            File.WriteAllText(_path, JsonSerializer.Serialize(new SettingsFile { LastProjectPath = LastProjectPath, IntervalMathExpanded = IntervalMathExpanded, IntervalMainExpanded = IntervalMainExpanded, ShowSpectrogram = ShowSpectrogram, ShowLoopMarks = ShowLoopMarks, SpectrogramColor = SpectrogramColor.ToString(), RecentProjects = _recentProjects, RecentDates = _recentDates, LastProjectDirectory = _lastProjectDirectory, LastExportDirectory = _lastExportDirectory, LastPresetDirectory = _lastPresetDirectory, LastLayerDirectory = _lastLayerDirectory, ExportOptions = _exportOptions, PresetVolume = _presetVolume }, Options));
         }
         catch (Exception)
         {
@@ -280,6 +298,7 @@ public sealed partial class AppSettings : ObservableObject
         public bool IntervalMathExpanded { get; set; } = true;
         public bool IntervalMainExpanded { get; set; } = true;
         public bool ShowSpectrogram { get; set; }
+        public bool ShowLoopMarks { get; set; } = true;
         public string? SpectrogramColor { get; set; }
         public List<string>? RecentProjects { get; set; }
         public Dictionary<string, DateTime>? RecentDates { get; set; }

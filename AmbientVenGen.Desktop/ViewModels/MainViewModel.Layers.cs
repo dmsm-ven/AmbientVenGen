@@ -385,16 +385,7 @@ public partial class MainViewModel
         (int begin, int end) = SampleTransform.PieceOf(sample.Frames, layer.LoopStart, layer.LoopDuration, ProjectMixer.SampleRate);
         double piece = (end - begin) / (double)ProjectMixer.SampleRate;
         SelectedPieceText = $"Loop {FormatClock(begin / (double)ProjectMixer.SampleRate)} - {FormatClock(end / (double)ProjectMixer.SampleRate)} of {FormatClock(total)}"
-            + $"  ·  one loop plays {FormatLength(RealLoopSeconds(layer, piece))}";
-    }
-
-    // What one pass of the loop really lasts: Stretch lengthens the piece, Speed shortens (or lengthens) the pass,
-    // and the crossfade overlaps the end of a pass with the beginning of the next one (as in the generator).
-    private static double RealLoopSeconds(Layer layer, double pieceSeconds)
-    {
-        double stretched = Math.Min(pieceSeconds * Math.Max(1.0, layer.Stretch), SampleLibrary.MaxSeconds);
-        double crossfade = Math.Min(Math.Clamp(layer.LoopCrossfade, 0, SampleTransform.MaxCrossfade), stretched / 2);
-        return (stretched - crossfade) / Math.Clamp(layer.Speed, 0.05, 8.0);
+            + $"  ·  one loop plays {FormatLength(layer.LoopPassOf(piece))}";
     }
 
     private static string FormatLength(double seconds) =>

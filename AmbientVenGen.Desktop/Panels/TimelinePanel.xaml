@@ -180,6 +180,7 @@
                         SeekCommand="{Binding SeekCommand}"
                         SoloCommand="{Binding ToggleSoloCommand}"
                         SelectedLayer="{Binding SelectedLayer, Mode=TwoWay}"
+                        ShowLoopMarks="{Binding Settings.ShowLoopMarks}"
                         ShowSpectrogram="{Binding ShowSpectrogram}"
                         SpectrogramColor="{Binding Settings.SpectrogramColor}"
                         Spectrograms="{Binding Spectrograms}" />

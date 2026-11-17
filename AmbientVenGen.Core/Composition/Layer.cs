@@ -360,6 +360,22 @@ public sealed partial class Layer : ObservableObject
         ShimmerSend);
 
     /// <summary>
+    /// What one pass of the loop of a recording really lasts (0 while the piece is unknown): Stretch lengthens the piece,
+    /// Speed shortens or lengthens the pass, the crossfade overlaps the end of a pass with the start of the next one.
+    /// </summary>
+    public double LoopPassSeconds => LoopPassOf(LoopDuration);
+
+    public double LoopPassOf(double pieceSeconds)
+    {
+        if (pieceSeconds <= 0)
+            return 0;
+
+        double stretched = Math.Min(pieceSeconds * Math.Max(1.0, Stretch), SampleLibrary.MaxSeconds);
+        double crossfade = Math.Min(Math.Clamp(LoopCrossfade, 0, SampleTransform.MaxCrossfade), stretched / 2);
+        return (stretched - crossfade) / Math.Clamp(Speed, MinSpeed, MaxSpeed);
+    }
+
+    /// <summary>
     /// "Paste format": takes the sound settings of <paramref name="format"/>. Not touched: the name, the type, the pitch
     /// (Drone / Pad), the file and its loop (Field record), the noise type, the start, the duration, the repeats and the gap.
     /// </summary>

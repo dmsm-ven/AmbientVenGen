@@ -81,6 +81,17 @@ public sealed partial class TimelineControl : FrameworkElement
         nameof(ShowSpectrogram), typeof(bool), typeof(TimelineControl),
         new PropertyMetadata(false, (d, _) => ((TimelineControl)d).InvalidateContent()));
 
+    /// <summary>Faint ticks at the bottom of a recording clip: where a new pass of its loop begins.</summary>
+    public static readonly DependencyProperty ShowLoopMarksProperty = DependencyProperty.Register(
+        nameof(ShowLoopMarks), typeof(bool), typeof(TimelineControl),
+        new PropertyMetadata(true, (d, _) => ((TimelineControl)d).InvalidateContent()));
+
+    public bool ShowLoopMarks
+    {
+        get => (bool)GetValue(ShowLoopMarksProperty);
+        set => SetValue(ShowLoopMarksProperty, value);
+    }
+
     /// <summary>Colour of the spectrogram bars.</summary>
     public static readonly DependencyProperty SpectrogramColorProperty = DependencyProperty.Register(
         nameof(SpectrogramColor), typeof(Color), typeof(TimelineControl),

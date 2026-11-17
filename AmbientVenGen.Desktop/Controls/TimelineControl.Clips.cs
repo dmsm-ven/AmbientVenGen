@@ -125,6 +125,9 @@ public sealed partial class TimelineControl
                 DrawAnalysing(dc, rect);
         }
 
+        if (ShowLoopMarks && layer.Type == LayerType.FieldRecord)
+            DrawLoopMarks(dc, layer, rect);
+
         DrawEnvelope(dc, layer, rect, accent, play * layer.PeriodSeconds);
 
         double textX = Math.Max(rect.Left, HeaderWidth) + 10;
@@ -145,6 +148,31 @@ public sealed partial class TimelineControl
             DrawFadeHandles(dc, layer, rect, accent);
 
         dc.Pop();
+    }
+
+    // Where a new pass of the loop begins: a faint tick on the lower edge of the clip (also without the spectrogram).
+    private void DrawLoopMarks(DrawingContext dc, Layer layer, Rect rect)
+    {
+        double pass = layer.LoopPassSeconds * PixelsPerSecond;
+
+        // too dense to be useful (and too many to draw)
+        if (pass < 6 || rect.Width <= 0)
+            return;
+
+        var pen = new Pen(BrushOf(Color.FromArgb(0x4A, 0xFF, 0xFF, 0xFF)), 1);
+        pen.Freeze();
+
+        double first = Math.Max(rect.Left, HeaderWidth);
+        int from = Math.Max(1, (int)Math.Ceiling((first - rect.Left) / pass));
+
+        for (int k = from; ; k++)
+        {
+            double x = rect.Left + k * pass;
+            if (x >= rect.Right - 1 || x > ActualWidth)
+                break;
+
+            dc.DrawLine(pen, new Point(x, rect.Bottom - 7), new Point(x, rect.Bottom - 1));
+        }
     }
 
     // The same stepped bars as the thumbnails of the preset library: the same width of a bar and of the step,

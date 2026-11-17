@@ -103,6 +103,21 @@
                     </ListBox.ItemContainerStyle>
                 </ListBox>
             </Border>
+
+            <ui:TextBlock
+                Margin="0,20,0,2"
+                FontSize="15"
+                FontWeight="SemiBold"
+                Text="Timeline loop marks" />
+            <ui:TextBlock
+                Margin="0,0,0,12"
+                FontSize="12"
+                Foreground="#A9A7C2"
+                Text="A faint tick at the bottom of a Field record clip where a new pass of its loop begins (also when the spectrogram is off)."
+                TextWrapping="Wrap" />
+            <Border Style="{StaticResource SectionCard}">
+                <CheckBox Content="Show loop marks" IsChecked="{Binding ShowLoopMarks, Mode=TwoWay}" />
+            </Border>
         </StackPanel>
     </Grid>
 </ui:FluentWindow>
