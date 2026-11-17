@@ -33,6 +33,7 @@ public sealed partial class Modulator : ObservableObject
     {
         ModTarget.ReverbSend => "Reverb send",
         ModTarget.Cutoff => "Cutoff",
+        ModTarget.DelayInput => "Delay input",
         ModTarget.None => "Level",
         _ => target.ToString()
     };

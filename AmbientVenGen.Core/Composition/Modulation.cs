@@ -7,7 +7,10 @@ public enum ModShape
     Triangle,
 
     /// <summary>Smooth random wandering (a new random target every cycle), the same every time for the same seed.</summary>
-    Random
+    Random,
+
+    /// <summary>Jumps between -1 and 1 (half a cycle each): a gate. With "Delay input" it throws the sound into the echo and lets the echo ring out.</summary>
+    Square
 }
 
 /// <summary>What a modulator moves.</summary>
@@ -19,7 +22,10 @@ public enum ModTarget
     Pan,
     ReverbSend,
     Brightness,
-    Modulation
+    Modulation,
+
+    /// <summary>How much of the layer feeds the echo (the dry sound is not touched): at the low part of the cycle only the echo tail rings.</summary>
+    DelayInput
 }
 
 /// <summary>
@@ -45,6 +51,9 @@ public sealed record ModulatorSpec(ModShape Shape, double RateHz, double Depth, 
                 double f = x - Math.Floor(x);
                 return 4.0 * Math.Abs(f - 0.5) - 1.0;
             }
+
+            case ModShape.Square:
+                return x - Math.Floor(x) < 0.5 ? 1.0 : -1.0;
 
             case ModShape.Random:
             {

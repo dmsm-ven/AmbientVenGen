@@ -18,11 +18,12 @@ internal sealed class LayerEffects
     private int _write;
     private double _delaySamples; // smoothed delay length, so moving the knob does not click
     private float _echoEnergy;
+    private float _inputGain = 1f;   // how much of the layer feeds the echo (smoothed: a gate must not click)
 
     /// <summary>True while an echo is still audible after the layer itself went silent.</summary>
     public bool HasTail => _echoEnergy > TailLevel;
 
-    public void Process(float[] left, float[] right, int count, double cutoffHz, double resonance, double delaySeconds, double feedback)
+    public void Process(float[] left, float[] right, int count, double cutoffHz, double resonance, double delaySeconds, double feedback, double delayInput = 1.0)
     {
         bool filterOn = cutoffHz < 19000.0 || resonance > 0.001;
         bool delayOn = delaySeconds >= 0.01;
@@ -50,6 +51,7 @@ internal sealed class LayerEffects
         float fb = (float)Math.Clamp(feedback, 0.0, 0.92);
         int size = _delayL.Length;
         float energy = 0f;
+        float inputTarget = (float)Math.Clamp(delayInput, 0.0, 1.0);
 
         if (_delaySamples <= 0)
             _delaySamples = target;
@@ -57,6 +59,7 @@ internal sealed class LayerEffects
         for (int i = 0; i < count; i++)
         {
             _delaySamples += (target - _delaySamples) * 0.0004;
+            _inputGain += (inputTarget - _inputGain) * 0.003f;   // about 10 ms
 
             // Read position in the ring. A read position a hair below zero (for example 0.55 s = 24255.000000000004
             // samples at the moment _write is 24255) turned into exactly "size" after adding the ring length, which
@@ -78,8 +81,8 @@ internal sealed class LayerEffects
             float inR = right[i];
 
             // Feed the echo back crosswise (L -> R -> L): a wider, ping-pong-like space.
-            _delayL[_write] = inL + echoR * fb;
-            _delayR[_write] = inR + echoL * fb;
+            _delayL[_write] = inL * _inputGain + echoR * fb;
+            _delayR[_write] = inR * _inputGain + echoL * fb;
 
             left[i] = inL + echoL * DelayWet;
             right[i] = inR + echoR * DelayWet;

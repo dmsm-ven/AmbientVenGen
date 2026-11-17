@@ -136,7 +136,8 @@ public static class Choices
     [
         new("Sine", ModShape.Sine),
         new("Triangle", ModShape.Triangle),
-        new("Random", ModShape.Random)
+        new("Random", ModShape.Random),
+        new("Square (gate)", ModShape.Square)
     ];
 
     public static IReadOnlyList<Choice<ModTarget>> ModTargets { get; } =
@@ -146,7 +147,8 @@ public static class Choices
         new("Pan", ModTarget.Pan),
         new("Reverb send", ModTarget.ReverbSend),
         new("Brightness", ModTarget.Brightness),
-        new("Modulation", ModTarget.Modulation)
+        new("Modulation", ModTarget.Modulation),
+        new("Delay input", ModTarget.DelayInput)
     ];
 
     public static IReadOnlyList<Choice<LayerType>> LayerTypes { get; } =

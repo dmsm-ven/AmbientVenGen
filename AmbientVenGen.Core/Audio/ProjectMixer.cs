@@ -213,7 +213,8 @@ public sealed class ProjectMixer : ISampleProvider
             Math.Clamp((layer.OverrideOf(play, RepeatParam.Cutoff) ?? layer.FilterCutoffHz) * mod.CutoffFactor, Layer.MinCutoffHz, Layer.MaxCutoffHz),
             layer.OverrideOf(play, RepeatParam.Resonance) ?? layer.FilterResonance,
             layer.OverrideOf(play, RepeatParam.DelayTime) ?? layer.DelaySeconds,
-            layer.OverrideOf(play, RepeatParam.DelayFeedback) ?? layer.DelayFeedback);
+            layer.OverrideOf(play, RepeatParam.DelayFeedback) ?? layer.DelayFeedback,
+            mod.DelayInput);
 
         // Constant-power pan (with a slow random wandering); the centre position keeps unity gain.
         double pan = Math.Clamp((layer.OverrideOf(play, RepeatParam.Pan) ?? layer.Pan) + mod.Pan + layer.PanDrift * 0.6 * runtime.PanWander.At(blockTime), -1.0, 1.0);
@@ -308,10 +309,11 @@ public sealed class ProjectMixer : ISampleProvider
         public double ReverbSend { get; init; }
         public double Brightness { get; init; }
         public double Modulation { get; init; }
+        public double DelayInput { get; init; }
 
         public static ModOffsets Evaluate(LayerSpec layer, int seed, double seconds)
         {
-            double level = 1.0, octaves = 0, pan = 0, send = 0, brightness = 0, modulation = 0;
+            double delayInput = 1.0, level = 1.0, octaves = 0, pan = 0, send = 0, brightness = 0, modulation = 0;
 
             void Add(ModulatorSpec? spec, int i)
             {
@@ -341,6 +343,9 @@ public sealed class ProjectMixer : ISampleProvider
                     case ModTarget.Modulation:
                         modulation += depth * value * 0.5;
                         break;
+                    case ModTarget.DelayInput:
+                        delayInput *= 1.0 - depth * (1.0 - value) * 0.5;   // 1 = all of the layer feeds the echo, 0 = nothing: only the tail rings
+                        break;
                 }
             }
 
@@ -363,7 +368,8 @@ public sealed class ProjectMixer : ISampleProvider
                 Pan = pan,
                 ReverbSend = send,
                 Brightness = brightness,
-                Modulation = modulation
+                Modulation = modulation,
+                DelayInput = delayInput
             };
         }
     }
