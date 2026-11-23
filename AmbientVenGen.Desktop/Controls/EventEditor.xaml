@@ -36,6 +36,7 @@
         Padding="6,4"
         Background="#0DFFFFFF"
         CornerRadius="5"
+        Focusable="True"
         PreviewMouseLeftButtonDown="OnPickEvent">
         <Border.Style>
             <Style TargetType="Border">
@@ -72,6 +73,16 @@
                     <StackPanel.LayoutTransform>
                         <ScaleTransform ScaleX="0.7" ScaleY="0.7" />
                     </StackPanel.LayoutTransform>
+                    <Button
+                        Width="32"
+                        Height="32"
+                        Margin="0,0,6,0"
+                        Padding="0"
+                        Click="OnGoToClick"
+                        Cursor="Hand"
+                        ToolTip="Go to this moment on the timeline (Space)">
+                        <ui:SymbolIcon FontSize="16" Symbol="ArrowRight24" />
+                    </Button>
                     <ToggleButton
                         Width="32"
                         Height="32"
@@ -103,9 +114,8 @@
                     </Style>
                 </StackPanel.Style>
 
-                <controls:LabeledSlider
-                    Margin="4,0"
-                    Format="{}{0:0.00} s"
+                <controls:NumberBox
+                    Margin="4,2" Decimals="2" Unit="s"
                     Header="Start"
                     Hint="{x:Static vm:HintTexts.EventStart}"
                     Maximum="{Binding DataContext.SelectedLayer.DurationSeconds, RelativeSource={RelativeSource AncestorType=ItemsControl}}"
@@ -115,34 +125,30 @@
 
                 <!--  Echo throw  -->
                 <StackPanel Visibility="{Binding IsEcho, Converter={StaticResource BoolToVisibility}}">
-                    <controls:LabeledSlider
-                        Margin="4,0"
-                        Format="{}{0:0.00} s"
+                    <controls:NumberBox
+                        Margin="4,2" Decimals="2" Unit="s"
                         Header="Hold"
                         Hint="{x:Static vm:HintTexts.EchoThrow}"
                         Maximum="4"
                         Minimum="0.05"
                         Step="0.05"
                         Value="{Binding Length, Mode=TwoWay}" />
-                    <controls:LabeledSlider
-                        Margin="4,0"
-                        Format="{}{0:0.00} s"
+                    <controls:NumberBox
+                        Margin="4,2" Decimals="2" Unit="s"
                         Header="Delay time"
                         Maximum="1.5"
                         Minimum="0.05"
                         Step="0.01"
                         Value="{Binding Time, Mode=TwoWay}" />
-                    <controls:LabeledSlider
-                        Margin="4,0"
-                        Format="{}{0:P0}"
+                    <controls:NumberBox
+                        Margin="4,2" Scale="100" Unit="%" Decimals="0"
                         Header="Feedback"
                         Maximum="0.92"
                         Minimum="0"
                         Step="0.01"
                         Value="{Binding Amount, Mode=TwoWay}" />
-                    <controls:LabeledSlider
-                        Margin="4,0"
-                        Format="{}{0:0.0} s"
+                    <controls:NumberBox
+                        Margin="4,2" Decimals="1" Unit="s"
                         Header="Silence after"
                         Maximum="20"
                         Minimum="0"
@@ -152,31 +158,61 @@
 
                 <!--  Stutter  -->
                 <StackPanel Visibility="{Binding IsStutter, Converter={StaticResource BoolToVisibility}}">
-                    <controls:LabeledSlider
-                        Margin="4,0"
-                        Format="{}{0:0.000} s"
+                    <controls:NumberBox
+                        Margin="4,2" Decimals="3" Unit="s"
                         Header="Slice"
                         Hint="{x:Static vm:HintTexts.Stutter}"
                         Maximum="1"
                         Minimum="0.02"
                         Step="0.005"
                         Value="{Binding Length, Mode=TwoWay}" />
-                    <controls:LabeledSlider
-                        Margin="4,0"
-                        Format="{}{0:0}"
+                    <controls:NumberBox
+                        Margin="4,2" Decimals="0"
                         Header="Repeats"
                         Maximum="32"
                         Minimum="2"
                         Step="1"
                         Value="{Binding Count, Mode=TwoWay}" />
-                    <controls:LabeledSlider
-                        Margin="4,0"
-                        Format="{}{0:P0}"
+                    <controls:NumberBox
+                        Margin="4,2" Scale="100" Unit="%" Decimals="0"
                         Header="Fade per repeat"
                         Maximum="0.9"
                         Minimum="0"
                         Step="0.01"
                         Value="{Binding Amount, Mode=TwoWay}" />
+                </StackPanel>
+
+                <!--  Filter sweep  -->
+                <StackPanel Visibility="{Binding IsSweep, Converter={StaticResource BoolToVisibility}}">
+                    <controls:NumberBox
+                        Margin="4,2"
+                        Decimals="1"
+                        Header="Sweep time"
+                        Hint="{x:Static vm:HintTexts.FilterSweep}"
+                        Maximum="20"
+                        Minimum="0.05"
+                        Step="0.1"
+                        Unit="s"
+                        Value="{Binding Length, Mode=TwoWay}" />
+                    <controls:NumberBox
+                        Margin="4,2"
+                        Decimals="0"
+                        Header="Depth"
+                        Maximum="1"
+                        Minimum="0"
+                        Scale="100"
+                        Step="0.05"
+                        Unit="%"
+                        Value="{Binding Amount, Mode=TwoWay}" />
+                    <controls:NumberBox
+                        Margin="4,2"
+                        Decimals="1"
+                        Header="Recovery"
+                        Maximum="20"
+                        Minimum="0"
+                        Step="0.1"
+                        Unit="s"
+                        Value="{Binding Tail, Mode=TwoWay}" />
                 </StackPanel>
             </StackPanel>
         </StackPanel>

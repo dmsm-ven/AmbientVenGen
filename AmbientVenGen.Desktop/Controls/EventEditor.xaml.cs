@@ -29,7 +29,20 @@ public partial class EventEditor : UserControl
     // A click anywhere on the event picks it: its marker on the timeline gets a bright frame.
     private void OnPickEvent(object sender, MouseButtonEventArgs e)
     {
+        // the card takes the keyboard focus (Space then jumps to the event), unless a field is being typed in
+        if (e.OriginalSource is not System.Windows.Controls.Primitives.TextBoxBase)
+            Focus();
+
         if (DataContext is LayerEvent item && Host()?.DataContext is MainViewModel viewModel)
             viewModel.SelectEvent(item);
+    }
+
+    private void OnGoToClick(object sender, RoutedEventArgs e) => GoTo();
+
+    /// <summary>Moves the playhead of the timeline to this event (also what Space does inside the card).</summary>
+    public void GoTo()
+    {
+        if (DataContext is LayerEvent item && Host()?.DataContext is MainViewModel viewModel)
+            viewModel.GoToEvent(item);
     }
 }

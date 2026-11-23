@@ -25,6 +25,9 @@ public static class HintTexts
     public const string Stutter =
         "The last fraction of a second (Slice) is grabbed and repeated several times, each repeat a bit quieter (Fade per repeat). The layer is silent meanwhile.";
 
+    public const string FilterSweep =
+        "A one-shot low-pass sweep: the layer gets darker over Sweep time, as if a curtain closes, down by Depth, then opens again over Recovery.";
+
     public const string Modulator =
         "A slow oscillator that moves one parameter of the layer around the value you set, for a sound that breathes by itself. "
         + "Level only goes down from the set value, Cutoff moves up to 3 octaves each way, Pan swings across the stereo field, "

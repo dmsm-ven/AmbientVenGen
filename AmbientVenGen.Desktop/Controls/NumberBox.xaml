@@ -1,0 +1,130 @@
+<UserControl
+    x:Class="AmbientVenGen.Desktop.Controls.NumberBox"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:local="clr-namespace:AmbientVenGen.Desktop.Controls"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    <UserControl.Resources>
+        <!--  Small flat arrow button; holding it repeats.  -->
+        <Style x:Key="StepButton" TargetType="RepeatButton">
+            <Setter Property="Width" Value="22" />
+            <Setter Property="Height" Value="15" />
+            <Setter Property="Focusable" Value="False" />
+            <Setter Property="Foreground" Value="#C9C8D6" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="RepeatButton">
+                        <Border
+                            x:Name="Frame"
+                            Background="#1CFFFFFF"
+                            BorderBrush="#33FFFFFF"
+                            BorderThickness="1"
+                            CornerRadius="4">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="Frame" Property="Background" Value="#33FFFFFF" />
+                            </Trigger>
+                            <Trigger Property="IsPressed" Value="True">
+                                <Setter TargetName="Frame" Property="Background" Value="#55B7AFE9" />
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+    </UserControl.Resources>
+
+    <StackPanel x:Name="RootPanel">
+        <StackPanel x:Name="HeaderRow" Orientation="Horizontal">
+            <TextBlock
+                x:Name="HeaderText"
+                Margin="0"
+                FontSize="12"
+                Foreground="#C9C8D6" />
+            <local:HintIcon
+                x:Name="HeaderHint"
+                Margin="5,0,0,0"
+                VerticalAlignment="Center" />
+        </StackPanel>
+
+        <!--  Default look: just the time, like a label. Click to edit.  -->
+        <Border
+            x:Name="DisplayBox"
+            Height="32"
+            Margin="0,3,0,0"
+            CornerRadius="5"
+            Cursor="IBeam"
+            MouseLeftButtonUp="OnDisplayClick"
+            ToolTip="Click to edit">
+            <Border.Style>
+                <Style TargetType="Border">
+                    <!--  Quiet at rest (blends into the background), full brightness under the mouse  -->
+                    <Setter Property="Background" Value="#08FFFFFF" />
+                    <Setter Property="BorderBrush" Value="#12FFFFFF" />
+                    <Setter Property="BorderThickness" Value="1" />
+                    <Style.Triggers>
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter Property="Background" Value="#22FFFFFF" />
+                            <Setter Property="BorderBrush" Value="#B7AFE9" />
+                        </Trigger>
+                    </Style.Triggers>
+                </Style>
+            </Border.Style>
+            <TextBlock
+                x:Name="DisplayText"
+                Margin="0"
+                HorizontalAlignment="Center"
+                VerticalAlignment="Center"
+                FontFamily="Consolas"
+                FontSize="14"
+                Foreground="#ECECF2" />
+        </Border>
+
+        <Grid x:Name="EditGrid" Margin="0,3,0,0" Visibility="Collapsed">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="Auto" />
+            </Grid.ColumnDefinitions>
+
+            <TextBox
+                x:Name="Input"
+                Height="32"
+                MaxLength="10"
+                BorderBrush="#B7AFE9"
+                Padding="4,0"
+                FontFamily="Consolas"
+                FontSize="14"
+                GotKeyboardFocus="OnInputGotFocus"
+                LostKeyboardFocus="OnInputLostFocus"
+                MouseWheel="OnInputMouseWheel"
+                PreviewKeyDown="OnInputKeyDown"
+                TextAlignment="Center"
+                ToolTip="Up/Down arrows or the mouse wheel change the value (Shift: 10 times more, Alt: 10 times less)" />
+
+            <StackPanel Grid.Column="1" Margin="4,0,0,0" VerticalAlignment="Center">
+                <RepeatButton
+                    Margin="0,0,0,2"
+                    Click="OnUpClick"
+                    Style="{StaticResource StepButton}">
+                    <Path
+                        Data="M0,4 L4,0 L8,4"
+                        Stroke="#E6E6F2"
+                        StrokeEndLineCap="Round"
+                        StrokeLineJoin="Round"
+                        StrokeStartLineCap="Round"
+                        StrokeThickness="1.6" />
+                </RepeatButton>
+                <RepeatButton Click="OnDownClick" Style="{StaticResource StepButton}">
+                    <Path
+                        Data="M0,0 L4,4 L8,0"
+                        Stroke="#E6E6F2"
+                        StrokeEndLineCap="Round"
+                        StrokeLineJoin="Round"
+                        StrokeStartLineCap="Round"
+                        StrokeThickness="1.6" />
+                </RepeatButton>
+            </StackPanel>
+        </Grid>
+    </StackPanel>
+</UserControl>

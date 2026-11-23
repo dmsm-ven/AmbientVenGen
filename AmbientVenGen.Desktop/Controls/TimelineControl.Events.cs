@@ -22,9 +22,12 @@ public sealed partial class TimelineControl
     private int _eventDragPlay;
     private (int Lane, double X)? _dropPreview;
 
-    private static Color EventColor(EventType type) => type == EventType.Stutter
-        ? Color.FromRgb(0xFF, 0xB0, 0x70)
-        : Color.FromRgb(0x7F, 0xD1, 0xFF);
+    private static Color EventColor(EventType type) => type switch
+    {
+        EventType.Stutter => Color.FromRgb(0xFF, 0xB0, 0x70),
+        EventType.FilterSweep => Color.FromRgb(0x8F, 0xE3, 0xA0),
+        _ => Color.FromRgb(0x7F, 0xD1, 0xFF)
+    };
 
     private Rect EventMarkerRect(Rect play, LayerEvent item) =>
         new(play.Left + item.StartSeconds * PixelsPerSecond - 7, play.Top + 3, 14, 14);
@@ -64,6 +67,11 @@ public sealed partial class TimelineControl
                     dc.DrawLine(ink, new Point(cx - 3.5, center.Y - 2.5), new Point(cx - 3.5, center.Y + 2.5));
                     dc.DrawLine(ink, new Point(cx, center.Y - 4), new Point(cx, center.Y + 4));
                     dc.DrawLine(ink, new Point(cx + 3.5, center.Y - 2.5), new Point(cx + 3.5, center.Y + 2.5));
+                }
+                else if (item.Type == EventType.FilterSweep)
+                {
+                    dc.DrawLine(ink, new Point(cx - 4.5, center.Y - 3), new Point(cx - 1, center.Y - 3));
+                    dc.DrawLine(ink, new Point(cx - 1, center.Y - 3), new Point(cx + 4.5, center.Y + 3));
                 }
                 else
                 {

@@ -50,6 +50,23 @@ public partial class MainWindow : FluentWindow
             return;
 
         object? focused = Keyboard.FocusedElement;
+
+        // Space inside an event card of the Events tab: go to the moment of the event instead of play/pause
+        if (key == Key.Space && focused is not TextBoxBase && focused is DependencyObject focusedObject)
+        {
+            DependencyObject? up = focusedObject;
+            while (up is not null and not Controls.EventEditor)
+                up = up is System.Windows.Media.Visual or System.Windows.Media.Media3D.Visual3D
+                    ? System.Windows.Media.VisualTreeHelper.GetParent(up)
+                    : LogicalTreeHelper.GetParent(up);
+
+            if (up is Controls.EventEditor editor)
+            {
+                editor.GoTo();
+                e.Handled = true;
+                return;
+            }
+        }
         bool isTyping = focused is TextBoxBase
             || focused is System.Windows.Controls.ComboBox
             || focused is System.Windows.Controls.ComboBoxItem;

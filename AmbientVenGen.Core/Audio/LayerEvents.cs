@@ -46,12 +46,20 @@ internal sealed class LayerEvents
     private bool _stutterOn;
     private float _stutterMix;
 
+    // filter sweep: a low-pass (state-variable filter) whose cutoff falls and rises once
+    private bool _sweepOn;
+    private int _sweepPosition;
+    private int _sweepDown;
+    private int _sweepUp;
+    private double _sweepLow;
+    private float _s1L, _s2L, _s1R, _s2R;
+
     private double _expected = double.NaN;
     private int _lastPlay = -1;
     private readonly List<(int Offset, EventSpec Event)> _pending = [];
 
     /// <summary>True while an event still sounds (the layer must keep being processed even when it is silent).</summary>
-    public bool IsActive => _echoOn || _stutterOn || _stutterMix > 1e-4f;
+    public bool IsActive => _echoOn || _sweepOn || _stutterOn || _stutterMix > 1e-4f;
 
     /// <param name="centerTime">Seconds inside the current play at the middle of the block (negative before the layer starts; below -1e8 = no events now).</param>
     public void Process(float[] left, float[] right, int count, double centerTime, int play, IReadOnlyList<EventSpec>? events)
@@ -187,8 +195,14 @@ internal sealed class LayerEvents
                 _recorded++;
 
             float dry = _dryGain * (1f - _stutterMix);
-            left[i] = inL * dry + stutterL * _stutterMix + echoOutL;
-            right[i] = inR * dry + stutterR * _stutterMix + echoOutR;
+            float mixL = inL * dry + stutterL * _stutterMix;
+            float mixR = inR * dry + stutterR * _stutterMix;
+
+            if (_sweepOn)
+                SweepFilter(ref mixL, ref mixR);
+
+            left[i] = mixL + echoOutL;
+            right[i] = mixR + echoOutR;
         }
 
         if (_echoOn && _hold <= 0 && _tail <= 0 && energy < TailLevel)
@@ -199,8 +213,63 @@ internal sealed class LayerEvents
         }
     }
 
+    // Cutoff in log scale from 18 kHz down to _sweepLow (smoothstep), then back up.
+    private void SweepFilter(ref float l, ref float r)
+    {
+        double t = _sweepPosition < _sweepDown
+            ? _sweepPosition / (double)_sweepDown
+            : 1.0 - (_sweepPosition - _sweepDown) / (double)Math.Max(1, _sweepUp);
+
+        t = Math.Clamp(t, 0.0, 1.0);
+        double smooth = t * t * (3 - 2 * t);
+        double cutoff = 18000.0 * Math.Pow(_sweepLow / 18000.0, smooth);
+
+        // TPT state-variable low-pass, Q about 1.2
+        double g = Math.Tan(Math.PI * Math.Min(cutoff, SampleRate * 0.45) / SampleRate);
+        double k = 1.0 / 1.2;
+        double a1 = 1.0 / (1.0 + g * (g + k));
+        double a2 = g * a1;
+        double a3 = g * a2;
+
+        float outL = Svf(l, ref _s1L, ref _s2L, a1, a2, a3);
+        float outR = Svf(r, ref _s1R, ref _s2R, a1, a2, a3);
+
+        // fully open at the very start and end: the filter fades in and out with no jump
+        float blend = (float)Math.Min(1.0, smooth * 40.0);
+        l += (outL - l) * blend;
+        r += (outR - r) * blend;
+
+        if (++_sweepPosition >= _sweepDown + _sweepUp)
+        {
+            _sweepOn = false;
+            _s1L = _s2L = _s1R = _s2R = 0f;
+        }
+    }
+
+    private static float Svf(float input, ref float ic1, ref float ic2, double a1, double a2, double a3)
+    {
+        double v3 = input - ic2;
+        double v1 = a1 * ic1 + a2 * v3;
+        double v2 = ic2 + a2 * ic1 + a3 * v3;
+        ic1 = (float)(2 * v1 - ic1);
+        ic2 = (float)(2 * v2 - ic2);
+        return (float)v2;
+    }
+
     private void Fire(EventSpec item)
     {
+        if (item.Type == EventType.FilterSweep)
+        {
+            // depth 0 = no effect, 1 = down to about 100 Hz
+            _sweepLow = 18000.0 * Math.Pow(100.0 / 18000.0, Math.Clamp(item.Amount, 0.0, 1.0));
+            _sweepDown = Math.Max(1, (int)(Math.Clamp(item.Length, 0.05, EventSpec.MaxSweep) * SampleRate));
+            _sweepUp = Math.Max(1, (int)(Math.Clamp(item.Tail, 0.0, EventSpec.MaxTail) * SampleRate));
+            _sweepPosition = 0;
+            _s1L = _s2L = _s1R = _s2R = 0f;
+            _sweepOn = true;
+            return;
+        }
+
         if (item.Type == EventType.EchoThrow)
         {
             // a new throw starts a new echo
@@ -264,6 +333,8 @@ internal sealed class LayerEvents
         _dryGain = 1f;
         _stutterOn = false;
         _stutterMix = 0f;
+        _sweepOn = false;
+        _s1L = _s2L = _s1R = _s2R = 0f;
         _recorded = 0;
         _ringWrite = 0;
         Array.Clear(_echoL);

@@ -21,6 +21,18 @@ public partial class MainViewModel
         SideTabIndex = 1;
     }
 
+    /// <summary>The playhead goes to the moment of the event (in its first play on the timeline).</summary>
+    public void GoToEvent(LayerEvent item)
+    {
+        Layer? layer = SelectedLayer;
+
+        if (layer is null || !layer.Events.Contains(item))
+            return;
+
+        SelectEvent(item);
+        SeekCommand.Execute(layer.StartSeconds + item.StartSeconds);
+    }
+
     public void SelectEvent(LayerEvent? item)
     {
         if (ReferenceEquals(_selectedEvent, item))

@@ -9,7 +9,10 @@ public enum EventType
     EchoThrow,
 
     /// <summary>The last fraction of a second is grabbed and repeated several times (a glitch repeat), the layer itself is silent meanwhile.</summary>
-    Stutter
+    Stutter,
+
+    /// <summary>A one-shot low-pass sweep: the layer gets darker over Length, then opens again over Tail.</summary>
+    FilterSweep
 }
 
 /// <summary>
@@ -29,6 +32,7 @@ public sealed record EventSpec(
     bool Muted = false)
 {
     public const double MaxEchoHold = 4.0;
+    public const double MaxSweep = 20.0;
     public const double MinSlice = 0.02;
     public const double MaxSlice = 1.0;
     public const double MinDelay = 0.05;
@@ -46,6 +50,7 @@ public sealed partial class LayerEvent : ObservableObject
     [NotifyPropertyChangedFor(nameof(Title))]
     [NotifyPropertyChangedFor(nameof(IsEcho))]
     [NotifyPropertyChangedFor(nameof(IsStutter))]
+    [NotifyPropertyChangedFor(nameof(IsSweep))]
     private EventType _type = EventType.EchoThrow;
 
     /// <summary>Seconds from the start of the layer (of every play of it).</summary>
@@ -84,6 +89,8 @@ public sealed partial class LayerEvent : ObservableObject
 
     public bool IsStutter => Type == EventType.Stutter;
 
+    public bool IsSweep => Type == EventType.FilterSweep;
+
     /// <summary>"Echo throw | 0:12.5": the kind and the moment (short, so it never widens the panel).</summary>
     public string Title => $"{TypeName(Type)} | {TimeText(StartSeconds)}";
 
@@ -91,6 +98,7 @@ public sealed partial class LayerEvent : ObservableObject
     {
         EventType.EchoThrow => "Echo throw",
         EventType.Stutter => "Stutter",
+        EventType.FilterSweep => "Filter sweep",
         _ => type.ToString()
     };
 
@@ -112,6 +120,13 @@ public sealed partial class LayerEvent : ObservableObject
             item.Count = 8;
         }
 
+        if (type == EventType.FilterSweep)
+        {
+            item.Length = 4.0;
+            item.Amount = 0.8;
+            item.Tail = 4.0;
+        }
+
         return item;
     }
 
@@ -128,13 +143,19 @@ public sealed partial class LayerEvent : ObservableObject
     {
         Type = Enum.IsDefined(spec.Type) ? spec.Type : EventType.EchoThrow;
         StartSeconds = double.IsFinite(spec.StartSeconds) ? Math.Max(0, spec.StartSeconds) : 0;
-        Length = Type == EventType.Stutter
-            ? Math.Clamp(spec.Length, EventSpec.MinSlice, EventSpec.MaxSlice)
-            : Math.Clamp(spec.Length, EventSpec.MinSlice, EventSpec.MaxEchoHold);
+        Length = Type switch
+        {
+            EventType.Stutter => Math.Clamp(spec.Length, EventSpec.MinSlice, EventSpec.MaxSlice),
+            EventType.FilterSweep => Math.Clamp(spec.Length, 0.05, EventSpec.MaxSweep),
+            _ => Math.Clamp(spec.Length, EventSpec.MinSlice, EventSpec.MaxEchoHold)
+        };
         Time = Math.Clamp(spec.Time, EventSpec.MinDelay, EventSpec.MaxDelay);
-        Amount = Type == EventType.Stutter
-            ? Math.Clamp(spec.Amount, 0, 0.9)
-            : Math.Clamp(spec.Amount, 0, EventSpec.MaxFeedback);
+        Amount = Type switch
+        {
+            EventType.Stutter => Math.Clamp(spec.Amount, 0, 0.9),
+            EventType.FilterSweep => Math.Clamp(spec.Amount, 0, 1),
+            _ => Math.Clamp(spec.Amount, 0, EventSpec.MaxFeedback)
+        };
         Count = Math.Clamp(spec.Count, EventSpec.MinRepeats, EventSpec.MaxRepeats);
         Tail = Math.Clamp(spec.Tail, 0, EventSpec.MaxTail);
         Muted = spec.Muted;
