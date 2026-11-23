@@ -175,6 +175,9 @@ public sealed partial class Layer : ObservableObject
     /// <summary>Slow modulators that move parameters of the layer around their set values (any number).</summary>
     public ObservableCollection<Modulator> Modulators { get; } = [];
 
+    /// <summary>One-shot effects at moments of the layer (see <see cref="LayerEvent"/>).</summary>
+    public ObservableCollection<LayerEvent> Events { get; } = [];
+
     /// <summary>
     /// Own values of some properties for some plays (repeats) of the layer. Only the changed ones are here: a play
     /// that has no entry for a property uses the value of the layer.
@@ -252,6 +255,24 @@ public sealed partial class Layer : ObservableObject
         };
 
         RepeatOverrides.CollectionChanged += (_, _) => OnPropertyChanged(nameof(RepeatOverrides));
+
+        Events.CollectionChanged += (_, e) =>
+        {
+            foreach (LayerEvent removed in e.OldItems?.OfType<LayerEvent>() ?? [])
+                removed.PropertyChanged -= OnEventChanged;
+
+            foreach (LayerEvent added in e.NewItems?.OfType<LayerEvent>() ?? [])
+                added.PropertyChanged += OnEventChanged;
+
+            OnPropertyChanged(nameof(Events));
+        };
+    }
+
+    private void OnEventChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
+    {
+        // the selection is not a change of the layer
+        if (e.PropertyName != nameof(LayerEvent.IsSelected))
+            OnPropertyChanged(nameof(Events));
     }
 
     private void OnModulatorChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e) =>
@@ -357,7 +378,8 @@ public sealed partial class Layer : ObservableObject
         Modulators.Select(m => m.ToSpec()).ToList(),
         // saved only when at least one value was changed (and only for plays that still exist)
         RepeatOverrides.Where(o => o.Repeat < Repeats).ToList() is { Count: > 0 } overrides ? overrides : null,
-        ShimmerSend);
+        ShimmerSend,
+        Events.Count > 0 ? Events.Select(e => e.ToSpec()).ToList() : null);
 
     /// <summary>
     /// What one pass of the loop of a recording really lasts (0 while the piece is unknown): Stretch lengthens the piece,
@@ -467,6 +489,9 @@ public sealed partial class Layer : ObservableObject
             if (item.Repeat >= 0 && item.Repeat < MaxRepeats && Enum.IsDefined(item.Param) && double.IsFinite(item.Value))
                 layer.SetRepeatValue(item.Repeat, item.Param, item.Value);
         }
+
+        foreach (EventSpec item in spec.Events ?? [])
+            layer.Events.Add(LayerEvent.From(item));
 
         if (spec.Modulators is not null)
         {

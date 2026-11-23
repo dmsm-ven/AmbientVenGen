@@ -88,6 +88,10 @@ public partial class MainViewModel
 
     partial void OnSelectedLayerChanged(Layer? value)
     {
+        // the picked event belongs to the layer that was selected
+        if (_selectedEvent is not null && (value is null || !value.Events.Contains(_selectedEvent)))
+            SelectEvent(null);
+
         WeakReferenceMessenger.Default.Send(new FieldRecordTargetMessage(FieldRecordTargetName));
         RefreshProcessing();
         OnPropertyChanged(nameof(SelectedLayerTimeText));

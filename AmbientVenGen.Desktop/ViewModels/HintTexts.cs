@@ -15,6 +15,16 @@ public static class HintTexts
     public const string Modulation =
         "Depth of the slow movement: gentle pitch drift, volume 'breathing' and stereo width. Low is still, high is alive and shifting.";
 
+    public const string EventStart =
+        "When the event happens, in seconds from the start of the layer. It happens again in every repeat of the layer.";
+
+    public const string EchoThrow =
+        "The layer is thrown into an echo for a moment (Hold), then, if Silence is set, the layer itself goes quiet and only the echo rings out. "
+        + "It has its own Delay time and Feedback and works even when the layer's own Delay is off.";
+
+    public const string Stutter =
+        "The last fraction of a second (Slice) is grabbed and repeated several times, each repeat a bit quieter (Fade per repeat). The layer is silent meanwhile.";
+
     public const string Modulator =
         "A slow oscillator that moves one parameter of the layer around the value you set, for a sound that breathes by itself. "
         + "Level only goes down from the set value, Cutoff moves up to 3 octaves each way, Pan swings across the stereo field, "

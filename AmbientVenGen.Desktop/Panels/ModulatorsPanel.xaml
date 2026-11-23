@@ -16,11 +16,6 @@
                 <RowDefinition Height="Auto" />
                 <RowDefinition Height="*" />
             </Grid.RowDefinitions>
-            <ui:TextBlock
-                Margin="0,0,0,4"
-                FontSize="14"
-                FontWeight="SemiBold"
-                Text="Oscillators" />
             <!--  An invisible editor with the longest title: the panel is always as wide as with oscillators in it  -->
             <controls:ModulatorEditor
                 Grid.Row="1"

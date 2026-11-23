@@ -1,0 +1,142 @@
+using CommunityToolkit.Mvvm.ComponentModel;
+
+namespace AmbientVenGen.Core.Composition;
+
+/// <summary>What happens at a moment of a layer (a one-shot effect, unlike an oscillator, which never stops).</summary>
+public enum EventType
+{
+    /// <summary>The layer is thrown into an echo for a moment, then (optionally) goes silent and only the echo rings out.</summary>
+    EchoThrow,
+
+    /// <summary>The last fraction of a second is grabbed and repeated several times (a glitch repeat), the layer itself is silent meanwhile.</summary>
+    Stutter
+}
+
+/// <summary>
+/// One event of a layer: a moment (seconds from the start of the layer, in every play of it) and the settings of the effect.
+/// Length: EchoThrow = how long the layer feeds the echo; Stutter = the length of the grabbed slice.
+/// Time: EchoThrow = delay time. Amount: EchoThrow = feedback; Stutter = how much each repeat is quieter.
+/// Count: Stutter = number of repeats. Tail: EchoThrow = how long the layer stays silent after the throw (0 = it plays on).
+/// </summary>
+public sealed record EventSpec(
+    EventType Type,
+    double StartSeconds,
+    double Length,
+    double Time,
+    double Amount,
+    int Count,
+    double Tail,
+    bool Muted = false)
+{
+    public const double MaxEchoHold = 4.0;
+    public const double MinSlice = 0.02;
+    public const double MaxSlice = 1.0;
+    public const double MinDelay = 0.05;
+    public const double MaxDelay = 1.5;
+    public const double MaxFeedback = 0.92;
+    public const double MaxTail = 20.0;
+    public const int MinRepeats = 2;
+    public const int MaxRepeats = 32;
+}
+
+/// <summary>Editable event of a layer (see <see cref="EventSpec"/>).</summary>
+public sealed partial class LayerEvent : ObservableObject
+{
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(Title))]
+    [NotifyPropertyChangedFor(nameof(IsEcho))]
+    [NotifyPropertyChangedFor(nameof(IsStutter))]
+    private EventType _type = EventType.EchoThrow;
+
+    /// <summary>Seconds from the start of the layer (of every play of it).</summary>
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(Title))]
+    private double _startSeconds;
+
+    [ObservableProperty]
+    private double _length = 0.5;
+
+    [ObservableProperty]
+    private double _time = 0.35;
+
+    [ObservableProperty]
+    private double _amount = 0.7;
+
+    [ObservableProperty]
+    private int _count = 8;
+
+    [ObservableProperty]
+    private double _tail = 4.0;
+
+    [ObservableProperty]
+    private bool _muted;
+
+    /// <summary>Only for the screen (the event picked in the Events tab or on the timeline); not saved.</summary>
+    [ObservableProperty]
+    private bool _isSelected;
+
+    /// <summary>Raised when the picked event changes (the timeline redraws the frame of its marker).</summary>
+    public static event Action? SelectionChanged;
+
+    partial void OnIsSelectedChanged(bool value) => SelectionChanged?.Invoke();
+
+    public bool IsEcho => Type == EventType.EchoThrow;
+
+    public bool IsStutter => Type == EventType.Stutter;
+
+    /// <summary>"Echo throw | 0:12.5": the kind and the moment (short, so it never widens the panel).</summary>
+    public string Title => $"{TypeName(Type)} | {TimeText(StartSeconds)}";
+
+    public static string TypeName(EventType type) => type switch
+    {
+        EventType.EchoThrow => "Echo throw",
+        EventType.Stutter => "Stutter",
+        _ => type.ToString()
+    };
+
+    public static string TimeText(double seconds)
+    {
+        var span = TimeSpan.FromSeconds(Math.Max(0, seconds));
+        return $"{(int)span.TotalMinutes}:{span.Seconds:00}.{span.Milliseconds / 100}";
+    }
+
+    /// <summary>A new event of the type with its usual settings.</summary>
+    public static LayerEvent Create(EventType type, double startSeconds)
+    {
+        var item = new LayerEvent { Type = type, StartSeconds = Math.Max(0, startSeconds) };
+
+        if (type == EventType.Stutter)
+        {
+            item.Length = 0.12;
+            item.Amount = 0.1;
+            item.Count = 8;
+        }
+
+        return item;
+    }
+
+    public static LayerEvent From(EventSpec spec)
+    {
+        var item = new LayerEvent();
+        item.Apply(spec);
+        return item;
+    }
+
+    public EventSpec ToSpec() => new(Type, StartSeconds, Length, Time, Amount, Count, Tail, Muted);
+
+    public void Apply(EventSpec spec)
+    {
+        Type = Enum.IsDefined(spec.Type) ? spec.Type : EventType.EchoThrow;
+        StartSeconds = double.IsFinite(spec.StartSeconds) ? Math.Max(0, spec.StartSeconds) : 0;
+        Length = Type == EventType.Stutter
+            ? Math.Clamp(spec.Length, EventSpec.MinSlice, EventSpec.MaxSlice)
+            : Math.Clamp(spec.Length, EventSpec.MinSlice, EventSpec.MaxEchoHold);
+        Time = Math.Clamp(spec.Time, EventSpec.MinDelay, EventSpec.MaxDelay);
+        Amount = Type == EventType.Stutter
+            ? Math.Clamp(spec.Amount, 0, 0.9)
+            : Math.Clamp(spec.Amount, 0, EventSpec.MaxFeedback);
+        Count = Math.Clamp(spec.Count, EventSpec.MinRepeats, EventSpec.MaxRepeats);
+        Tail = Math.Clamp(spec.Tail, 0, EventSpec.MaxTail);
+        Muted = spec.Muted;
+    }
+}

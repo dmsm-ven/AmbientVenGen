@@ -118,7 +118,8 @@ public sealed record LayerSpec(
     double LoopCrossfade = SampleTransform.DefaultCrossfade,
     IReadOnlyList<ModulatorSpec>? Modulators = null,
     IReadOnlyList<RepeatOverrideSpec>? RepeatOverrides = null,
-    double? ShimmerSend = null)
+    double? ShimmerSend = null,
+    IReadOnlyList<EventSpec>? Events = null)
 {
     /// <summary>
     /// How much of the layer goes to the shimmer reverb. Projects saved before the shimmer had its own send fed it from the

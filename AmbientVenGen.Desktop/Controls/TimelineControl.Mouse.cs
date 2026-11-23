@@ -156,6 +156,13 @@ public sealed partial class TimelineControl
             return;
         }
 
+        // A marker of an event: a click picks it (the Events tab opens), a drag moves it.
+        if (TryBeginEventDrag(point))
+        {
+            e.Handled = true;
+            return;
+        }
+
         // The repeat sign between two plays opens the table of the repeat properties.
         if (RepeatSignAt(point) is { } sign)
         {
@@ -209,6 +216,12 @@ public sealed partial class TimelineControl
         if (_mode == DragMode.Scrub)
         {
             ScrubTo(point.X);
+            return;
+        }
+
+        if (_mode == DragMode.MoveEvent)
+        {
+            MoveEventTo(point.X);
             return;
         }
 
@@ -325,6 +338,7 @@ public sealed partial class TimelineControl
         base.OnLostMouseCapture(e);
         _mode = DragMode.None;
         _dragLayer = null;
+        EndEventDrag();
     }
 
     private void EndDrag()
@@ -369,7 +383,7 @@ public sealed partial class TimelineControl
             return;
         }
 
-        if (RepeatSignAt(point) is not null)
+        if (RepeatSignAt(point) is not null || EventMarkerAt(point) is not null)
         {
             Cursor = Cursors.Hand;
             return;

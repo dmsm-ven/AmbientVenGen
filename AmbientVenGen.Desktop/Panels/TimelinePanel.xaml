@@ -172,6 +172,7 @@
                     VerticalScrollBarVisibility="Auto">
                     <controls:TimelineControl
                         x:Name="Timeline"
+                        AllowDrop="True"
                         DeleteCommand="{Binding DeleteSelectedLayerCommand}"
                         PasteFormatCommand="{Binding PasteLayerFormatCommand}"
                         PlayheadSeconds="{Binding PlayheadSeconds}"

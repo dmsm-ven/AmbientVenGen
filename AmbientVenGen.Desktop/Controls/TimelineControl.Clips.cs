@@ -53,6 +53,7 @@ public sealed partial class TimelineControl
         }
 
         DrawClip(dc, layer, ClipRect(layer, lane), selected, 0);
+        DrawEventMarkers(dc, layer, lane);
     }
 
     /// <summary>The repeat sign after a play (in the gap when it fits, otherwise on the joint): a click opens the repeat properties.</summary>

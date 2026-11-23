@@ -84,7 +84,17 @@
                 <panels:NoisePanel />
                 <panels:IntervalPanel />
                 <panels:SelectedLayerPanel Grid.Column="1" />
-                <panels:ModulatorsPanel Grid.Column="2" />
+                <TabControl
+                    Grid.Column="2"
+                    Padding="0"
+                    SelectedIndex="{Binding SideTabIndex, Mode=TwoWay}">
+                    <TabItem Header="Oscillators">
+                        <panels:ModulatorsPanel />
+                    </TabItem>
+                    <TabItem Header="Events">
+                        <panels:EventsPanel />
+                    </TabItem>
+                </TabControl>
             </Grid>
                     </ScrollViewer>
                 </DataTemplate>

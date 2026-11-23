@@ -169,7 +169,7 @@ public sealed class ProjectMixer : ISampleProvider
             runtime.Gain = 0f;
 
             // Nothing to play, but an echo of the layer may still be ringing out.
-            if (!runtime.Effects.HasTail)
+            if (!runtime.Effects.HasTail && !runtime.Events.IsActive)
                 return;
 
             Array.Clear(_scratchLeft, 0, count);
@@ -215,6 +215,16 @@ public sealed class ProjectMixer : ISampleProvider
             layer.OverrideOf(play, RepeatParam.DelayTime) ?? layer.DelaySeconds,
             layer.OverrideOf(play, RepeatParam.DelayFeedback) ?? layer.DelayFeedback,
             mod.DelayInput);
+
+        // One-shot events (echo throw, stutter) work on what the layer sounds like now; no events in a muted layer.
+        // Before the layer starts the time is negative (an event at its very start is not lost by a block that straddles it).
+        runtime.Events.Process(
+            _scratchLeft,
+            _scratchRight,
+            count,
+            inPlay ? within : local < 0 ? local : -1e9,
+            play,
+            layer.Muted ? null : layer.Events);
 
         // Constant-power pan (with a slow random wandering); the centre position keeps unity gain.
         double pan = Math.Clamp((layer.OverrideOf(play, RepeatParam.Pan) ?? layer.Pan) + mod.Pan + layer.PanDrift * 0.6 * runtime.PanWander.At(blockTime), -1.0, 1.0);
@@ -283,6 +293,7 @@ public sealed class ProjectMixer : ISampleProvider
 
         public NoiseType NoiseType { get; }
         public LayerEffects Effects { get; } = new();
+        public LayerEvents Events { get; } = new();
         public Wander PitchWander { get; }
         public Wander PanWander { get; }
 

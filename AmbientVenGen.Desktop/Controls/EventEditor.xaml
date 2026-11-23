@@ -1,0 +1,184 @@
+<UserControl
+    x:Class="AmbientVenGen.Desktop.Controls.EventEditor"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:controls="clr-namespace:AmbientVenGen.Desktop.Controls"
+    xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
+    xmlns:vm="clr-namespace:AmbientVenGen.Desktop.ViewModels">
+    <!--  DataContext: a LayerEvent (type, start, settings). The selected one has a bright frame.  -->
+    <UserControl.Resources>
+        <ControlTemplate x:Key="MuteTemplate" TargetType="ToggleButton">
+            <Border
+                x:Name="Frame"
+                Background="#1AFFFFFF"
+                BorderBrush="#2EFFFFFF"
+                BorderThickness="1"
+                CornerRadius="6">
+                <controls:ModGlyph
+                    x:Name="Icon"
+                    Width="20"
+                    Height="20"
+                    Key="Mute" />
+            </Border>
+            <ControlTemplate.Triggers>
+                <Trigger Property="IsMouseOver" Value="True">
+                    <Setter TargetName="Frame" Property="Background" Value="#33FFFFFF" />
+                </Trigger>
+                <Trigger Property="IsChecked" Value="True">
+                    <Setter TargetName="Frame" Property="Background" Value="#33E5737F" />
+                    <Setter TargetName="Frame" Property="BorderBrush" Value="#AAE5737F" />
+                    <Setter TargetName="Icon" Property="Stroke" Value="#F08A94" />
+                </Trigger>
+            </ControlTemplate.Triggers>
+        </ControlTemplate>
+    </UserControl.Resources>
+    <Border
+        Padding="6,4"
+        Background="#0DFFFFFF"
+        CornerRadius="5"
+        PreviewMouseLeftButtonDown="OnPickEvent">
+        <Border.Style>
+            <Style TargetType="Border">
+                <Setter Property="BorderBrush" Value="#1FFFFFFF" />
+                <Setter Property="BorderThickness" Value="1" />
+                <Style.Triggers>
+                    <DataTrigger Binding="{Binding IsSelected}" Value="True">
+                        <Setter Property="BorderBrush" Value="#E6E4FA" />
+                        <Setter Property="BorderThickness" Value="1.6" />
+                    </DataTrigger>
+                </Style.Triggers>
+            </Style>
+        </Border.Style>
+        <StackPanel>
+            <Grid Margin="0,0,0,4">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+                <StackPanel Orientation="Horizontal">
+                    <controls:ModGlyph
+                        Width="20"
+                        Height="20"
+                        Margin="0,0,6,0"
+                        Key="{Binding Type}" />
+                    <TextBlock
+                        VerticalAlignment="Center"
+                        FontSize="12"
+                        FontWeight="SemiBold"
+                        Foreground="#C9C8D6"
+                        Text="{Binding Title}" />
+                </StackPanel>
+                <StackPanel Grid.Column="1" Margin="12,0,0,0" Orientation="Horizontal">
+                    <StackPanel.LayoutTransform>
+                        <ScaleTransform ScaleX="0.7" ScaleY="0.7" />
+                    </StackPanel.LayoutTransform>
+                    <ToggleButton
+                        Width="32"
+                        Height="32"
+                        Cursor="Hand"
+                        IsChecked="{Binding Muted, Mode=TwoWay}"
+                        Template="{StaticResource MuteTemplate}"
+                        ToolTip="Mute: switch this event off" />
+                    <Button
+                        Width="32"
+                        Height="32"
+                        Margin="6,0,0,0"
+                        Padding="0"
+                        Click="OnRemoveClick"
+                        Cursor="Hand"
+                        ToolTip="Remove this event">
+                        <ui:SymbolIcon FontSize="16" Symbol="Dismiss24" />
+                    </Button>
+                </StackPanel>
+            </Grid>
+
+            <StackPanel>
+                <StackPanel.Style>
+                    <Style TargetType="StackPanel">
+                        <Style.Triggers>
+                            <DataTrigger Binding="{Binding Muted}" Value="True">
+                                <Setter Property="Opacity" Value="0.4" />
+                            </DataTrigger>
+                        </Style.Triggers>
+                    </Style>
+                </StackPanel.Style>
+
+                <controls:LabeledSlider
+                    Margin="4,0"
+                    Format="{}{0:0.00} s"
+                    Header="Start"
+                    Hint="{x:Static vm:HintTexts.EventStart}"
+                    Maximum="{Binding DataContext.SelectedLayer.DurationSeconds, RelativeSource={RelativeSource AncestorType=ItemsControl}}"
+                    Minimum="0"
+                    Step="0.05"
+                    Value="{Binding StartSeconds, Mode=TwoWay}" />
+
+                <!--  Echo throw  -->
+                <StackPanel Visibility="{Binding IsEcho, Converter={StaticResource BoolToVisibility}}">
+                    <controls:LabeledSlider
+                        Margin="4,0"
+                        Format="{}{0:0.00} s"
+                        Header="Hold"
+                        Hint="{x:Static vm:HintTexts.EchoThrow}"
+                        Maximum="4"
+                        Minimum="0.05"
+                        Step="0.05"
+                        Value="{Binding Length, Mode=TwoWay}" />
+                    <controls:LabeledSlider
+                        Margin="4,0"
+                        Format="{}{0:0.00} s"
+                        Header="Delay time"
+                        Maximum="1.5"
+                        Minimum="0.05"
+                        Step="0.01"
+                        Value="{Binding Time, Mode=TwoWay}" />
+                    <controls:LabeledSlider
+                        Margin="4,0"
+                        Format="{}{0:P0}"
+                        Header="Feedback"
+                        Maximum="0.92"
+                        Minimum="0"
+                        Step="0.01"
+                        Value="{Binding Amount, Mode=TwoWay}" />
+                    <controls:LabeledSlider
+                        Margin="4,0"
+                        Format="{}{0:0.0} s"
+                        Header="Silence after"
+                        Maximum="20"
+                        Minimum="0"
+                        Step="0.1"
+                        Value="{Binding Tail, Mode=TwoWay}" />
+                </StackPanel>
+
+                <!--  Stutter  -->
+                <StackPanel Visibility="{Binding IsStutter, Converter={StaticResource BoolToVisibility}}">
+                    <controls:LabeledSlider
+                        Margin="4,0"
+                        Format="{}{0:0.000} s"
+                        Header="Slice"
+                        Hint="{x:Static vm:HintTexts.Stutter}"
+                        Maximum="1"
+                        Minimum="0.02"
+                        Step="0.005"
+                        Value="{Binding Length, Mode=TwoWay}" />
+                    <controls:LabeledSlider
+                        Margin="4,0"
+                        Format="{}{0:0}"
+                        Header="Repeats"
+                        Maximum="32"
+                        Minimum="2"
+                        Step="1"
+                        Value="{Binding Count, Mode=TwoWay}" />
+                    <controls:LabeledSlider
+                        Margin="4,0"
+                        Format="{}{0:P0}"
+                        Header="Fade per repeat"
+                        Maximum="0.9"
+                        Minimum="0"
+                        Step="0.01"
+                        Value="{Binding Amount, Mode=TwoWay}" />
+                </StackPanel>
+            </StackPanel>
+        </StackPanel>
+    </Border>
+</UserControl>

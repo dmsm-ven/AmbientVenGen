@@ -124,7 +124,7 @@ public sealed partial class TimelineControl : FrameworkElement
     /// <summary>Height of the ruler (the bottom copy of it is a <see cref="TimelineRuler"/>).</summary>
     public static double RulerStripHeight => RulerHeight;
 
-    private enum DragMode { None, Move, ResizeLeft, ResizeRight, FadeIn, FadeOut, Scrub }
+    private enum DragMode { None, Move, ResizeLeft, ResizeRight, FadeIn, FadeOut, Scrub, MoveEvent }
 
     private enum HitZone { None, Body, LeftEdge, RightEdge, FadeInHandle, FadeOutHandle }
 
@@ -199,8 +199,16 @@ public sealed partial class TimelineControl : FrameworkElement
     public TimelineControl()
     {
         // A recording that turned out to be missing is written on its track.
-        Loaded += (_, _) => SampleLibrary.StateChanged += InvalidateContent;
-        Unloaded += (_, _) => SampleLibrary.StateChanged -= InvalidateContent;
+        Loaded += (_, _) =>
+        {
+            SampleLibrary.StateChanged += InvalidateContent;
+            LayerEvent.SelectionChanged += InvalidateContent;
+        };
+        Unloaded += (_, _) =>
+        {
+            SampleLibrary.StateChanged -= InvalidateContent;
+            LayerEvent.SelectionChanged -= InvalidateContent;
+        };
 
         AddVisualChild(_contentVisual);
         AddVisualChild(_playheadVisual);
