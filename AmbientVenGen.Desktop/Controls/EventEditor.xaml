@@ -43,10 +43,6 @@
                 <Setter Property="BorderBrush" Value="#1FFFFFFF" />
                 <Setter Property="BorderThickness" Value="1" />
                 <Style.Triggers>
-                    <DataTrigger Binding="{Binding IsSelected}" Value="True">
-                        <Setter Property="BorderBrush" Value="#E6E4FA" />
-                        <Setter Property="BorderThickness" Value="1.6" />
-                    </DataTrigger>
                 </Style.Triggers>
             </Style>
         </Border.Style>
@@ -115,7 +111,7 @@
                 </StackPanel.Style>
 
                 <controls:NumberBox
-                    Margin="4,2" Decimals="2" Unit="s"
+                    Margin="4,1" IsInline="True" Decimals="2" Unit="s"
                     Header="Start"
                     Hint="{x:Static vm:HintTexts.EventStart}"
                     Maximum="{Binding DataContext.SelectedLayer.DurationSeconds, RelativeSource={RelativeSource AncestorType=ItemsControl}}"
@@ -126,7 +122,7 @@
                 <!--  Echo throw  -->
                 <StackPanel Visibility="{Binding IsEcho, Converter={StaticResource BoolToVisibility}}">
                     <controls:NumberBox
-                        Margin="4,2" Decimals="2" Unit="s"
+                        Margin="4,1" IsInline="True" Decimals="2" Unit="s"
                         Header="Hold"
                         Hint="{x:Static vm:HintTexts.EchoThrow}"
                         Maximum="4"
@@ -134,21 +130,21 @@
                         Step="0.05"
                         Value="{Binding Length, Mode=TwoWay}" />
                     <controls:NumberBox
-                        Margin="4,2" Decimals="2" Unit="s"
+                        Margin="4,1" IsInline="True" Decimals="2" Unit="s"
                         Header="Delay time"
                         Maximum="1.5"
                         Minimum="0.05"
                         Step="0.01"
                         Value="{Binding Time, Mode=TwoWay}" />
                     <controls:NumberBox
-                        Margin="4,2" Scale="100" Unit="%" Decimals="0"
+                        Margin="4,1" IsInline="True" Scale="100" Unit="%" Decimals="0"
                         Header="Feedback"
                         Maximum="0.92"
                         Minimum="0"
                         Step="0.01"
                         Value="{Binding Amount, Mode=TwoWay}" />
                     <controls:NumberBox
-                        Margin="4,2" Decimals="1" Unit="s"
+                        Margin="4,1" IsInline="True" Decimals="1" Unit="s"
                         Header="Silence after"
                         Maximum="20"
                         Minimum="0"
@@ -159,7 +155,7 @@
                 <!--  Stutter  -->
                 <StackPanel Visibility="{Binding IsStutter, Converter={StaticResource BoolToVisibility}}">
                     <controls:NumberBox
-                        Margin="4,2" Decimals="3" Unit="s"
+                        Margin="4,1" IsInline="True" Decimals="3" Unit="s"
                         Header="Slice"
                         Hint="{x:Static vm:HintTexts.Stutter}"
                         Maximum="1"
@@ -167,14 +163,14 @@
                         Step="0.005"
                         Value="{Binding Length, Mode=TwoWay}" />
                     <controls:NumberBox
-                        Margin="4,2" Decimals="0"
+                        Margin="4,1" IsInline="True" Decimals="0"
                         Header="Repeats"
                         Maximum="32"
                         Minimum="2"
                         Step="1"
                         Value="{Binding Count, Mode=TwoWay}" />
                     <controls:NumberBox
-                        Margin="4,2" Scale="100" Unit="%" Decimals="0"
+                        Margin="4,1" IsInline="True" Scale="100" Unit="%" Decimals="0"
                         Header="Fade per repeat"
                         Maximum="0.9"
                         Minimum="0"
@@ -185,7 +181,7 @@
                 <!--  Filter sweep  -->
                 <StackPanel Visibility="{Binding IsSweep, Converter={StaticResource BoolToVisibility}}">
                     <controls:NumberBox
-                        Margin="4,2"
+                        Margin="4,1" IsInline="True"
                         Decimals="1"
                         Header="Sweep time"
                         Hint="{x:Static vm:HintTexts.FilterSweep}"
@@ -195,7 +191,7 @@
                         Unit="s"
                         Value="{Binding Length, Mode=TwoWay}" />
                     <controls:NumberBox
-                        Margin="4,2"
+                        Margin="4,1" IsInline="True"
                         Decimals="0"
                         Header="Depth"
                         Maximum="1"
@@ -205,7 +201,7 @@
                         Unit="%"
                         Value="{Binding Amount, Mode=TwoWay}" />
                     <controls:NumberBox
-                        Margin="4,2"
+                        Margin="4,1" IsInline="True"
                         Decimals="1"
                         Header="Recovery"
                         Maximum="20"

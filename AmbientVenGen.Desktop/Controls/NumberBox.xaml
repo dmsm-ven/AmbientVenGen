@@ -104,6 +104,7 @@
 
             <StackPanel Grid.Column="1" Margin="4,0,0,0" VerticalAlignment="Center">
                 <RepeatButton
+                    x:Name="UpButton"
                     Margin="0,0,0,2"
                     Click="OnUpClick"
                     Style="{StaticResource StepButton}">
@@ -115,7 +116,7 @@
                         StrokeStartLineCap="Round"
                         StrokeThickness="1.6" />
                 </RepeatButton>
-                <RepeatButton Click="OnDownClick" Style="{StaticResource StepButton}">
+                <RepeatButton x:Name="DownButton" Click="OnDownClick" Style="{StaticResource StepButton}">
                     <Path
                         Data="M0,0 L4,4 L8,0"
                         Stroke="#E6E6F2"

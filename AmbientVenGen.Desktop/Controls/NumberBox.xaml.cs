@@ -44,6 +44,18 @@ public partial class NumberBox : UserControl
     public static readonly DependencyProperty UnitProperty = DependencyProperty.Register(
         nameof(Unit), typeof(string), typeof(NumberBox), new PropertyMetadata(string.Empty, OnPropertyChanged));
 
+    /// <summary>The caption stands to the left of the field (one row) instead of above it.</summary>
+    public static readonly DependencyProperty IsInlineProperty = DependencyProperty.Register(
+        nameof(IsInline), typeof(bool), typeof(NumberBox), new PropertyMetadata(false, OnPropertyChanged));
+
+    /// <summary>Width of the caption column of an inline box (so the fields of several rows line up).</summary>
+    public static readonly DependencyProperty HeaderWidthProperty = DependencyProperty.Register(
+        nameof(HeaderWidth), typeof(double), typeof(NumberBox), new PropertyMetadata(104.0, OnPropertyChanged));
+
+    public bool IsInline { get => (bool)GetValue(IsInlineProperty); set => SetValue(IsInlineProperty, value); }
+
+    public double HeaderWidth { get => (double)GetValue(HeaderWidthProperty); set => SetValue(HeaderWidthProperty, value); }
+
     public string Header { get => (string)GetValue(HeaderProperty); set => SetValue(HeaderProperty, value); }
 
     public string Hint { get => (string)GetValue(HintProperty); set => SetValue(HintProperty, value); }
@@ -82,11 +94,36 @@ public partial class NumberBox : UserControl
         if (Input is null)
             return;
 
+        ApplyLayout();
+
         HeaderText.Text = Header;
         HeaderHint.Text = Hint;
         HeaderRow.Visibility = string.IsNullOrEmpty(Header) ? Visibility.Collapsed : Visibility.Visible;
         Input.Text = Number(Value);
         DisplayText.Text = string.IsNullOrEmpty(Unit) ? Number(Value) : Number(Value) + " " + Unit;
+    }
+
+    // Inline: "Hold   [ 0.50 s ]" on one low row; the arrows are smaller so the row does not grow while editing.
+    private void ApplyLayout()
+    {
+        bool inline = IsInline;
+
+        RootPanel.Orientation = inline ? Orientation.Horizontal : Orientation.Vertical;
+        HeaderRow.VerticalAlignment = inline ? VerticalAlignment.Center : VerticalAlignment.Top;
+        HeaderRow.Width = inline ? HeaderWidth : double.NaN;
+
+        Thickness boxMargin = inline ? new Thickness(0) : new Thickness(0, 3, 0, 0);
+        DisplayBox.Margin = boxMargin;
+        EditGrid.Margin = boxMargin;
+        DisplayBox.Width = inline ? 112 : double.NaN;
+        EditGrid.Width = inline ? 112 : double.NaN;
+
+        double height = inline ? 26 : 32;
+        DisplayBox.Height = height;
+        Input.Height = height;
+        UpButton.Height = inline ? 12 : 15;
+        DownButton.Height = inline ? 12 : 15;
+        UpButton.Margin = new Thickness(0, 0, 0, inline ? 1 : 2);
     }
 
     private void OnDisplayClick(object sender, MouseButtonEventArgs e)

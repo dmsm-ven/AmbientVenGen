@@ -166,4 +166,73 @@
         </Setter>
     </Style>
 
+    <!--  Side tabs (Oscillators / Events): two equal flat tabs on one line, the picked one tinted with an accent line  -->
+    <Style x:Key="SideTabItem" TargetType="TabItem">
+        <Setter Property="Foreground" Value="#9A99AA" />
+        <Setter Property="Cursor" Value="Hand" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="TabItem">
+                    <Border
+                        x:Name="Frame"
+                        Height="30"
+                        Margin="0,0,4,0"
+                        Padding="14,0"
+                        Background="Transparent"
+                        BorderBrush="Transparent"
+                        BorderThickness="0,0,0,2"
+                        CornerRadius="5,5,0,0">
+                        <ContentPresenter
+                            HorizontalAlignment="Center"
+                            VerticalAlignment="Center"
+                            ContentSource="Header"
+                            TextElement.FontSize="13"
+                            TextElement.FontWeight="SemiBold"
+                            TextElement.Foreground="{TemplateBinding Foreground}" />
+                    </Border>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter TargetName="Frame" Property="Background" Value="#14FFFFFF" />
+                            <Setter Property="Foreground" Value="#E6E6F2" />
+                        </Trigger>
+                        <Trigger Property="IsSelected" Value="True">
+                            <Setter TargetName="Frame" Property="Background" Value="#26B7AFE9" />
+                            <Setter TargetName="Frame" Property="BorderBrush" Value="#B7AFE9" />
+                            <Setter Property="Foreground" Value="#F2F1FA" />
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <Style x:Key="SideTabControl" TargetType="TabControl">
+        <Setter Property="Padding" Value="0" />
+        <Setter Property="BorderThickness" Value="0" />
+        <Setter Property="Background" Value="Transparent" />
+        <Setter Property="ItemContainerStyle" Value="{StaticResource SideTabItem}" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="TabControl">
+                    <Grid>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="*" />
+                        </Grid.RowDefinitions>
+                        <Border
+                            Margin="6,0,0,0"
+                            BorderBrush="#1FFFFFFF"
+                            BorderThickness="0,0,0,1">
+                            <TabPanel
+                                Margin="0"
+                                Panel.ZIndex="1"
+                                IsItemsHost="True" />
+                        </Border>
+                        <ContentPresenter Grid.Row="1" Margin="0,6,0,0" ContentSource="SelectedContent" />
+                    </Grid>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
 </ResourceDictionary>
