@@ -37,7 +37,7 @@
                 <RowDefinition Height="*" />
             </Grid.RowDefinitions>
 
-            <UniformGrid Columns="3">
+            <UniformGrid Columns="2">
                 <Border
                     MouseLeftButtonDown="OnTileDown"
                     MouseLeftButtonUp="OnTileUp"
@@ -99,6 +99,27 @@
                             Foreground="#C9C8D6"
                             IsHitTestVisible="False"
                             Text="Filter sweep" />
+                    </StackPanel>
+                </Border>
+                            <Border
+                    MouseLeftButtonDown="OnTileDown"
+                    MouseLeftButtonUp="OnTileUp"
+                    MouseMove="OnTileMove"
+                    Style="{StaticResource EventTile}"
+                    Tag="Freeze"
+                    ToolTip="Freeze: click to add at the playhead, or drag onto a layer of the timeline">
+                    <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center">
+                        <controls:ModGlyph
+                            Width="22"
+                            Height="22"
+                            Key="Freeze"
+                            IsHitTestVisible="False" />
+                        <TextBlock
+                            HorizontalAlignment="Center"
+                            FontSize="12"
+                            Foreground="#C9C8D6"
+                            IsHitTestVisible="False"
+                            Text="Freeze" />
                     </StackPanel>
                 </Border>
             </UniformGrid>

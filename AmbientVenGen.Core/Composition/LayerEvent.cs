@@ -12,7 +12,10 @@ public enum EventType
     Stutter,
 
     /// <summary>A one-shot low-pass sweep: the layer gets darker over Length, then opens again over Tail.</summary>
-    FilterSweep
+    FilterSweep,
+
+    /// <summary>The last moment of the layer is looped into a held, endless pad for Length seconds, then released.</summary>
+    Freeze
 }
 
 /// <summary>
@@ -51,6 +54,7 @@ public sealed partial class LayerEvent : ObservableObject
     [NotifyPropertyChangedFor(nameof(IsEcho))]
     [NotifyPropertyChangedFor(nameof(IsStutter))]
     [NotifyPropertyChangedFor(nameof(IsSweep))]
+    [NotifyPropertyChangedFor(nameof(IsFreeze))]
     private EventType _type = EventType.EchoThrow;
 
     /// <summary>Seconds from the start of the layer (of every play of it).</summary>
@@ -91,6 +95,8 @@ public sealed partial class LayerEvent : ObservableObject
 
     public bool IsSweep => Type == EventType.FilterSweep;
 
+    public bool IsFreeze => Type == EventType.Freeze;
+
     /// <summary>"Echo throw | 0:12.5": the kind and the moment (short, so it never widens the panel).</summary>
     public string Title => $"{TypeName(Type)} | {TimeText(StartSeconds)}";
 
@@ -99,6 +105,7 @@ public sealed partial class LayerEvent : ObservableObject
         EventType.EchoThrow => "Echo throw",
         EventType.Stutter => "Stutter",
         EventType.FilterSweep => "Filter sweep",
+        EventType.Freeze => "Freeze",
         _ => type.ToString()
     };
 
@@ -127,6 +134,14 @@ public sealed partial class LayerEvent : ObservableObject
             item.Tail = 4.0;
         }
 
+        if (type == EventType.Freeze)
+        {
+            item.Length = 6.0;
+            item.Time = 0.5;
+            item.Amount = 1.0;
+            item.Tail = 4.0;
+        }
+
         return item;
     }
 
@@ -147,13 +162,16 @@ public sealed partial class LayerEvent : ObservableObject
         {
             EventType.Stutter => Math.Clamp(spec.Length, EventSpec.MinSlice, EventSpec.MaxSlice),
             EventType.FilterSweep => Math.Clamp(spec.Length, 0.05, EventSpec.MaxSweep),
+            EventType.Freeze => Math.Clamp(spec.Length, 0.1, EventSpec.MaxSweep),
             _ => Math.Clamp(spec.Length, EventSpec.MinSlice, EventSpec.MaxEchoHold)
         };
-        Time = Math.Clamp(spec.Time, EventSpec.MinDelay, EventSpec.MaxDelay);
+        Time = Type == EventType.Freeze
+            ? Math.Clamp(spec.Time, 0.1, 1.0)
+            : Math.Clamp(spec.Time, EventSpec.MinDelay, EventSpec.MaxDelay);
         Amount = Type switch
         {
             EventType.Stutter => Math.Clamp(spec.Amount, 0, 0.9),
-            EventType.FilterSweep => Math.Clamp(spec.Amount, 0, 1),
+            EventType.FilterSweep or EventType.Freeze => Math.Clamp(spec.Amount, 0, 1),
             _ => Math.Clamp(spec.Amount, 0, EventSpec.MaxFeedback)
         };
         Count = Math.Clamp(spec.Count, EventSpec.MinRepeats, EventSpec.MaxRepeats);
