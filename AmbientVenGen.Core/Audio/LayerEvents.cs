@@ -1,4 +1,4 @@
-using AmbientVenGen.Core.Composition;
+﻿using AmbientVenGen.Core.Composition;
 
 namespace AmbientVenGen.Core.Audio;
 
@@ -309,25 +309,25 @@ internal sealed class LayerEvents
     {
         if (item.Type == EventType.Freeze)
         {
-            int length = Math.Min((int)(Math.Clamp(item.Time, 0.1, 1.0) * SampleRate), _recorded);
-            length = Math.Min(length, _frzL.Length - 4);
+            int lengthV = Math.Min((int)(Math.Clamp(item.Time, 0.1, 1.0) * SampleRate), _recorded);
+            lengthV = Math.Min(lengthV, _frzL.Length - 4);
 
-            if (length < 1024)
+            if (lengthV < 1024)
                 return;
 
-            int from = _ringWrite - length;
-            if (from < 0)
-                from += RingSize;
+            int fromV = _ringWrite - lengthV;
+            if (fromV < 0)
+                fromV += RingSize;
 
-            for (int i = 0; i < length; i++)
+            for (int i = 0; i < lengthV; i++)
             {
-                int index = from + i >= RingSize ? from + i - RingSize : from + i;
+                int index = fromV + i >= RingSize ? fromV + i - RingSize : fromV + i;
                 _frzL[i] = _ringL[index];
                 _frzR[i] = _ringR[index];
             }
 
-            _frzLength = length;
-            _frzFade = length / 3;
+            _frzLength = lengthV;
+            _frzFade = lengthV / 3;
             _frzPos = 0;
             _frzHold = Math.Max(1, (int)(Math.Clamp(item.Length, 0.1, EventSpec.MaxSweep) * SampleRate));
             _frzGain = 0f;
