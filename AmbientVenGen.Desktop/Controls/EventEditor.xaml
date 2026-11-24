@@ -178,6 +178,52 @@
                         Value="{Binding Amount, Mode=TwoWay}" />
                 </StackPanel>
 
+                <!--  Freeze  -->
+                <StackPanel Visibility="{Binding IsFreeze, Converter={StaticResource BoolToVisibility}}">
+                    <controls:NumberBox
+                        Margin="4,1"
+                        Decimals="1"
+                        Header="Hold"
+                        Hint="{x:Static vm:HintTexts.Freeze}"
+                        IsInline="True"
+                        Maximum="20"
+                        Minimum="0.1"
+                        Step="0.1"
+                        Unit="s"
+                        Value="{Binding Length, Mode=TwoWay}" />
+                    <controls:NumberBox
+                        Margin="4,1"
+                        Decimals="2"
+                        Header="Slice"
+                        IsInline="True"
+                        Maximum="1"
+                        Minimum="0.1"
+                        Step="0.05"
+                        Unit="s"
+                        Value="{Binding Time, Mode=TwoWay}" />
+                    <controls:NumberBox
+                        Margin="4,1"
+                        Decimals="0"
+                        Header="Amount"
+                        IsInline="True"
+                        Maximum="1"
+                        Minimum="0"
+                        Scale="100"
+                        Step="0.05"
+                        Unit="%"
+                        Value="{Binding Amount, Mode=TwoWay}" />
+                    <controls:NumberBox
+                        Margin="4,1"
+                        Decimals="1"
+                        Header="Release"
+                        IsInline="True"
+                        Maximum="20"
+                        Minimum="0"
+                        Step="0.1"
+                        Unit="s"
+                        Value="{Binding Tail, Mode=TwoWay}" />
+                </StackPanel>
+
                 <!--  Filter sweep  -->
                 <StackPanel Visibility="{Binding IsSweep, Converter={StaticResource BoolToVisibility}}">
                     <controls:NumberBox

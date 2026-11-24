@@ -54,12 +54,25 @@ internal sealed class LayerEvents
     private double _sweepLow;
     private float _s1L, _s2L, _s1R, _s2R;
 
+    // freeze: a captured slice looped with a crossfade, held and released
+    private readonly float[] _frzL = new float[SampleRate + 8];
+    private readonly float[] _frzR = new float[SampleRate + 8];
+    private bool _frzOn;
+    private int _frzLength;
+    private int _frzFade;
+    private int _frzPos;
+    private int _frzHold;
+    private float _frzGain;
+    private float _frzMix;
+    private float _frzAttack;
+    private float _frzRelease;
+
     private double _expected = double.NaN;
     private int _lastPlay = -1;
     private readonly List<(int Offset, EventSpec Event)> _pending = [];
 
     /// <summary>True while an event still sounds (the layer must keep being processed even when it is silent).</summary>
-    public bool IsActive => _echoOn || _sweepOn || _stutterOn || _stutterMix > 1e-4f;
+    public bool IsActive => _echoOn || _frzOn || _sweepOn || _stutterOn || _stutterMix > 1e-4f;
 
     /// <param name="centerTime">Seconds inside the current play at the middle of the block (negative before the layer starts; below -1e8 = no events now).</param>
     public void Process(float[] left, float[] right, int count, double centerTime, int play, IReadOnlyList<EventSpec>? events)
@@ -198,6 +211,9 @@ internal sealed class LayerEvents
             float mixL = inL * dry + stutterL * _stutterMix;
             float mixR = inR * dry + stutterR * _stutterMix;
 
+            if (_frzOn)
+                Freeze(ref mixL, ref mixR);
+
             if (_sweepOn)
                 SweepFilter(ref mixL, ref mixR);
 
@@ -211,6 +227,39 @@ internal sealed class LayerEvents
             Array.Clear(_echoL);
             Array.Clear(_echoR);
         }
+    }
+
+    private void Freeze(ref float l, ref float r)
+    {
+        float fl = _frzL[_frzPos];
+        float fr = _frzR[_frzPos];
+        int start = _frzLength - _frzFade;
+
+        if (_frzPos >= start)
+        {
+            // the end of the slice fades out while its beginning fades in (equal power): no click at the loop point
+            double k = (_frzPos - start) / (double)_frzFade * Math.PI / 2;
+            float outGain = (float)Math.Cos(k);
+            float inGain = (float)Math.Sin(k);
+            int other = _frzPos - start;
+            fl = fl * outGain + _frzL[other] * inGain;
+            fr = fr * outGain + _frzR[other] * inGain;
+        }
+
+        if (++_frzPos >= _frzLength)
+            _frzPos = _frzFade;
+
+        bool holding = _frzHold > 0;
+        if (holding)
+            _frzHold--;
+
+        _frzGain += ((holding ? 1f : 0f) - _frzGain) * (holding ? _frzAttack : _frzRelease);
+        float m = _frzGain * _frzMix;
+        l = l * (1f - m) + fl * m;
+        r = r * (1f - m) + fr * m;
+
+        if (!holding && _frzGain < 1e-3f)
+            _frzOn = false;
     }
 
     // Cutoff in log scale from 18 kHz down to _sweepLow (smoothstep), then back up.
@@ -258,6 +307,38 @@ internal sealed class LayerEvents
 
     private void Fire(EventSpec item)
     {
+        if (item.Type == EventType.Freeze)
+        {
+            int length = Math.Min((int)(Math.Clamp(item.Time, 0.1, 1.0) * SampleRate), _recorded);
+            length = Math.Min(length, _frzL.Length - 4);
+
+            if (length < 1024)
+                return;
+
+            int from = _ringWrite - length;
+            if (from < 0)
+                from += RingSize;
+
+            for (int i = 0; i < length; i++)
+            {
+                int index = from + i >= RingSize ? from + i - RingSize : from + i;
+                _frzL[i] = _ringL[index];
+                _frzR[i] = _ringR[index];
+            }
+
+            _frzLength = length;
+            _frzFade = length / 3;
+            _frzPos = 0;
+            _frzHold = Math.Max(1, (int)(Math.Clamp(item.Length, 0.1, EventSpec.MaxSweep) * SampleRate));
+            _frzGain = 0f;
+            _frzMix = (float)Math.Clamp(item.Amount, 0.0, 1.0);
+            _frzAttack = (float)(1 - Math.Exp(-1.0 / (0.15 * SampleRate)));
+            double release = Math.Max(0.05, Math.Clamp(item.Tail, 0.0, EventSpec.MaxTail) / 3.0);
+            _frzRelease = (float)(1 - Math.Exp(-1.0 / (release * SampleRate)));
+            _frzOn = true;
+            return;
+        }
+
         if (item.Type == EventType.FilterSweep)
         {
             // depth 0 = no effect, 1 = down to about 100 Hz
@@ -333,6 +414,7 @@ internal sealed class LayerEvents
         _dryGain = 1f;
         _stutterOn = false;
         _stutterMix = 0f;
+        _frzOn = false;
         _sweepOn = false;
         _s1L = _s2L = _s1R = _s2R = 0f;
         _recorded = 0;
