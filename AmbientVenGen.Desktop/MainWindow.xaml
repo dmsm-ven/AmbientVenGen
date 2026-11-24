@@ -86,8 +86,8 @@
                 <panels:SelectedLayerPanel Grid.Column="1" />
                 <TabControl
                     Grid.Column="2"
-                    Padding="0"
-                    SelectedIndex="{Binding SideTabIndex, Mode=TwoWay}">
+                    SelectedIndex="{Binding SideTabIndex, Mode=TwoWay}"
+                    Style="{StaticResource SideTabControl}">
                     <TabItem Header="Oscillators">
                         <panels:ModulatorsPanel />
                     </TabItem>
