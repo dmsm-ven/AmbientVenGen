@@ -37,7 +37,7 @@
                 <RowDefinition Height="*" />
             </Grid.RowDefinitions>
 
-            <UniformGrid Columns="6">
+            <UniformGrid Columns="7">
                 <Border
                     MouseLeftButtonDown="OnTileDown"
                     MouseLeftButtonUp="OnTileUp"
@@ -125,6 +125,21 @@
                             Width="20"
                             Height="20"
                             Key="SwellDuck"
+                            IsHitTestVisible="False" />
+                    </StackPanel>
+                </Border>
+                            <Border
+                    MouseLeftButtonDown="OnTileDown"
+                    MouseLeftButtonUp="OnTileUp"
+                    MouseMove="OnTileMove"
+                    Style="{StaticResource EventTile}"
+                    Tag="BitcrushBurst"
+                    ToolTip="Bitcrush burst: click to add at the playhead, or drag onto a layer of the timeline">
+                    <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center">
+                        <controls:ModGlyph
+                            Width="20"
+                            Height="20"
+                            Key="BitcrushBurst"
                             IsHitTestVisible="False" />
                     </StackPanel>
                 </Border>

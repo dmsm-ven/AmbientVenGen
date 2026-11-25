@@ -21,13 +21,17 @@ public enum EventType
     PitchDive,
 
     /// <summary>The level moves: Length to get there, Time held, Tail to come back. Amount below 0 = duck, above 0 = swell.</summary>
-    SwellDuck
+    SwellDuck,
+
+    /// <summary>The sound is crushed (fewer bits, lower sample rate) for Length seconds, then goes back over Tail.</summary>
+    BitcrushBurst
 }
 
 /// <summary>
 /// One event of a layer: a moment (seconds from the start of the layer, in every play of it) and the settings of the effect.
 /// Length: EchoThrow = how long the layer feeds the echo; Stutter = the length of the grabbed slice.
 /// Time: EchoThrow = delay time. Amount: EchoThrow = feedback; Stutter = how much each repeat is quieter.
+/// Fade: EchoThrow = how long the layer takes to come back after the silence (a smooth return instead of a jump).
 /// Count: Stutter = number of repeats. Tail: EchoThrow = how long the layer stays silent after the throw (0 = it plays on).
 /// </summary>
 public sealed record EventSpec(
@@ -38,10 +42,12 @@ public sealed record EventSpec(
     double Amount,
     int Count,
     double Tail,
-    bool Muted = false)
+    bool Muted = false,
+    double Fade = 1.0)
 {
     public const double MaxEchoHold = 4.0;
     public const double MaxSweep = 20.0;
+    public const double MaxFade = 10.0;
     public const double MinSlice = 0.02;
     public const double MaxSlice = 1.0;
     public const double MinDelay = 0.05;
@@ -63,6 +69,7 @@ public sealed partial class LayerEvent : ObservableObject
     [NotifyPropertyChangedFor(nameof(IsFreeze))]
     [NotifyPropertyChangedFor(nameof(IsDive))]
     [NotifyPropertyChangedFor(nameof(IsSwellDuck))]
+    [NotifyPropertyChangedFor(nameof(IsCrush))]
     private EventType _type = EventType.EchoThrow;
 
     /// <summary>Seconds from the start of the layer (of every play of it).</summary>
@@ -84,6 +91,10 @@ public sealed partial class LayerEvent : ObservableObject
 
     [ObservableProperty]
     private double _tail = 4.0;
+
+    /// <summary>Echo throw: seconds the layer takes to come back after the silence.</summary>
+    [ObservableProperty]
+    private double _fade = 1.0;
 
     [ObservableProperty]
     private bool _muted;
@@ -113,6 +124,8 @@ public sealed partial class LayerEvent : ObservableObject
 
     public bool IsSwellDuck => Type == EventType.SwellDuck;
 
+    public bool IsCrush => Type == EventType.BitcrushBurst;
+
     /// <summary>"Echo throw | 0:12.5": the kind and the moment (short, so it never widens the panel).</summary>
     public string Title => $"{TypeName(Type)} | {TimeText(StartSeconds)}";
 
@@ -124,6 +137,7 @@ public sealed partial class LayerEvent : ObservableObject
         EventType.Freeze => "Freeze",
         EventType.PitchDive => "Pitch dive",
         EventType.SwellDuck => "Swell / Duck",
+        EventType.BitcrushBurst => "Bitcrush burst",
         _ => type.ToString()
     };
 
@@ -175,6 +189,13 @@ public sealed partial class LayerEvent : ObservableObject
             item.Tail = 3.0;
         }
 
+        if (type == EventType.BitcrushBurst)
+        {
+            item.Length = 2.0;
+            item.Amount = 0.6;
+            item.Tail = 1.0;
+        }
+
         return item;
     }
 
@@ -185,7 +206,7 @@ public sealed partial class LayerEvent : ObservableObject
         return item;
     }
 
-    public EventSpec ToSpec() => new(Type, StartSeconds, Length, Time, Amount, Count, Tail, Muted);
+    public EventSpec ToSpec() => new(Type, StartSeconds, Length, Time, Amount, Count, Tail, Muted, Fade);
 
     public void Apply(EventSpec spec)
     {
@@ -196,7 +217,7 @@ public sealed partial class LayerEvent : ObservableObject
             EventType.Stutter => Math.Clamp(spec.Length, EventSpec.MinSlice, EventSpec.MaxSlice),
             EventType.FilterSweep => Math.Clamp(spec.Length, 0.05, EventSpec.MaxSweep),
             EventType.Freeze or EventType.PitchDive => Math.Clamp(spec.Length, 0.1, EventSpec.MaxSweep),
-            EventType.SwellDuck => Math.Clamp(spec.Length, 0.05, EventSpec.MaxSweep),
+            EventType.SwellDuck or EventType.BitcrushBurst => Math.Clamp(spec.Length, 0.05, EventSpec.MaxSweep),
             _ => Math.Clamp(spec.Length, EventSpec.MinSlice, EventSpec.MaxEchoHold)
         };
         Time = Type switch
@@ -208,12 +229,13 @@ public sealed partial class LayerEvent : ObservableObject
         Amount = Type switch
         {
             EventType.Stutter => Math.Clamp(spec.Amount, 0, 0.9),
-            EventType.FilterSweep or EventType.Freeze or EventType.PitchDive => Math.Clamp(spec.Amount, 0, 1),
+            EventType.FilterSweep or EventType.Freeze or EventType.PitchDive or EventType.BitcrushBurst => Math.Clamp(spec.Amount, 0, 1),
             EventType.SwellDuck => Math.Clamp(spec.Amount, -1, 1),
             _ => Math.Clamp(spec.Amount, 0, EventSpec.MaxFeedback)
         };
         Count = Math.Clamp(spec.Count, EventSpec.MinRepeats, EventSpec.MaxRepeats);
         Tail = Math.Clamp(spec.Tail, 0, EventSpec.MaxTail);
+        Fade = double.IsFinite(spec.Fade) ? Math.Clamp(spec.Fade, 0, EventSpec.MaxFade) : 1.0;
         Muted = spec.Muted;
     }
 }

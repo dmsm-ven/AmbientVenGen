@@ -20,7 +20,12 @@ public static class HintTexts
 
     public const string EchoThrow =
         "The layer is thrown into an echo for a moment (Hold), then, if Silence is set, the layer itself goes quiet and only the echo rings out. "
-        + "It has its own Delay time and Feedback and works even when the layer's own Delay is off.";
+        + "It has its own Delay time and Feedback and works even when the layer's own Delay is off. "
+        + "Fade back is how long the layer takes to return after the silence, so it does not jump back.";
+
+    public const string BitcrushBurst =
+        "For Burst seconds the sound is crushed: fewer bits and a lower sample rate (Depth), a rough digital crumble. "
+        + "Then it clears up again over Fade out.";
 
     public const string Stutter =
         "The last fraction of a second (Slice) is grabbed and repeated several times, each repeat a bit quieter (Fade per repeat). The layer is silent meanwhile.";

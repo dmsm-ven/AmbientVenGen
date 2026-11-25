@@ -33,6 +33,7 @@ internal sealed class LayerEvents
     private int _tail;
     private float _feed;
     private float _dryGain = 1f;
+    private float _returnCoef = 0.003f;
 
     // stutter
     private readonly float[] _stutterL = new float[(int)(EventSpec.MaxSlice * SampleRate) + 8];
@@ -82,12 +83,23 @@ internal sealed class LayerEvents
     private int _sdUp;
     private float _sdTarget = 1f;
 
+    // bitcrush burst: quantizer + sample-and-hold, blended in and out
+    private bool _crOn;
+    private int _crPos;
+    private int _crAttack;
+    private int _crHold;
+    private int _crRelease;
+    private float _crLevels = 4096f;
+    private int _crFactor = 1;
+    private int _crCount;
+    private float _crHeldL, _crHeldR;
+
     private double _expected = double.NaN;
     private int _lastPlay = -1;
     private readonly List<(int Offset, EventSpec Event)> _pending = [];
 
     /// <summary>True while an event still sounds (the layer must keep being processed even when it is silent).</summary>
-    public bool IsActive => _echoOn || _dvOn || _sdOn || _frzOn || _sweepOn || _stutterOn || _stutterMix > 1e-4f;
+    public bool IsActive => _echoOn || _dryGain < 0.999f || _crOn || _dvOn || _sdOn || _frzOn || _sweepOn || _stutterOn || _stutterMix > 1e-4f;
 
     /// <param name="centerTime">Seconds inside the current play at the middle of the block (negative before the layer starts; below -1e8 = no events now).</param>
     public void Process(float[] left, float[] right, int count, double centerTime, int play, IReadOnlyList<EventSpec>? events)
@@ -188,7 +200,7 @@ internal sealed class LayerEvents
             }
 
             bool muteNow = _echoOn && _muteDry && _hold <= 0 && _tail > 0;
-            _dryGain += ((muteNow ? 0f : 1f) - _dryGain) * 0.003f;
+            _dryGain += ((muteNow ? 0f : 1f) - _dryGain) * (muteNow ? 0.003f : _returnCoef);
 
             // stutter: the grabbed slice instead of the layer
             float stutterL = 0f;
@@ -245,6 +257,9 @@ internal sealed class LayerEvents
             if (_sweepOn)
                 SweepFilter(ref mixL, ref mixR);
 
+            if (_crOn)
+                Crush(ref mixL, ref mixR);
+
             left[i] = mixL + echoOutL;
             right[i] = mixR + echoOutR;
         }
@@ -284,6 +299,33 @@ internal sealed class LayerEvents
 
         if (++_dvPos >= _dvDown + _dvUp)
             _dvOn = false;
+    }
+
+    private void Crush(ref float l, ref float r)
+    {
+        double env;
+
+        if (_crPos < _crAttack)
+            env = _crPos / (double)_crAttack;
+        else if (_crPos < _crAttack + _crHold)
+            env = 1.0;
+        else
+            env = 1.0 - Smooth((_crPos - _crAttack - _crHold) / (double)Math.Max(1, _crRelease));
+
+        if (_crCount <= 0)
+        {
+            _crHeldL = MathF.Round(l * _crLevels) / _crLevels;
+            _crHeldR = MathF.Round(r * _crLevels) / _crLevels;
+            _crCount = _crFactor;
+        }
+
+        _crCount--;
+        float wet = (float)env;
+        l += (_crHeldL - l) * wet;
+        r += (_crHeldR - r) * wet;
+
+        if (++_crPos >= _crAttack + _crHold + _crRelease)
+            _crOn = false;
     }
 
     private float SwellDuck()
@@ -381,6 +423,21 @@ internal sealed class LayerEvents
 
     private void Fire(EventSpec item)
     {
+        if (item.Type == EventType.BitcrushBurst)
+        {
+            // depth 0 = 13 bits and no sample-rate loss, 1 = 3 bits and one sample in 32
+            double depth = Math.Clamp(item.Amount, 0.0, 1.0);
+            _crLevels = (float)Math.Pow(2.0, 13.0 - depth * 10.0 - 1.0);
+            _crFactor = 1 + (int)Math.Round(depth * 31.0);
+            _crAttack = (int)(0.02 * SampleRate);
+            _crHold = (int)(Math.Clamp(item.Length, 0.05, EventSpec.MaxSweep) * SampleRate);
+            _crRelease = Math.Max(1, (int)(Math.Clamp(item.Tail, 0.0, EventSpec.MaxTail) * SampleRate));
+            _crPos = 0;
+            _crCount = 0;
+            _crOn = true;
+            return;
+        }
+
         if (item.Type == EventType.PitchDive)
         {
             // Amount 1 = 24 semitones down; the delay needed is limited by the ring (a very long, deep dive is shallower)
@@ -463,6 +520,10 @@ internal sealed class LayerEvents
             _hold = Math.Max(1, (int)(Math.Clamp(item.Length, EventSpec.MinSlice, EventSpec.MaxEchoHold) * SampleRate));
             _tail = (int)(Math.Clamp(item.Tail, 0.0, EventSpec.MaxTail) * SampleRate);
             _muteDry = item.Tail > 0.001;
+
+            // the way back from the silence: a smooth rise instead of a jump (about a third of the time constant)
+            double fade = Math.Clamp(item.Fade, 0.0, EventSpec.MaxFade);
+            _returnCoef = fade < 0.01 ? 0.003f : (float)(1 - Math.Exp(-3.0 / (fade * SampleRate)));
             _feed = 0f;
             _echoOn = true;
             return;
@@ -515,6 +576,7 @@ internal sealed class LayerEvents
         _dryGain = 1f;
         _stutterOn = false;
         _stutterMix = 0f;
+        _crOn = false;
         _frzOn = false;
         _dvOn = false;
         _sdOn = false;

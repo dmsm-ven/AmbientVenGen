@@ -29,6 +29,7 @@ public sealed partial class TimelineControl
         EventType.Freeze => Color.FromRgb(0xC3, 0xA6, 0xFF),
         EventType.PitchDive => Color.FromRgb(0xFF, 0x8F, 0xA3),
         EventType.SwellDuck => Color.FromRgb(0xFF, 0xE0, 0x8A),
+        EventType.BitcrushBurst => Color.FromRgb(0xC8, 0xCD, 0xD6),
         _ => Color.FromRgb(0x7F, 0xD1, 0xFF)
     };
 
@@ -70,6 +71,15 @@ public sealed partial class TimelineControl
                     dc.DrawLine(ink, new Point(cx - 3.5, center.Y - 2.5), new Point(cx - 3.5, center.Y + 2.5));
                     dc.DrawLine(ink, new Point(cx, center.Y - 4), new Point(cx, center.Y + 4));
                     dc.DrawLine(ink, new Point(cx + 3.5, center.Y - 2.5), new Point(cx + 3.5, center.Y + 2.5));
+                }
+                else if (item.Type == EventType.BitcrushBurst)
+                {
+                    dc.DrawLine(ink, new Point(cx - 4.5, center.Y + 3), new Point(cx - 4.5, center.Y));
+                    dc.DrawLine(ink, new Point(cx - 4.5, center.Y), new Point(cx - 1.5, center.Y));
+                    dc.DrawLine(ink, new Point(cx - 1.5, center.Y), new Point(cx - 1.5, center.Y - 3));
+                    dc.DrawLine(ink, new Point(cx - 1.5, center.Y - 3), new Point(cx + 1.5, center.Y - 3));
+                    dc.DrawLine(ink, new Point(cx + 1.5, center.Y - 3), new Point(cx + 1.5, center.Y + 1.5));
+                    dc.DrawLine(ink, new Point(cx + 1.5, center.Y + 1.5), new Point(cx + 4.5, center.Y + 1.5));
                 }
                 else if (item.Type == EventType.PitchDive)
                 {
