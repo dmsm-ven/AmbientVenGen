@@ -67,12 +67,27 @@ internal sealed class LayerEvents
     private float _frzAttack;
     private float _frzRelease;
 
+    // pitch dive: the layer is read from the ring through a delay that grows (pitch down) and shrinks back (pitch up)
+    private bool _dvOn;
+    private int _dvPos;
+    private int _dvDown;
+    private int _dvUp;
+    private double _dvMax;
+
+    // swell / duck: a level envelope (down time, hold, up time)
+    private bool _sdOn;
+    private int _sdPos;
+    private int _sdDown;
+    private int _sdHold;
+    private int _sdUp;
+    private float _sdTarget = 1f;
+
     private double _expected = double.NaN;
     private int _lastPlay = -1;
     private readonly List<(int Offset, EventSpec Event)> _pending = [];
 
     /// <summary>True while an event still sounds (the layer must keep being processed even when it is silent).</summary>
-    public bool IsActive => _echoOn || _frzOn || _sweepOn || _stutterOn || _stutterMix > 1e-4f;
+    public bool IsActive => _echoOn || _dvOn || _sdOn || _frzOn || _sweepOn || _stutterOn || _stutterMix > 1e-4f;
 
     /// <param name="centerTime">Seconds inside the current play at the middle of the block (negative before the layer starts; below -1e8 = no events now).</param>
     public void Process(float[] left, float[] right, int count, double centerTime, int play, IReadOnlyList<EventSpec>? events)
@@ -208,8 +223,21 @@ internal sealed class LayerEvents
                 _recorded++;
 
             float dry = _dryGain * (1f - _stutterMix);
-            float mixL = inL * dry + stutterL * _stutterMix;
-            float mixR = inR * dry + stutterR * _stutterMix;
+            float srcL = inL;
+            float srcR = inR;
+
+            if (_dvOn)
+                PitchDive(ref srcL, ref srcR);
+
+            float mixL = srcL * dry + stutterL * _stutterMix;
+            float mixR = srcR * dry + stutterR * _stutterMix;
+
+            if (_sdOn)
+            {
+                float gain = SwellDuck();
+                mixL *= gain;
+                mixR *= gain;
+            }
 
             if (_frzOn)
                 Freeze(ref mixL, ref mixR);
@@ -227,6 +255,52 @@ internal sealed class LayerEvents
             Array.Clear(_echoL);
             Array.Clear(_echoR);
         }
+    }
+
+    private static double Smooth(double t)
+    {
+        t = Math.Clamp(t, 0.0, 1.0);
+        return t * t * (3 - 2 * t);
+    }
+
+    // The delay D(t) follows a smooth up-and-down curve; the pitch ratio is 1 - D'(t), so it stays smooth by itself.
+    private void PitchDive(ref float l, ref float r)
+    {
+        double t = _dvPos < _dvDown
+            ? _dvPos / (double)_dvDown
+            : 1.0 - (_dvPos - _dvDown) / (double)Math.Max(1, _dvUp);
+
+        double delay = _dvMax * Smooth(t);
+        double read = _ringWrite - 1 - delay;
+        while (read < 0)
+            read += RingSize;
+
+        int i0 = (int)read;
+        int i1 = i0 + 1 >= RingSize ? 0 : i0 + 1;
+        float frac = (float)(read - i0);
+
+        l = _ringL[i0] + (_ringL[i1] - _ringL[i0]) * frac;
+        r = _ringR[i0] + (_ringR[i1] - _ringR[i0]) * frac;
+
+        if (++_dvPos >= _dvDown + _dvUp)
+            _dvOn = false;
+    }
+
+    private float SwellDuck()
+    {
+        double s;
+
+        if (_sdPos < _sdDown)
+            s = Smooth(_sdPos / (double)_sdDown);
+        else if (_sdPos < _sdDown + _sdHold)
+            s = 1.0;
+        else
+            s = 1.0 - Smooth((_sdPos - _sdDown - _sdHold) / (double)Math.Max(1, _sdUp));
+
+        if (++_sdPos >= _sdDown + _sdHold + _sdUp)
+            _sdOn = false;
+
+        return (float)(1.0 + (_sdTarget - 1.0) * s);
     }
 
     private void Freeze(ref float l, ref float r)
@@ -307,6 +381,33 @@ internal sealed class LayerEvents
 
     private void Fire(EventSpec item)
     {
+        if (item.Type == EventType.PitchDive)
+        {
+            // Amount 1 = 24 semitones down; the delay needed is limited by the ring (a very long, deep dive is shallower)
+            double semitones = Math.Clamp(item.Amount, 0.0, 1.0) * 24.0;
+            double ratio = Math.Pow(2.0, -semitones / 12.0);
+            double down = Math.Clamp(item.Length, 0.1, EventSpec.MaxSweep);
+            _dvMax = Math.Min((1.0 - ratio) * down / 1.5 * SampleRate, RingSize - 4096);
+            _dvDown = Math.Max(1, (int)(down * SampleRate));
+            _dvUp = Math.Max(1, (int)(Math.Clamp(item.Tail, 0.0, EventSpec.MaxTail) * SampleRate));
+            _dvPos = 0;
+            _dvOn = _dvMax > 1;
+            return;
+        }
+
+        if (item.Type == EventType.SwellDuck)
+        {
+            // Amount -1 = silence, +1 = four times louder
+            double amount = Math.Clamp(item.Amount, -1.0, 1.0);
+            _sdTarget = (float)(amount < 0 ? 1.0 + amount : 1.0 + amount * 3.0);
+            _sdDown = Math.Max(1, (int)(Math.Clamp(item.Length, 0.05, EventSpec.MaxSweep) * SampleRate));
+            _sdHold = (int)(Math.Clamp(item.Time, 0.0, EventSpec.MaxSweep) * SampleRate);
+            _sdUp = Math.Max(1, (int)(Math.Clamp(item.Tail, 0.0, EventSpec.MaxTail) * SampleRate));
+            _sdPos = 0;
+            _sdOn = true;
+            return;
+        }
+
         if (item.Type == EventType.Freeze)
         {
             int lengthV = Math.Min((int)(Math.Clamp(item.Time, 0.1, 1.0) * SampleRate), _recorded);
@@ -415,6 +516,8 @@ internal sealed class LayerEvents
         _stutterOn = false;
         _stutterMix = 0f;
         _frzOn = false;
+        _dvOn = false;
+        _sdOn = false;
         _sweepOn = false;
         _s1L = _s2L = _s1R = _s2R = 0f;
         _recorded = 0;

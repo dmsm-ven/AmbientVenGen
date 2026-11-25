@@ -32,6 +32,14 @@ public static class HintTexts
         "The last moment of the layer (Slice) is looped smoothly into an endless pad and held for Hold seconds, while the layer itself fades away. "
         + "After that it is released over Release. Amount is how much of the layer is replaced by the frozen sound.";
 
+    public const string PitchDive =
+        "The layer slides down in pitch like a slowing tape (Dive time), by Depth semitones, then climbs back up (Recovery). "
+        + "A very long and deep dive is limited, so it may go less deep than set.";
+
+    public const string SwellDuck =
+        "The level of the layer moves and comes back. Level below 0 % ducks it (-100 % = silence), above 0 % swells it (+100 % = four times louder). "
+        + "Fade is the time to get there, Hold is how long it stays, Return is the way back.";
+
     public const string Modulator =
         "A slow oscillator that moves one parameter of the layer around the value you set, for a sound that breathes by itself. "
         + "Level only goes down from the set value, Cutoff moves up to 3 octaves each way, Pan swings across the stereo field, "

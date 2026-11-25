@@ -12,8 +12,8 @@
     -->
     <UserControl.Resources>
         <Style x:Key="EventTile" TargetType="Border">
-            <Setter Property="Height" Value="56" />
-            <Setter Property="Margin" Value="3" />
+            <Setter Property="Height" Value="28" />
+            <Setter Property="Margin" Value="2" />
             <Setter Property="Background" Value="#14FFFFFF" />
             <Setter Property="BorderBrush" Value="#2EFFFFFF" />
             <Setter Property="BorderThickness" Value="1" />
@@ -37,7 +37,7 @@
                 <RowDefinition Height="*" />
             </Grid.RowDefinitions>
 
-            <UniformGrid Columns="2">
+            <UniformGrid Columns="6">
                 <Border
                     MouseLeftButtonDown="OnTileDown"
                     MouseLeftButtonUp="OnTileUp"
@@ -47,16 +47,10 @@
                     ToolTip="Echo throw: click to add at the playhead, or drag onto a layer of the timeline">
                     <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center">
                         <controls:ModGlyph
-                            Width="22"
-                            Height="22"
+                            Width="20"
+                            Height="20"
                             Key="EchoThrow"
                             IsHitTestVisible="False" />
-                        <TextBlock
-                            HorizontalAlignment="Center"
-                            FontSize="12"
-                            Foreground="#C9C8D6"
-                            IsHitTestVisible="False"
-                            Text="Echo throw" />
                     </StackPanel>
                 </Border>
                 <Border
@@ -68,16 +62,10 @@
                     ToolTip="Stutter: click to add at the playhead, or drag onto a layer of the timeline">
                     <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center">
                         <controls:ModGlyph
-                            Width="22"
-                            Height="22"
+                            Width="20"
+                            Height="20"
                             Key="Stutter"
                             IsHitTestVisible="False" />
-                        <TextBlock
-                            HorizontalAlignment="Center"
-                            FontSize="12"
-                            Foreground="#C9C8D6"
-                            IsHitTestVisible="False"
-                            Text="Stutter" />
                     </StackPanel>
                 </Border>
                             <Border
@@ -89,16 +77,10 @@
                     ToolTip="Filter sweep: click to add at the playhead, or drag onto a layer of the timeline">
                     <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center">
                         <controls:ModGlyph
-                            Width="22"
-                            Height="22"
+                            Width="20"
+                            Height="20"
                             Key="FilterSweep"
                             IsHitTestVisible="False" />
-                        <TextBlock
-                            HorizontalAlignment="Center"
-                            FontSize="12"
-                            Foreground="#C9C8D6"
-                            IsHitTestVisible="False"
-                            Text="Filter sweep" />
                     </StackPanel>
                 </Border>
                             <Border
@@ -110,16 +92,40 @@
                     ToolTip="Freeze: click to add at the playhead, or drag onto a layer of the timeline">
                     <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center">
                         <controls:ModGlyph
-                            Width="22"
-                            Height="22"
+                            Width="20"
+                            Height="20"
                             Key="Freeze"
                             IsHitTestVisible="False" />
-                        <TextBlock
-                            HorizontalAlignment="Center"
-                            FontSize="12"
-                            Foreground="#C9C8D6"
-                            IsHitTestVisible="False"
-                            Text="Freeze" />
+                    </StackPanel>
+                </Border>
+                            <Border
+                    MouseLeftButtonDown="OnTileDown"
+                    MouseLeftButtonUp="OnTileUp"
+                    MouseMove="OnTileMove"
+                    Style="{StaticResource EventTile}"
+                    Tag="PitchDive"
+                    ToolTip="Pitch dive: click to add at the playhead, or drag onto a layer of the timeline">
+                    <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center">
+                        <controls:ModGlyph
+                            Width="20"
+                            Height="20"
+                            Key="PitchDive"
+                            IsHitTestVisible="False" />
+                    </StackPanel>
+                </Border>
+                            <Border
+                    MouseLeftButtonDown="OnTileDown"
+                    MouseLeftButtonUp="OnTileUp"
+                    MouseMove="OnTileMove"
+                    Style="{StaticResource EventTile}"
+                    Tag="SwellDuck"
+                    ToolTip="Swell / Duck: click to add at the playhead, or drag onto a layer of the timeline">
+                    <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center">
+                        <controls:ModGlyph
+                            Width="20"
+                            Height="20"
+                            Key="SwellDuck"
+                            IsHitTestVisible="False" />
                     </StackPanel>
                 </Border>
             </UniformGrid>

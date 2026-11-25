@@ -270,8 +270,8 @@ public sealed partial class Layer : ObservableObject
 
     private void OnEventChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
     {
-        // the selection is not a change of the layer
-        if (e.PropertyName != nameof(LayerEvent.IsSelected))
+        // the selection and the folding of the card are not a change of the layer
+        if (e.PropertyName is not (nameof(LayerEvent.IsSelected) or nameof(LayerEvent.IsExpanded)))
             OnPropertyChanged(nameof(Events));
     }
 

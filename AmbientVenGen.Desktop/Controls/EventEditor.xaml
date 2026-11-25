@@ -74,6 +74,27 @@
                         Height="32"
                         Margin="0,0,6,0"
                         Padding="0"
+                        Click="OnExpandClick"
+                        Cursor="Hand"
+                        ToolTip="Fold / unfold the settings of this event">
+                        <ui:SymbolIcon FontSize="16">
+                            <ui:SymbolIcon.Style>
+                                <Style TargetType="ui:SymbolIcon">
+                                    <Setter Property="Symbol" Value="ChevronUp24" />
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding IsExpanded}" Value="False">
+                                            <Setter Property="Symbol" Value="ChevronDown24" />
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </ui:SymbolIcon.Style>
+                        </ui:SymbolIcon>
+                    </Button>
+                    <Button
+                        Width="32"
+                        Height="32"
+                        Margin="0,0,6,0"
+                        Padding="0"
                         Click="OnGoToClick"
                         Cursor="Hand"
                         ToolTip="Go to this moment on the timeline (Space)">
@@ -105,6 +126,9 @@
                         <Style.Triggers>
                             <DataTrigger Binding="{Binding Muted}" Value="True">
                                 <Setter Property="Opacity" Value="0.4" />
+                            </DataTrigger>
+                            <DataTrigger Binding="{Binding IsExpanded}" Value="False">
+                                <Setter Property="Visibility" Value="Collapsed" />
                             </DataTrigger>
                         </Style.Triggers>
                     </Style>
@@ -216,6 +240,88 @@
                         Margin="4,1"
                         Decimals="1"
                         Header="Release"
+                        IsInline="True"
+                        Maximum="20"
+                        Minimum="0"
+                        Step="0.1"
+                        Unit="s"
+                        Value="{Binding Tail, Mode=TwoWay}" />
+                </StackPanel>
+
+                <!--  Pitch dive  -->
+                <StackPanel Visibility="{Binding IsDive, Converter={StaticResource BoolToVisibility}}">
+                    <controls:NumberBox
+                        Margin="4,1"
+                        Decimals="1"
+                        Header="Dive time"
+                        Hint="{x:Static vm:HintTexts.PitchDive}"
+                        IsInline="True"
+                        Maximum="20"
+                        Minimum="0.1"
+                        Step="0.1"
+                        Unit="s"
+                        Value="{Binding Length, Mode=TwoWay}" />
+                    <controls:NumberBox
+                        Margin="4,1"
+                        Decimals="0"
+                        Header="Depth"
+                        IsInline="True"
+                        Maximum="1"
+                        Minimum="0"
+                        Scale="24"
+                        Step="0.0416667"
+                        Unit="st"
+                        Value="{Binding Amount, Mode=TwoWay}" />
+                    <controls:NumberBox
+                        Margin="4,1"
+                        Decimals="1"
+                        Header="Recovery"
+                        IsInline="True"
+                        Maximum="20"
+                        Minimum="0"
+                        Step="0.1"
+                        Unit="s"
+                        Value="{Binding Tail, Mode=TwoWay}" />
+                </StackPanel>
+
+                <!--  Swell / Duck  -->
+                <StackPanel Visibility="{Binding IsSwellDuck, Converter={StaticResource BoolToVisibility}}">
+                    <controls:NumberBox
+                        Margin="4,1"
+                        Decimals="1"
+                        Header="Fade"
+                        Hint="{x:Static vm:HintTexts.SwellDuck}"
+                        IsInline="True"
+                        Maximum="20"
+                        Minimum="0.05"
+                        Step="0.1"
+                        Unit="s"
+                        Value="{Binding Length, Mode=TwoWay}" />
+                    <controls:NumberBox
+                        Margin="4,1"
+                        Decimals="1"
+                        Header="Hold"
+                        IsInline="True"
+                        Maximum="20"
+                        Minimum="0"
+                        Step="0.1"
+                        Unit="s"
+                        Value="{Binding Time, Mode=TwoWay}" />
+                    <controls:NumberBox
+                        Margin="4,1"
+                        Decimals="0"
+                        Header="Level"
+                        IsInline="True"
+                        Maximum="1"
+                        Minimum="-1"
+                        Scale="100"
+                        Step="0.05"
+                        Unit="%"
+                        Value="{Binding Amount, Mode=TwoWay}" />
+                    <controls:NumberBox
+                        Margin="4,1"
+                        Decimals="1"
+                        Header="Return"
                         IsInline="True"
                         Maximum="20"
                         Minimum="0"

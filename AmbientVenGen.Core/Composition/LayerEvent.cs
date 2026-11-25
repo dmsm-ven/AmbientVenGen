@@ -15,7 +15,13 @@ public enum EventType
     FilterSweep,
 
     /// <summary>The last moment of the layer is looped into a held, endless pad for Length seconds, then released.</summary>
-    Freeze
+    Freeze,
+
+    /// <summary>The layer slides down in pitch (Amount x 24 semitones) over Length, then climbs back over Tail.</summary>
+    PitchDive,
+
+    /// <summary>The level moves: Length to get there, Time held, Tail to come back. Amount below 0 = duck, above 0 = swell.</summary>
+    SwellDuck
 }
 
 /// <summary>
@@ -55,6 +61,8 @@ public sealed partial class LayerEvent : ObservableObject
     [NotifyPropertyChangedFor(nameof(IsStutter))]
     [NotifyPropertyChangedFor(nameof(IsSweep))]
     [NotifyPropertyChangedFor(nameof(IsFreeze))]
+    [NotifyPropertyChangedFor(nameof(IsDive))]
+    [NotifyPropertyChangedFor(nameof(IsSwellDuck))]
     private EventType _type = EventType.EchoThrow;
 
     /// <summary>Seconds from the start of the layer (of every play of it).</summary>
@@ -80,6 +88,10 @@ public sealed partial class LayerEvent : ObservableObject
     [ObservableProperty]
     private bool _muted;
 
+    /// <summary>Only for the screen (the card shows its settings or only its header); not saved.</summary>
+    [ObservableProperty]
+    private bool _isExpanded = true;
+
     /// <summary>Only for the screen (the event picked in the Events tab or on the timeline); not saved.</summary>
     [ObservableProperty]
     private bool _isSelected;
@@ -97,6 +109,10 @@ public sealed partial class LayerEvent : ObservableObject
 
     public bool IsFreeze => Type == EventType.Freeze;
 
+    public bool IsDive => Type == EventType.PitchDive;
+
+    public bool IsSwellDuck => Type == EventType.SwellDuck;
+
     /// <summary>"Echo throw | 0:12.5": the kind and the moment (short, so it never widens the panel).</summary>
     public string Title => $"{TypeName(Type)} | {TimeText(StartSeconds)}";
 
@@ -106,6 +122,8 @@ public sealed partial class LayerEvent : ObservableObject
         EventType.Stutter => "Stutter",
         EventType.FilterSweep => "Filter sweep",
         EventType.Freeze => "Freeze",
+        EventType.PitchDive => "Pitch dive",
+        EventType.SwellDuck => "Swell / Duck",
         _ => type.ToString()
     };
 
@@ -142,6 +160,21 @@ public sealed partial class LayerEvent : ObservableObject
             item.Tail = 4.0;
         }
 
+        if (type == EventType.PitchDive)
+        {
+            item.Length = 5.0;
+            item.Amount = 0.5;
+            item.Tail = 5.0;
+        }
+
+        if (type == EventType.SwellDuck)
+        {
+            item.Length = 2.0;
+            item.Time = 1.0;
+            item.Amount = -0.9;
+            item.Tail = 3.0;
+        }
+
         return item;
     }
 
@@ -162,16 +195,21 @@ public sealed partial class LayerEvent : ObservableObject
         {
             EventType.Stutter => Math.Clamp(spec.Length, EventSpec.MinSlice, EventSpec.MaxSlice),
             EventType.FilterSweep => Math.Clamp(spec.Length, 0.05, EventSpec.MaxSweep),
-            EventType.Freeze => Math.Clamp(spec.Length, 0.1, EventSpec.MaxSweep),
+            EventType.Freeze or EventType.PitchDive => Math.Clamp(spec.Length, 0.1, EventSpec.MaxSweep),
+            EventType.SwellDuck => Math.Clamp(spec.Length, 0.05, EventSpec.MaxSweep),
             _ => Math.Clamp(spec.Length, EventSpec.MinSlice, EventSpec.MaxEchoHold)
         };
-        Time = Type == EventType.Freeze
-            ? Math.Clamp(spec.Time, 0.1, 1.0)
-            : Math.Clamp(spec.Time, EventSpec.MinDelay, EventSpec.MaxDelay);
+        Time = Type switch
+        {
+            EventType.Freeze => Math.Clamp(spec.Time, 0.1, 1.0),
+            EventType.SwellDuck => Math.Clamp(spec.Time, 0, EventSpec.MaxSweep),
+            _ => Math.Clamp(spec.Time, EventSpec.MinDelay, EventSpec.MaxDelay)
+        };
         Amount = Type switch
         {
             EventType.Stutter => Math.Clamp(spec.Amount, 0, 0.9),
-            EventType.FilterSweep or EventType.Freeze => Math.Clamp(spec.Amount, 0, 1),
+            EventType.FilterSweep or EventType.Freeze or EventType.PitchDive => Math.Clamp(spec.Amount, 0, 1),
+            EventType.SwellDuck => Math.Clamp(spec.Amount, -1, 1),
             _ => Math.Clamp(spec.Amount, 0, EventSpec.MaxFeedback)
         };
         Count = Math.Clamp(spec.Count, EventSpec.MinRepeats, EventSpec.MaxRepeats);

@@ -37,6 +37,12 @@ public partial class EventEditor : UserControl
             viewModel.SelectEvent(item);
     }
 
+    private void OnExpandClick(object sender, RoutedEventArgs e)
+    {
+        if (DataContext is LayerEvent item)
+            item.IsExpanded = !item.IsExpanded;
+    }
+
     private void OnGoToClick(object sender, RoutedEventArgs e) => GoTo();
 
     /// <summary>Moves the playhead of the timeline to this event (also what Space does inside the card).</summary>
