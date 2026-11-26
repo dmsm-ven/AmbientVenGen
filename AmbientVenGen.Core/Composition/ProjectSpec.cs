@@ -38,7 +38,8 @@ public enum NoiseType
     Gong,
     Heartbeat,
     CardiacMonitor,
-    Fog
+    Fog,
+    InsectSwarm
 }
 
 /// <summary>A property of a layer that can get its own value for a repeat (see <see cref="RepeatOverrideSpec"/>).</summary>
