@@ -26,11 +26,18 @@
                 <RowDefinition Height="*" />
             </Grid.RowDefinitions>
 
-            <TextBlock
-                Margin="0,0,0,6"
-                FontSize="14"
-                FontWeight="SemiBold"
-                Text="Pitch interval" />
+            <StackPanel Margin="0,0,0,6" Orientation="Horizontal">
+                <TextBlock
+                    VerticalAlignment="Center"
+                    FontSize="14"
+                    FontWeight="SemiBold"
+                    Text="Pitch interval" />
+                <ToggleButton
+                    Margin="4,0,0,0"
+                    IsChecked="{Binding DataContext.Settings.LeftPanelOpen, RelativeSource={RelativeSource AncestorType=Window}, Mode=TwoWay}"
+                    Style="{StaticResource CollapseArrowLeft}"
+                    ToolTip="Hide this group" />
+            </StackPanel>
 
             <!--  The same width as the Recording and Noise type groups: the left side bar never changes its width  -->
             <ScrollViewer

@@ -223,10 +223,19 @@
                             Margin="6,0,0,0"
                             BorderBrush="#1FFFFFFF"
                             BorderThickness="0,0,0,1">
-                            <TabPanel
-                                Margin="0"
-                                Panel.ZIndex="1"
-                                IsItemsHost="True" />
+                            <DockPanel LastChildFill="False">
+                                <TabPanel
+                                    Margin="0"
+                                    Panel.ZIndex="1"
+                                    DockPanel.Dock="Left"
+                                    IsItemsHost="True" />
+                                <ToggleButton
+                                    Margin="4,0,0,2"
+                                    DockPanel.Dock="Left"
+                                    IsChecked="{Binding DataContext.Settings.RightPanelOpen, RelativeSource={RelativeSource AncestorType=Window}, Mode=TwoWay}"
+                                    Style="{StaticResource CollapseArrowRight}"
+                                    ToolTip="Hide this group" />
+                            </DockPanel>
                         </Border>
                         <ContentPresenter Grid.Row="1" Margin="0,6,0,0" ContentSource="SelectedContent" />
                     </Grid>
@@ -322,6 +331,64 @@
                         <Trigger Property="IsMouseOver" Value="True">
                             <Setter TargetName="Frame" Property="Background" Value="#22FFFFFF" />
                             <Setter TargetName="Frame" Property="BorderBrush" Value="#B7AFE9" />
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <!--  Small arrow after the title of a side group: folds the group (a bar to open it again stays at the window edge)  -->
+    <Style x:Key="CollapseArrowLeft" TargetType="ToggleButton">
+        <Setter Property="Width" Value="22" />
+        <Setter Property="Height" Value="22" />
+        <Setter Property="Cursor" Value="Hand" />
+        <Setter Property="Focusable" Value="False" />
+        <Setter Property="VerticalAlignment" Value="Center" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="ToggleButton">
+                    <Border
+                        x:Name="Frame"
+                        Background="Transparent"
+                        CornerRadius="5">
+                        <ui:SymbolIcon
+                            FontSize="14"
+                            Foreground="#9A99AA"
+                            Symbol="ChevronLeft24" />
+                    </Border>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter TargetName="Frame" Property="Background" Value="#26FFFFFF" />
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <!--  Small arrow after the title of a side group: folds the group (a bar to open it again stays at the window edge)  -->
+    <Style x:Key="CollapseArrowRight" TargetType="ToggleButton">
+        <Setter Property="Width" Value="22" />
+        <Setter Property="Height" Value="22" />
+        <Setter Property="Cursor" Value="Hand" />
+        <Setter Property="Focusable" Value="False" />
+        <Setter Property="VerticalAlignment" Value="Center" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="ToggleButton">
+                    <Border
+                        x:Name="Frame"
+                        Background="Transparent"
+                        CornerRadius="5">
+                        <ui:SymbolIcon
+                            FontSize="14"
+                            Foreground="#9A99AA"
+                            Symbol="ChevronRight24" />
+                    </Border>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter TargetName="Frame" Property="Background" Value="#26FFFFFF" />
                         </Trigger>
                     </ControlTemplate.Triggers>
                 </ControlTemplate>

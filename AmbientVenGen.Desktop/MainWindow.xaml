@@ -88,8 +88,17 @@
                     Margin="0,0,6,0"
                     Content="Source"
                     IsChecked="{Binding Settings.LeftPanelOpen, Mode=TwoWay}"
-                    Style="{StaticResource SideToggleLeft}"
-                    ToolTip="Show / hide the Recording, Noise and Interval group" />
+                    ToolTip="Show / hide the Recording, Noise and Interval group">
+                    <ToggleButton.Style>
+                        <Style BasedOn="{StaticResource SideToggleLeft}" TargetType="ToggleButton">
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding Settings.LeftPanelOpen}" Value="True">
+                                    <Setter Property="Visibility" Value="Collapsed" />
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </ToggleButton.Style>
+                </ToggleButton>
                 <Grid Grid.Column="1" Visibility="{Binding Settings.LeftPanelOpen, Converter={StaticResource BoolToVisibility}}">
                     <panels:RecordingPanel />
                     <panels:NoisePanel />
@@ -113,8 +122,17 @@
                     Margin="6,0,0,0"
                     Content="Oscillators / Events"
                     IsChecked="{Binding Settings.RightPanelOpen, Mode=TwoWay}"
-                    Style="{StaticResource SideToggleRight}"
-                    ToolTip="Show / hide the Oscillators and Events group" />
+                    ToolTip="Show / hide the Oscillators and Events group">
+                    <ToggleButton.Style>
+                        <Style BasedOn="{StaticResource SideToggleRight}" TargetType="ToggleButton">
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding Settings.RightPanelOpen}" Value="True">
+                                    <Setter Property="Visibility" Value="Collapsed" />
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </ToggleButton.Style>
+                </ToggleButton>
             </Grid>
                     </ScrollViewer>
                 </DataTemplate>

@@ -27,6 +27,11 @@
                             FontSize="14"
                             FontWeight="SemiBold"
                             Text="Recording" />
+                        <ToggleButton
+                    Margin="4,0,0,0"
+                    IsChecked="{Binding DataContext.Settings.LeftPanelOpen, RelativeSource={RelativeSource AncestorType=Window}, Mode=TwoWay}"
+                    Style="{StaticResource CollapseArrowLeft}"
+                    ToolTip="Hide this group" />
                         <TextBlock
                             Margin="10,0,0,0"
                             VerticalAlignment="Center"

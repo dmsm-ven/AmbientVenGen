@@ -1,4 +1,4 @@
-﻿<UserControl
+<UserControl
     x:Class="AmbientVenGen.Desktop.Panels.NoisePanel"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
@@ -22,11 +22,18 @@
                 <RowDefinition Height="*" />
             </Grid.RowDefinitions>
 
-            <TextBlock
-                Margin="0,0,0,6"
-                FontSize="14"
-                FontWeight="SemiBold"
-                Text="Noise type" />
+            <StackPanel Margin="0,0,0,6" Orientation="Horizontal">
+                <TextBlock
+                    VerticalAlignment="Center"
+                    FontSize="14"
+                    FontWeight="SemiBold"
+                    Text="Noise type" />
+                <ToggleButton
+                    Margin="4,0,0,0"
+                    IsChecked="{Binding DataContext.Settings.LeftPanelOpen, RelativeSource={RelativeSource AncestorType=Window}, Mode=TwoWay}"
+                    Style="{StaticResource CollapseArrowLeft}"
+                    ToolTip="Hide this group" />
+            </StackPanel>
 
             <ListBox
                 Grid.Row="1"
