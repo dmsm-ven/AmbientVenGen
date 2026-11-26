@@ -71,6 +71,39 @@ public sealed partial class AppSettings : ObservableObject
         }
     }
 
+    private bool _leftPanelOpen = true;
+    private bool _rightPanelOpen = true;
+
+    /// <summary>The left side group (Recording / Noise / Interval) is shown; the narrow bar next to it folds it.</summary>
+    public bool LeftPanelOpen
+    {
+        get => _leftPanelOpen;
+        set
+        {
+            if (_leftPanelOpen == value)
+                return;
+
+            _leftPanelOpen = value;
+            OnPropertyChanged();
+            Save();
+        }
+    }
+
+    /// <summary>The right side group (Oscillators / Events) is shown.</summary>
+    public bool RightPanelOpen
+    {
+        get => _rightPanelOpen;
+        set
+        {
+            if (_rightPanelOpen == value)
+                return;
+
+            _rightPanelOpen = value;
+            OnPropertyChanged();
+            Save();
+        }
+    }
+
     private bool _showSpectrogram = false;
 
     /// <summary>Faint ticks at the bottom of a Field record clip where a new pass of its loop begins.</summary>
@@ -260,6 +293,8 @@ public sealed partial class AppSettings : ObservableObject
                 _intervalMainExpanded = file.IntervalMainExpanded;
                 _showSpectrogram = file.ShowSpectrogram;
                 _showLoopMarks = file.ShowLoopMarks;
+                _leftPanelOpen = file.LeftPanelOpen;
+                _rightPanelOpen = file.RightPanelOpen;
                 _recentProjects = (file.RecentProjects ?? []).Where(p => !string.IsNullOrWhiteSpace(p)).Take(MaxRecent).ToList();
                 _recentDates = new Dictionary<string, DateTime>(file.RecentDates ?? [], StringComparer.OrdinalIgnoreCase);
                 _lastProjectDirectory = file.LastProjectDirectory;
@@ -284,7 +319,7 @@ public sealed partial class AppSettings : ObservableObject
         try
         {
             Directory.CreateDirectory(Path.GetDirectoryName(_path)!);
-            File.WriteAllText(_path, JsonSerializer.Serialize(new SettingsFile { LastProjectPath = LastProjectPath, IntervalMathExpanded = IntervalMathExpanded, IntervalMainExpanded = IntervalMainExpanded, ShowSpectrogram = ShowSpectrogram, ShowLoopMarks = ShowLoopMarks, SpectrogramColor = SpectrogramColor.ToString(), RecentProjects = _recentProjects, RecentDates = _recentDates, LastProjectDirectory = _lastProjectDirectory, LastExportDirectory = _lastExportDirectory, LastPresetDirectory = _lastPresetDirectory, LastLayerDirectory = _lastLayerDirectory, ExportOptions = _exportOptions, PresetVolume = _presetVolume }, Options));
+            File.WriteAllText(_path, JsonSerializer.Serialize(new SettingsFile { LastProjectPath = LastProjectPath, IntervalMathExpanded = IntervalMathExpanded, IntervalMainExpanded = IntervalMainExpanded, ShowSpectrogram = ShowSpectrogram, ShowLoopMarks = ShowLoopMarks, LeftPanelOpen = LeftPanelOpen, RightPanelOpen = RightPanelOpen, SpectrogramColor = SpectrogramColor.ToString(), RecentProjects = _recentProjects, RecentDates = _recentDates, LastProjectDirectory = _lastProjectDirectory, LastExportDirectory = _lastExportDirectory, LastPresetDirectory = _lastPresetDirectory, LastLayerDirectory = _lastLayerDirectory, ExportOptions = _exportOptions, PresetVolume = _presetVolume }, Options));
         }
         catch (Exception)
         {
@@ -299,6 +334,8 @@ public sealed partial class AppSettings : ObservableObject
         public bool IntervalMainExpanded { get; set; } = true;
         public bool ShowSpectrogram { get; set; }
         public bool ShowLoopMarks { get; set; } = true;
+        public bool LeftPanelOpen { get; set; } = true;
+        public bool RightPanelOpen { get; set; } = true;
         public string? SpectrogramColor { get; set; }
         public List<string>? RecentProjects { get; set; }
         public Dictionary<string, DateTime>? RecentDates { get; set; }

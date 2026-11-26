@@ -77,17 +77,30 @@
             <Grid Margin="10,6,10,0">
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="Auto" />
                     <ColumnDefinition Width="*" />
                     <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="Auto" />
                 </Grid.ColumnDefinitions>
-                <panels:RecordingPanel />
-                <panels:NoisePanel />
-                <panels:IntervalPanel />
-                <panels:SelectedLayerPanel Grid.Column="1" />
+
+                <!--  The bars fold the side groups: the Selected Layer group in the middle gets all the room  -->
+                <ToggleButton
+                    Margin="0,0,6,0"
+                    Content="Source"
+                    IsChecked="{Binding Settings.LeftPanelOpen, Mode=TwoWay}"
+                    Style="{StaticResource SideToggleLeft}"
+                    ToolTip="Show / hide the Recording, Noise and Interval group" />
+                <Grid Grid.Column="1" Visibility="{Binding Settings.LeftPanelOpen, Converter={StaticResource BoolToVisibility}}">
+                    <panels:RecordingPanel />
+                    <panels:NoisePanel />
+                    <panels:IntervalPanel />
+                </Grid>
+                <panels:SelectedLayerPanel Grid.Column="2" />
                 <TabControl
-                    Grid.Column="2"
+                    Grid.Column="3"
                     SelectedIndex="{Binding SideTabIndex, Mode=TwoWay}"
-                    Style="{StaticResource SideTabControl}">
+                    Style="{StaticResource SideTabControl}"
+                    Visibility="{Binding Settings.RightPanelOpen, Converter={StaticResource BoolToVisibility}}">
                     <TabItem Header="Oscillators">
                         <panels:ModulatorsPanel />
                     </TabItem>
@@ -95,6 +108,13 @@
                         <panels:EventsPanel />
                     </TabItem>
                 </TabControl>
+                <ToggleButton
+                    Grid.Column="4"
+                    Margin="6,0,0,0"
+                    Content="Oscillators / Events"
+                    IsChecked="{Binding Settings.RightPanelOpen, Mode=TwoWay}"
+                    Style="{StaticResource SideToggleRight}"
+                    ToolTip="Show / hide the Oscillators and Events group" />
             </Grid>
                     </ScrollViewer>
                 </DataTemplate>

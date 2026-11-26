@@ -235,4 +235,98 @@
         </Setter>
     </Style>
 
+    <!--  Narrow vertical bar that folds a side group of the main window (the caption is turned sideways)  -->
+    <Style x:Key="SideToggleLeft" TargetType="ToggleButton">
+        <Setter Property="Width" Value="24" />
+        <Setter Property="Cursor" Value="Hand" />
+        <Setter Property="Focusable" Value="False" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="ToggleButton">
+                    <Border
+                        x:Name="Frame"
+                        Background="#0DFFFFFF"
+                        BorderBrush="#1FFFFFFF"
+                        BorderThickness="1"
+                        CornerRadius="6">
+                        <StackPanel Margin="0,8" HorizontalAlignment="Center">
+                            <ui:SymbolIcon
+                                x:Name="Chevron"
+                                Margin="0,0,0,8"
+                                FontSize="14"
+                                Foreground="#C9C8D6"
+                                Symbol="ChevronLeft24" />
+                            <TextBlock
+                                HorizontalAlignment="Center"
+                                FontSize="12"
+                                FontWeight="SemiBold"
+                                Foreground="#9A99AA"
+                                Text="{TemplateBinding Content}">
+                                <TextBlock.LayoutTransform>
+                                    <RotateTransform Angle="270" />
+                                </TextBlock.LayoutTransform>
+                            </TextBlock>
+                        </StackPanel>
+                    </Border>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsChecked" Value="False">
+                            <Setter TargetName="Chevron" Property="Symbol" Value="ChevronRight24" />
+                        </Trigger>
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter TargetName="Frame" Property="Background" Value="#22FFFFFF" />
+                            <Setter TargetName="Frame" Property="BorderBrush" Value="#B7AFE9" />
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <!--  Narrow vertical bar that folds a side group of the main window (the caption is turned sideways)  -->
+    <Style x:Key="SideToggleRight" TargetType="ToggleButton">
+        <Setter Property="Width" Value="24" />
+        <Setter Property="Cursor" Value="Hand" />
+        <Setter Property="Focusable" Value="False" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="ToggleButton">
+                    <Border
+                        x:Name="Frame"
+                        Background="#0DFFFFFF"
+                        BorderBrush="#1FFFFFFF"
+                        BorderThickness="1"
+                        CornerRadius="6">
+                        <StackPanel Margin="0,8" HorizontalAlignment="Center">
+                            <ui:SymbolIcon
+                                x:Name="Chevron"
+                                Margin="0,0,0,8"
+                                FontSize="14"
+                                Foreground="#C9C8D6"
+                                Symbol="ChevronRight24" />
+                            <TextBlock
+                                HorizontalAlignment="Center"
+                                FontSize="12"
+                                FontWeight="SemiBold"
+                                Foreground="#9A99AA"
+                                Text="{TemplateBinding Content}">
+                                <TextBlock.LayoutTransform>
+                                    <RotateTransform Angle="270" />
+                                </TextBlock.LayoutTransform>
+                            </TextBlock>
+                        </StackPanel>
+                    </Border>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsChecked" Value="False">
+                            <Setter TargetName="Chevron" Property="Symbol" Value="ChevronLeft24" />
+                        </Trigger>
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter TargetName="Frame" Property="Background" Value="#22FFFFFF" />
+                            <Setter TargetName="Frame" Property="BorderBrush" Value="#B7AFE9" />
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
 </ResourceDictionary>
