@@ -4,7 +4,7 @@
     <OutputType>WinExe</OutputType>
     <UseWPF>true</UseWPF>
     <ApplicationIcon>Assets\app-icon.ico</ApplicationIcon>
-	<Version>1.0.1</Version>
+	<Version>1.0.2</Version>
 	<PublishReadyToRun>true</PublishReadyToRun>
 	<RuntimeIdentifier>win-x64</RuntimeIdentifier>
   </PropertyGroup>
