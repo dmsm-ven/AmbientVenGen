@@ -4,7 +4,7 @@ namespace AmbientVenGen.Core.Audio;
 
 /// <summary>
 /// Noise textures made of events (clicks, drops, dropouts) and slow movement (gusts, tuning drift) on top of filtered
-/// noise: Crackle, Vinyl, RadioStatic, Wind, Rain, Ocean, ElectricalHum, TapeHiss, SpaceRumble, Geiger, IceSinging, HighVoltage, EnergyShield, CrtWhine, PlasmaArc, Gong, Heartbeat, CardiacMonitor and Fog. Every channel has its own random stream, so the left and the right
+/// noise: Crackle, Vinyl, RadioStatic, Wind, Rain, Ocean, ElectricalHum, TapeHiss, SpaceRumble, Geiger, IceSinging, HighVoltage, EnergyShield, CrtWhine, PlasmaArc, Gong, Heartbeat, CardiacMonitor, Fog and InsectSwarm. Every channel has its own random stream, so the left and the right
 /// side are different (wide). Brightness sets the tone, Modulation the density or the amount of movement.
 /// Everything is random-driven from the seed, so the sound is the same every time and can have any length.
 /// </summary>
@@ -58,6 +58,7 @@ internal sealed class TextureNoiseGenerator : LayerGenerator
         NoiseType.Heartbeat => new HeartChannel(seed),
         NoiseType.CardiacMonitor => new MonitorChannel(seed),
         NoiseType.Fog => new FogChannel(seed),
+        NoiseType.InsectSwarm => new InsectChannel(seed),
         _ => new CrackleChannel(seed)
     };
 
@@ -454,6 +455,94 @@ internal sealed class TextureNoiseGenerator : LayerGenerator
             float veil = _veilLevel.Next(band) * (0.004f + 0.012f * brightness) * (0.5f + veilMove);
 
             return body + veil;
+        }
+    }
+
+    /// <summary>
+    /// Insect swarm: a cloud of small flying insects. Seven buzzing wings (saw tones around 150-450 Hz, each with its own slow
+    /// drift, a fast vibrato and its own flight passes that come near and fade away) through a band-pass, over a fine
+    /// trembling shimmer of high noise. The whole cloud thickens and thins over tens of seconds.
+    /// Brightness = how high and thin the buzz is, Modulation = how deep the swarm's breathing is.
+    /// </summary>
+    private sealed class InsectChannel : Channel
+    {
+        private const int Voices = 7;
+
+        private Rng _rng;
+        private readonly float[] _phase = new float[Voices];
+        private readonly float[] _baseHz = new float[Voices];
+        private readonly float[] _vibPhase = new float[Voices];
+        private readonly float[] _vibRate = new float[Voices];
+        private readonly Wander[] _amp = new Wander[Voices];
+        private readonly Wander[] _pitch = new Wander[Voices];
+        private Wander _swarm;
+        private Svf _body = new(900f, 1.1f);
+        private Svf _veil = new(4500f, 1.4f);
+        private Leveler _veilLevel;
+        private float _tremorPhase;
+        private int _tick;
+
+        public InsectChannel(uint seed)
+        {
+            _rng = new Rng(seed);
+            _swarm = new Wander(seed ^ 0x9E3779B9u);
+
+            for (int v = 0; v < Voices; v++)
+            {
+                _phase[v] = _rng.Next01();
+                _baseHz[v] = 150f + 300f * _rng.Next01();
+                _vibPhase[v] = _rng.Next01();
+                _vibRate[v] = 4f + 5f * _rng.Next01();
+                _amp[v] = new Wander(seed + 0x1000193u * (uint)(v + 1));
+                _pitch[v] = new Wander(seed ^ (0x85EBCA6Bu * (uint)(v + 3)));
+            }
+        }
+
+        public override float Next(float brightness, float modulation)
+        {
+            float swarm = _swarm.Next(16f);
+            float sum = 0f;
+
+            for (int v = 0; v < Voices; v++)
+            {
+                // a flight pass: the insect comes close (loud) and flies away (quiet)
+                float amp = _amp[v].Next(5f + 1.7f * v);
+                amp *= amp;
+
+                _vibPhase[v] += _vibRate[v] / Sr;
+                if (_vibPhase[v] >= 1f)
+                    _vibPhase[v] -= 1f;
+
+                float hz = _baseHz[v] * (0.94f + 0.12f * _pitch[v].Next(9f)) * (1f + 0.012f * MathF.Sin(_vibPhase[v] * MathF.Tau));
+
+                _phase[v] += hz / Sr;
+                if (_phase[v] >= 1f)
+                    _phase[v] -= 1f;
+
+                sum += (2f * _phase[v] - 1f) * amp;
+            }
+
+            if ((_tick++ & 31) == 0)
+            {
+                _body.Set(350f + 1700f * brightness, 1.1f);
+                _veil.Set(3000f + 3500f * brightness, 1.4f);
+            }
+
+            _body.Process(sum, out _, out float band, out _);
+
+            // the fine trembling of the wings: the high shimmer flutters
+            _tremorPhase += (38f + 22f * modulation) / Sr;
+            if (_tremorPhase >= 1f)
+                _tremorPhase -= 1f;
+
+            float tremor = 0.4f + 0.6f * (0.5f + 0.5f * MathF.Sin(_tremorPhase * MathF.Tau));
+
+            float depth = 0.3f + 0.7f * modulation;
+            float gain = (1f - depth) + depth * (0.25f + 1.1f * swarm);
+
+            _veil.Process(_rng.Signed(), out _, out float veilBand, out _);
+
+            return band * 0.16f * gain + _veilLevel.Next(veilBand) * 0.012f * (0.4f + swarm) * tremor;
         }
     }
 
