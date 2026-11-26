@@ -126,7 +126,10 @@ public static class Choices
             "Sounds like: the beeping of a heart monitor in a hospital room."),
         new(NoiseType.Fog, "Fog",
             "A very quiet, dark, muffled air that slowly thickens and thins. Brightness = how clear the air is, Modulation = how deep the slow breathing is.",
-            "Sounds like: a heavy fog over a lake at dawn, a soft hush with no events in it.")
+            "Sounds like: a heavy fog over a lake at dawn, a soft hush with no events in it."),
+        new(NoiseType.InsectSwarm, "Insect swarm",
+            "A cloud of small flying insects: trembling buzzing wings that come near and fade away, over a fine flutter of high noise. Brightness = how high and thin the buzz is, Modulation = how deep the swarm's breathing is.",
+            "Sounds like: a warm summer night over a marsh, a swarm of midges and mosquitoes drifting around you.")
     ];
 
     /// <summary>Three-layer relations (the arithmetic lives in Core: <see cref="PitchRelations"/>).</summary>
