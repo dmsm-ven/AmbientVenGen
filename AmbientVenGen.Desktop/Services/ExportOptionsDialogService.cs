@@ -1,7 +1,6 @@
 using AmbientVenGen.Core.Export;
 using AmbientVenGen.Desktop.ViewModels;
 using AmbientVenGen.Desktop.Views;
-using AmbientVenGen.Core.Export;
 using System.Windows;
 
 namespace AmbientVenGen.Desktop.Services;
